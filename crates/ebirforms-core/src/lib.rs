@@ -4,6 +4,7 @@ pub mod crypto;
 pub mod form;
 pub mod job;
 pub mod package;
+pub mod receipt;
 pub mod submission;
 pub mod transport;
 
@@ -15,6 +16,9 @@ pub use job::{
 };
 pub use package::{
     build_submission_package, sha256_hex, PackageError, SubmissionManifest, SubmissionPackage,
+};
+pub use receipt::{
+    apply_receipt_to_store, parse_and_apply_receipt, parse_receipt, ReceiptError, ReceiptMetadata,
 };
 pub use submission::{
     blocks_automatic_retry, submit_with_store, SubmissionError, SubmissionRecord, SubmissionStore,

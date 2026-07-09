@@ -1,7 +1,7 @@
 use ebirforms_core::{
-    build_submission_package, decrypt_payload, encrypt_payload, run_due_jobs_dry_run,
-    run_due_jobs_live, sha256_hex, submit_with_store, DryRunTransport, JobMode, JobStore,
-    SftpTransport, SubmissionStore, SubmitMode,
+    build_submission_package, decrypt_payload, encrypt_payload, parse_and_apply_receipt,
+    run_due_jobs_dry_run, run_due_jobs_live, sha256_hex, submit_with_store, DryRunTransport,
+    JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
 };
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -26,6 +26,7 @@ fn usage(program: &str) {
     eprintln!("  {program} run-queue --dry-run [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
     eprintln!("  {program} run-queue --live --confirm [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
     eprintln!("  {program} jobs [--db <jobs.sqlite>]");
+    eprintln!("  {program} receipt-match --receipt <receipt.txt> [--records <submissions.json>]");
     eprintln!("  {program} serve [--addr 127.0.0.1:8765] [--db <jobs.sqlite>] [--records <submissions.json>]");
 }
 
@@ -36,6 +37,7 @@ struct Args {
     out: Option<PathBuf>,
     manifest: Option<PathBuf>,
     fixture: Option<PathBuf>,
+    receipt: Option<PathBuf>,
     records: Option<PathBuf>,
     db: Option<PathBuf>,
     limit: Option<usize>,
@@ -63,6 +65,7 @@ fn main() -> ExitCode {
         "queue" => run_queue(parse_flags(&argv[2..])),
         "run-queue" => run_run_queue(parse_flags(&argv[2..])),
         "jobs" => run_jobs(parse_flags(&argv[2..])),
+        "receipt-match" => run_receipt_match(parse_flags(&argv[2..])),
         "serve" => run_serve(parse_flags(&argv[2..])),
         _ => {
             usage(program);
@@ -108,6 +111,12 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                 i += 1;
                 parsed.fixture = Some(PathBuf::from(
                     args.get(i).ok_or("--fixture requires a value")?,
+                ));
+            }
+            "--receipt" => {
+                i += 1;
+                parsed.receipt = Some(PathBuf::from(
+                    args.get(i).ok_or("--receipt requires a value")?,
                 ));
             }
             "--records" => {
@@ -366,6 +375,22 @@ fn submission_records_path(args: &Args) -> PathBuf {
     args.records
         .clone()
         .unwrap_or_else(|| PathBuf::from(".ebirforms/submissions.json"))
+}
+
+fn run_receipt_match(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let receipt_path = args
+        .receipt
+        .as_deref()
+        .ok_or("receipt-match requires --receipt")?;
+    let receipt_text = fs::read_to_string(receipt_path)
+        .map_err(|err| format!("failed to read receipt {}: {err}", receipt_path.display()))?;
+    let store = SubmissionStore::new(submission_records_path(&args));
+    let record = parse_and_apply_receipt(&store, &receipt_text).map_err(|err| err.to_string())?;
+    let json = serde_json::to_string_pretty(&record).map_err(|err| err.to_string())?;
+    println!("{json}");
+    eprintln!("submission record store: {}", store.path().display());
+    Ok(())
 }
 
 fn run_serve(args: Result<Args, String>) -> Result<(), String> {

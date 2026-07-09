@@ -1,4 +1,5 @@
 use crate::package::SubmissionPackage;
+use crate::receipt::ReceiptMetadata;
 use crate::transport::{idempotency_key, SubmissionStatus, SubmissionTransport, TransportError};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -38,6 +39,8 @@ pub struct SubmissionRecord {
     pub attempts: u32,
     #[serde(default)]
     pub last_error: Option<String>,
+    #[serde(default)]
+    pub receipt: Option<ReceiptMetadata>,
 }
 
 impl SubmissionRecord {
@@ -64,11 +67,16 @@ impl SubmissionRecord {
             updated_unix_seconds: now,
             attempts: 0,
             last_error: None,
+            receipt: None,
         }
     }
 
     fn touch(&mut self) {
         self.updated_unix_seconds = unix_now();
+    }
+
+    pub(crate) fn touch_for_receipt(&mut self) {
+        self.touch();
     }
 }
 
