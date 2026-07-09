@@ -1,7 +1,8 @@
 use ebirforms_core::{
     build_submission_package, decrypt_payload, encrypt_payload, parse_and_apply_receipt,
-    run_due_jobs_dry_run, run_due_jobs_live, sha256_hex, submit_with_store, DryRunTransport,
-    JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
+    run_due_jobs_dry_run, run_due_jobs_live, sha256_hex, submit_with_store, AppStateStore,
+    DryRunTransport, JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
+    TaxpayerProfile, Theme,
 };
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -27,7 +28,12 @@ fn usage(program: &str) {
     eprintln!("  {program} run-queue --live --confirm [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
     eprintln!("  {program} jobs [--db <jobs.sqlite>]");
     eprintln!("  {program} receipt-match --receipt <receipt.txt> [--records <submissions.json>]");
-    eprintln!("  {program} serve [--addr 127.0.0.1:8765] [--db <jobs.sqlite>] [--records <submissions.json>]");
+    eprintln!("  {program} profiles [--state <app-state.json>]");
+    eprintln!("  {program} profile-create --profile-id <id> --tin <tin> --email <email> --name <taxpayer> [--rdo <code>] [--address <addr>] [--zip <zip>] [--state <app-state.json>]");
+    eprintln!("  {program} settings --theme <light|dark|system> [--state <app-state.json>]");
+    eprintln!("  {program} lock-init --pin <pin> [--state <app-state.json>]");
+    eprintln!("  {program} unlock-check --pin <pin> [--state <app-state.json>]");
+    eprintln!("  {program} serve [--addr 127.0.0.1:8765] [--db <jobs.sqlite>] [--records <submissions.json>] [--state <app-state.json>]");
 }
 
 #[derive(Debug, Default)]
@@ -40,6 +46,16 @@ struct Args {
     receipt: Option<PathBuf>,
     records: Option<PathBuf>,
     db: Option<PathBuf>,
+    state: Option<PathBuf>,
+    profile_id: Option<String>,
+    tin: Option<String>,
+    email: Option<String>,
+    name: Option<String>,
+    rdo: Option<String>,
+    address: Option<String>,
+    zip: Option<String>,
+    theme: Option<String>,
+    pin: Option<String>,
     limit: Option<usize>,
     max_attempts: Option<u32>,
     addr: Option<String>,
@@ -66,6 +82,11 @@ fn main() -> ExitCode {
         "run-queue" => run_run_queue(parse_flags(&argv[2..])),
         "jobs" => run_jobs(parse_flags(&argv[2..])),
         "receipt-match" => run_receipt_match(parse_flags(&argv[2..])),
+        "profiles" => run_profiles(parse_flags(&argv[2..])),
+        "profile-create" => run_profile_create(parse_flags(&argv[2..])),
+        "settings" => run_settings(parse_flags(&argv[2..])),
+        "lock-init" => run_lock_init(parse_flags(&argv[2..])),
+        "unlock-check" => run_unlock_check(parse_flags(&argv[2..])),
         "serve" => run_serve(parse_flags(&argv[2..])),
         _ => {
             usage(program);
@@ -128,6 +149,49 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
             "--db" => {
                 i += 1;
                 parsed.db = Some(PathBuf::from(args.get(i).ok_or("--db requires a value")?));
+            }
+            "--state" => {
+                i += 1;
+                parsed.state = Some(PathBuf::from(
+                    args.get(i).ok_or("--state requires a value")?,
+                ));
+            }
+            "--profile-id" => {
+                i += 1;
+                parsed.profile_id =
+                    Some(args.get(i).ok_or("--profile-id requires a value")?.clone());
+            }
+            "--tin" => {
+                i += 1;
+                parsed.tin = Some(args.get(i).ok_or("--tin requires a value")?.clone());
+            }
+            "--email" => {
+                i += 1;
+                parsed.email = Some(args.get(i).ok_or("--email requires a value")?.clone());
+            }
+            "--name" => {
+                i += 1;
+                parsed.name = Some(args.get(i).ok_or("--name requires a value")?.clone());
+            }
+            "--rdo" => {
+                i += 1;
+                parsed.rdo = Some(args.get(i).ok_or("--rdo requires a value")?.clone());
+            }
+            "--address" => {
+                i += 1;
+                parsed.address = Some(args.get(i).ok_or("--address requires a value")?.clone());
+            }
+            "--zip" => {
+                i += 1;
+                parsed.zip = Some(args.get(i).ok_or("--zip requires a value")?.clone());
+            }
+            "--theme" => {
+                i += 1;
+                parsed.theme = Some(args.get(i).ok_or("--theme requires a value")?.clone());
+            }
+            "--pin" => {
+                i += 1;
+                parsed.pin = Some(args.get(i).ok_or("--pin requires a value")?.clone());
             }
             "--limit" => {
                 i += 1;
@@ -377,6 +441,18 @@ fn submission_records_path(args: &Args) -> PathBuf {
         .unwrap_or_else(|| PathBuf::from(".ebirforms/submissions.json"))
 }
 
+fn app_state_path(args: &Args) -> PathBuf {
+    args.state
+        .clone()
+        .unwrap_or_else(|| PathBuf::from(".ebirforms/app-state.json"))
+}
+
+fn print_json<T: serde::Serialize>(value: T) -> Result<(), String> {
+    let json = serde_json::to_string_pretty(&value).map_err(|err| err.to_string())?;
+    println!("{json}");
+    Ok(())
+}
+
 fn run_receipt_match(args: Result<Args, String>) -> Result<(), String> {
     let args = args?;
     let receipt_path = args
@@ -393,6 +469,62 @@ fn run_receipt_match(args: Result<Args, String>) -> Result<(), String> {
     Ok(())
 }
 
+fn run_profiles(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let store = AppStateStore::new(app_state_path(&args));
+    print_json(store.list_profiles().map_err(|err| err.to_string())?)
+}
+
+fn run_profile_create(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let mut profile = TaxpayerProfile::new(
+        args.profile_id
+            .clone()
+            .ok_or("profile-create requires --profile-id")?,
+        args.tin.clone().ok_or("profile-create requires --tin")?,
+        args.email
+            .clone()
+            .ok_or("profile-create requires --email")?,
+        args.name.clone().ok_or("profile-create requires --name")?,
+    );
+    profile.rdo_code = args.rdo.clone();
+    profile.registered_address = args.address.clone();
+    profile.zip_code = args.zip.clone();
+    let store = AppStateStore::new(app_state_path(&args));
+    let saved = store
+        .upsert_profile(profile)
+        .map_err(|err| err.to_string())?;
+    print_json(saved)
+}
+
+fn run_settings(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let store = AppStateStore::new(app_state_path(&args));
+    if let Some(theme) = args.theme.as_deref() {
+        let theme = Theme::parse(theme).map_err(|err| err.to_string())?;
+        print_json(store.set_theme(theme).map_err(|err| err.to_string())?)
+    } else {
+        print_json(store.settings().map_err(|err| err.to_string())?)
+    }
+}
+
+fn run_lock_init(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let pin = args.pin.as_deref().ok_or("lock-init requires --pin")?;
+    let store = AppStateStore::new(app_state_path(&args));
+    print_json(store.set_master_pin(pin).map_err(|err| err.to_string())?)
+}
+
+fn run_unlock_check(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let pin = args.pin.as_deref().ok_or("unlock-check requires --pin")?;
+    let store = AppStateStore::new(app_state_path(&args));
+    let unlocked = store
+        .verify_master_pin(pin)
+        .map_err(|err| err.to_string())?;
+    print_json(serde_json::json!({ "unlocked": unlocked }))
+}
+
 fn run_serve(args: Result<Args, String>) -> Result<(), String> {
     let args = args?;
     let addr = args
@@ -401,13 +533,16 @@ fn run_serve(args: Result<Args, String>) -> Result<(), String> {
         .unwrap_or_else(|| "127.0.0.1:8765".to_string());
     let job_store = JobStore::open(job_db_path(&args)).map_err(|err| err.to_string())?;
     let submission_store = SubmissionStore::new(submission_records_path(&args));
+    let app_state_store = AppStateStore::new(app_state_path(&args));
     let listener =
         TcpListener::bind(&addr).map_err(|err| format!("failed to bind {addr}: {err}"))?;
     eprintln!("ebirforms local IPC listening on http://{addr}");
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                if let Err(err) = handle_http_connection(stream, &job_store, &submission_store) {
+                if let Err(err) =
+                    handle_http_connection(stream, &job_store, &submission_store, &app_state_store)
+                {
                     eprintln!("ipc request failed: {err}");
                 }
             }
@@ -421,6 +556,7 @@ fn handle_http_connection(
     mut stream: TcpStream,
     job_store: &JobStore,
     submission_store: &SubmissionStore,
+    app_state_store: &AppStateStore,
 ) -> Result<(), String> {
     let mut buffer = [0_u8; 64 * 1024];
     let read = stream
@@ -443,6 +579,64 @@ fn handle_http_connection(
         ("GET", "/jobs") => json_result(job_store.list().map_err(|err| err.to_string())),
         ("GET", "/submissions") => {
             json_result(submission_store.load().map_err(|err| err.to_string()))
+        }
+        ("GET", "/profiles") => json_result(
+            app_state_store
+                .list_profiles()
+                .map_err(|err| err.to_string()),
+        ),
+        ("GET", "/settings") => {
+            json_result(app_state_store.settings().map_err(|err| err.to_string()))
+        }
+        ("POST", "/profiles") => {
+            let profile: TaxpayerProfile = serde_json::from_str(body)
+                .map_err(|err| format!("failed to parse POST /profiles body: {err}"))?;
+            json_result(
+                app_state_store
+                    .upsert_profile(profile)
+                    .map_err(|err| err.to_string()),
+            )
+        }
+        ("POST", "/settings/theme") => {
+            let body: Value = serde_json::from_str(body)
+                .map_err(|err| format!("failed to parse POST /settings/theme body: {err}"))?;
+            let theme = body
+                .get("theme")
+                .and_then(Value::as_str)
+                .ok_or("POST /settings/theme requires JSON field `theme`")?;
+            let theme = Theme::parse(theme).map_err(|err| err.to_string())?;
+            json_result(
+                app_state_store
+                    .set_theme(theme)
+                    .map_err(|err| err.to_string()),
+            )
+        }
+        ("POST", "/lock/init") => {
+            let body: Value = serde_json::from_str(body)
+                .map_err(|err| format!("failed to parse POST /lock/init body: {err}"))?;
+            let pin = body
+                .get("pin")
+                .and_then(Value::as_str)
+                .ok_or("POST /lock/init requires JSON field `pin`")?;
+            json_result(
+                app_state_store
+                    .set_master_pin(pin)
+                    .map_err(|err| err.to_string()),
+            )
+        }
+        ("POST", "/lock/check") => {
+            let body: Value = serde_json::from_str(body)
+                .map_err(|err| format!("failed to parse POST /lock/check body: {err}"))?;
+            let pin = body
+                .get("pin")
+                .and_then(Value::as_str)
+                .ok_or("POST /lock/check requires JSON field `pin`")?;
+            json_result(
+                app_state_store
+                    .verify_master_pin(pin)
+                    .map(|unlocked| serde_json::json!({ "unlocked": unlocked }))
+                    .map_err(|err| err.to_string()),
+            )
         }
         ("POST", "/jobs") => {
             let form = query.get("form").map(String::as_str).unwrap_or("1601C");
