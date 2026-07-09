@@ -1,7 +1,7 @@
 use ebirforms_core::{
     build_submission_package, decrypt_payload, encrypt_payload, parse_and_apply_receipt,
-    run_due_jobs_dry_run, run_due_jobs_live, sha256_hex, submit_with_store, AppStateStore,
-    DryRunTransport, JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
+    poll_receipt_directory, run_due_jobs_dry_run, run_due_jobs_live, sha256_hex, submit_with_store,
+    AppStateStore, DryRunTransport, JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
     TaxpayerProfile, Theme,
 };
 use serde_json::Value;
@@ -28,6 +28,7 @@ fn usage(program: &str) {
     eprintln!("  {program} run-queue --live --confirm [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
     eprintln!("  {program} jobs [--db <jobs.sqlite>]");
     eprintln!("  {program} receipt-match --receipt <receipt.txt> [--records <submissions.json>]");
+    eprintln!("  {program} receipt-poll --receipt-dir <dir> [--records <submissions.json>]");
     eprintln!("  {program} profiles [--state <app-state.json>]");
     eprintln!("  {program} profile-create --profile-id <id> --tin <tin> --email <email> --name <taxpayer> [--rdo <code>] [--address <addr>] [--zip <zip>] [--state <app-state.json>]");
     eprintln!("  {program} settings --theme <light|dark|system> [--state <app-state.json>]");
@@ -44,6 +45,7 @@ struct Args {
     manifest: Option<PathBuf>,
     fixture: Option<PathBuf>,
     receipt: Option<PathBuf>,
+    receipt_dir: Option<PathBuf>,
     records: Option<PathBuf>,
     db: Option<PathBuf>,
     state: Option<PathBuf>,
@@ -82,6 +84,7 @@ fn main() -> ExitCode {
         "run-queue" => run_run_queue(parse_flags(&argv[2..])),
         "jobs" => run_jobs(parse_flags(&argv[2..])),
         "receipt-match" => run_receipt_match(parse_flags(&argv[2..])),
+        "receipt-poll" => run_receipt_poll(parse_flags(&argv[2..])),
         "profiles" => run_profiles(parse_flags(&argv[2..])),
         "profile-create" => run_profile_create(parse_flags(&argv[2..])),
         "settings" => run_settings(parse_flags(&argv[2..])),
@@ -138,6 +141,12 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                 i += 1;
                 parsed.receipt = Some(PathBuf::from(
                     args.get(i).ok_or("--receipt requires a value")?,
+                ));
+            }
+            "--receipt-dir" => {
+                i += 1;
+                parsed.receipt_dir = Some(PathBuf::from(
+                    args.get(i).ok_or("--receipt-dir requires a value")?,
                 ));
             }
             "--records" => {
@@ -467,6 +476,17 @@ fn run_receipt_match(args: Result<Args, String>) -> Result<(), String> {
     println!("{json}");
     eprintln!("submission record store: {}", store.path().display());
     Ok(())
+}
+
+fn run_receipt_poll(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let receipt_dir = args
+        .receipt_dir
+        .as_deref()
+        .ok_or("receipt-poll requires --receipt-dir")?;
+    let store = SubmissionStore::new(submission_records_path(&args));
+    let report = poll_receipt_directory(&store, receipt_dir).map_err(|err| err.to_string())?;
+    print_json(report)
 }
 
 fn run_profiles(args: Result<Args, String>) -> Result<(), String> {

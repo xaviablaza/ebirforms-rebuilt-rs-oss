@@ -2,6 +2,8 @@ use crate::submission::{SubmissionError, SubmissionRecord, SubmissionStore};
 use crate::transport::SubmissionStatus;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::fs;
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ReceiptMetadata {
@@ -22,6 +24,8 @@ pub enum ReceiptError {
     NoMatchingSubmission { receipt_id: String },
     #[error("receipt status `{0}` is not an accepted/confirmed status")]
     NotAccepted(String),
+    #[error("receipt poll failed: {0}")]
+    Poll(String),
     #[error(transparent)]
     Submission(#[from] SubmissionError),
 }
@@ -80,6 +84,47 @@ pub fn parse_and_apply_receipt(
 ) -> Result<SubmissionRecord, ReceiptError> {
     let receipt = parse_receipt(text)?;
     apply_receipt_to_store(store, receipt)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ReceiptPollReport {
+    pub scanned: usize,
+    pub confirmed: Vec<SubmissionRecord>,
+    pub errors: Vec<String>,
+}
+
+pub fn poll_receipt_directory(
+    store: &SubmissionStore,
+    dir: &Path,
+) -> Result<ReceiptPollReport, ReceiptError> {
+    let mut report = ReceiptPollReport {
+        scanned: 0,
+        confirmed: Vec::new(),
+        errors: Vec::new(),
+    };
+    let entries = fs::read_dir(dir).map_err(|err| ReceiptError::Poll(err.to_string()))?;
+    for entry in entries {
+        let entry = entry.map_err(|err| ReceiptError::Poll(err.to_string()))?;
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Some(extension) = path.extension().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if !matches!(extension.to_ascii_lowercase().as_str(), "txt" | "eml") {
+            continue;
+        }
+        report.scanned += 1;
+        match fs::read_to_string(&path)
+            .map_err(|err| ReceiptError::Poll(err.to_string()))
+            .and_then(|text| parse_and_apply_receipt(store, &text))
+        {
+            Ok(record) => report.confirmed.push(record),
+            Err(err) => report.errors.push(format!("{}: {err}", path.display())),
+        }
+    }
+    Ok(report)
 }
 
 fn parse_key_value_lines(text: &str) -> BTreeMap<String, String> {
@@ -150,24 +195,32 @@ mod tests {
     }
 
     #[test]
-    fn receipt_confirms_matching_submission_record() {
-        let records_path = temp_path("ebirforms-receipt-records");
+    fn receipt_directory_poll_confirms_matching_submission_record() {
+        let records_path = temp_path("ebirforms-receipt-poll-records");
+        let dir_path =
+            std::env::temp_dir().join(format!("ebirforms-receipt-poll-dir-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir_path);
+        fs::create_dir_all(&dir_path).unwrap();
         let store = SubmissionStore::new(&records_path);
         let package = build_submission_package("1601C", &fixture_input()).unwrap();
         let mut transport = DryRunTransport::new();
         submit_with_store(&package, &store, &mut transport, SubmitMode::DryRun).unwrap();
+        fs::write(
+            dir_path.join("receipt.txt"),
+            format!(
+                "Receipt-ID: TEST-1601C-001\nStatus: ACCEPTED\nFilename: {}\nForm: 1601C\nPeriod: 062026\nReceived-At: 2026-07-09T10:00:00Z\n",
+                package.manifest.filename
+            ),
+        )
+        .unwrap();
 
-        let receipt = format!(
-            "Receipt-ID: TEST-1601C-001\nStatus: ACCEPTED\nFilename: {}\nForm: 1601C\nPeriod: 062026\nReceived-At: 2026-07-09T10:00:00Z\n",
-            package.manifest.filename
-        );
-        let confirmed = parse_and_apply_receipt(&store, &receipt).unwrap();
+        let report = poll_receipt_directory(&store, &dir_path).unwrap();
 
-        assert_eq!(confirmed.status, SubmissionStatus::Confirmed);
-        assert_eq!(
-            confirmed.receipt.as_ref().unwrap().receipt_id,
-            "TEST-1601C-001"
-        );
+        assert_eq!(report.scanned, 1);
+        assert_eq!(report.confirmed.len(), 1);
+        assert!(report.errors.is_empty());
+        assert_eq!(report.confirmed[0].status, SubmissionStatus::Confirmed);
         let _ = fs::remove_file(&records_path);
+        let _ = fs::remove_dir_all(&dir_path);
     }
 }

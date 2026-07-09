@@ -22,7 +22,8 @@ pub use profile::{
     AppSettings, AppState, AppStateStore, PinVerifier, ProfileError, TaxpayerProfile, Theme,
 };
 pub use receipt::{
-    apply_receipt_to_store, parse_and_apply_receipt, parse_receipt, ReceiptError, ReceiptMetadata,
+    apply_receipt_to_store, parse_and_apply_receipt, parse_receipt, poll_receipt_directory,
+    ReceiptError, ReceiptMetadata, ReceiptPollReport,
 };
 pub use submission::{
     blocks_automatic_retry, submit_with_store, SubmissionError, SubmissionRecord, SubmissionStore,
