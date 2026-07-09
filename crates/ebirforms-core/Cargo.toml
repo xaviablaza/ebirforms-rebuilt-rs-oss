@@ -11,6 +11,7 @@ cipher = "0.4"
 flate2 = { version = "1", default-features = false, features = ["zlib"] }
 hex = "0.4"
 serde = { version = "1", features = ["derive"] }
+rusqlite = { version = "0.30.0", features = ["bundled"] }
 serde_json = "1"
 sha2 = "0.10"
 thiserror = "1"

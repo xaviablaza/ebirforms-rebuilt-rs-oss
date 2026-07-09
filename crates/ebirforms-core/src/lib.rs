@@ -2,12 +2,17 @@
 
 pub mod crypto;
 pub mod form;
+pub mod job;
 pub mod package;
 pub mod submission;
 pub mod transport;
 
 pub use crypto::{decrypt_payload, encrypt_payload, CryptoError};
 pub use form::{render_form, FormDefinition, FormError, FormMetadata};
+pub use job::{
+    run_due_jobs_dry_run, run_due_jobs_live, run_next_job, JobError, JobMode, JobStore,
+    SubmissionJob,
+};
 pub use package::{
     build_submission_package, sha256_hex, PackageError, SubmissionManifest, SubmissionPackage,
 };

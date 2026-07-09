@@ -1,6 +1,7 @@
 use ebirforms_core::{
-    build_submission_package, decrypt_payload, encrypt_payload, sha256_hex, submit_with_store,
-    DryRunTransport, SftpTransport, SubmissionStore, SubmitMode,
+    build_submission_package, decrypt_payload, encrypt_payload, run_due_jobs_dry_run,
+    run_due_jobs_live, sha256_hex, submit_with_store, DryRunTransport, JobMode, JobStore,
+    SftpTransport, SubmissionStore, SubmitMode,
 };
 use serde_json::Value;
 use std::env;
@@ -17,6 +18,11 @@ fn usage(program: &str) {
     eprintln!("  {program} diff-fixture --form 1601C --input <input.json> --fixture <official_encrypted.xml>");
     eprintln!("  {program} submit --form 1601C --input <input.json> --dry-run [--records <submissions.json>]");
     eprintln!("  {program} submit --form 1601C --input <input.json> --live --confirm [--records <submissions.json>]");
+    eprintln!("  {program} queue --form 1601C --input <input.json> --dry-run [--db <jobs.sqlite>] [--max-attempts <n>]");
+    eprintln!("  {program} queue --form 1601C --input <input.json> --live --confirm [--db <jobs.sqlite>] [--max-attempts <n>]");
+    eprintln!("  {program} run-queue --dry-run [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
+    eprintln!("  {program} run-queue --live --confirm [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
+    eprintln!("  {program} jobs [--db <jobs.sqlite>]");
 }
 
 #[derive(Debug, Default)]
@@ -27,6 +33,9 @@ struct Args {
     manifest: Option<PathBuf>,
     fixture: Option<PathBuf>,
     records: Option<PathBuf>,
+    db: Option<PathBuf>,
+    limit: Option<usize>,
+    max_attempts: Option<u32>,
     dry_run: bool,
     live: bool,
     confirm: bool,
@@ -46,6 +55,9 @@ fn main() -> ExitCode {
         "package" => run_package(parse_flags(&argv[2..])),
         "diff-fixture" => run_diff_fixture(parse_flags(&argv[2..])),
         "submit" => run_submit(parse_flags(&argv[2..])),
+        "queue" => run_queue(parse_flags(&argv[2..])),
+        "run-queue" => run_run_queue(parse_flags(&argv[2..])),
+        "jobs" => run_jobs(parse_flags(&argv[2..])),
         _ => {
             usage(program);
             return ExitCode::from(2);
@@ -97,6 +109,28 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                 parsed.records = Some(PathBuf::from(
                     args.get(i).ok_or("--records requires a value")?,
                 ));
+            }
+            "--db" => {
+                i += 1;
+                parsed.db = Some(PathBuf::from(args.get(i).ok_or("--db requires a value")?));
+            }
+            "--limit" => {
+                i += 1;
+                parsed.limit = Some(
+                    args.get(i)
+                        .ok_or("--limit requires a value")?
+                        .parse()
+                        .map_err(|_| "--limit must be a positive integer".to_string())?,
+                );
+            }
+            "--max-attempts" => {
+                i += 1;
+                parsed.max_attempts = Some(
+                    args.get(i)
+                        .ok_or("--max-attempts requires a value")?
+                        .parse()
+                        .map_err(|_| "--max-attempts must be a positive integer".to_string())?,
+                );
             }
             "--dry-run" => parsed.dry_run = true,
             "--live" => parsed.live = true,
@@ -239,6 +273,89 @@ fn run_submit(args: Result<Args, String>) -> Result<(), String> {
 
     eprintln!("submission record store: {}", store.path().display());
     Ok(())
+}
+
+fn run_queue(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let form = args.form.as_deref().ok_or("queue requires --form")?;
+    let input_path = args.input.as_deref().ok_or("queue requires --input")?;
+    let mode = requested_job_mode(&args, "queue")?;
+    let input = read_json(input_path)?;
+    let job_store = JobStore::open(job_db_path(&args)).map_err(|err| err.to_string())?;
+    let job = job_store
+        .enqueue(form, &input, mode, args.max_attempts.unwrap_or(3))
+        .map_err(|err| err.to_string())?;
+    let json = serde_json::to_string_pretty(&job).map_err(|err| err.to_string())?;
+    println!("{json}");
+    eprintln!("job store: {}", job_store.path().display());
+    Ok(())
+}
+
+fn run_run_queue(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let mode = requested_job_mode(&args, "run-queue")?;
+    let job_store = JobStore::open(job_db_path(&args)).map_err(|err| err.to_string())?;
+    let submission_store = SubmissionStore::new(submission_records_path(&args));
+    let limit = args.limit.unwrap_or(1);
+
+    let jobs = match mode {
+        JobMode::DryRun => run_due_jobs_dry_run(&job_store, &submission_store, limit),
+        JobMode::Live => {
+            if !args.confirm {
+                return Err("run-queue live mode requires --live --confirm".to_string());
+            }
+            run_due_jobs_live(&job_store, &submission_store, limit)
+        }
+    }
+    .map_err(|err| err.to_string())?;
+
+    let json = serde_json::to_string_pretty(&jobs).map_err(|err| err.to_string())?;
+    println!("{json}");
+    eprintln!("job store: {}", job_store.path().display());
+    eprintln!(
+        "submission record store: {}",
+        submission_store.path().display()
+    );
+    Ok(())
+}
+
+fn run_jobs(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let job_store = JobStore::open(job_db_path(&args)).map_err(|err| err.to_string())?;
+    let jobs = job_store.list().map_err(|err| err.to_string())?;
+    let json = serde_json::to_string_pretty(&jobs).map_err(|err| err.to_string())?;
+    println!("{json}");
+    eprintln!("job store: {}", job_store.path().display());
+    Ok(())
+}
+
+fn requested_job_mode(args: &Args, command: &str) -> Result<JobMode, String> {
+    if args.live && !(args.confirm && !args.dry_run) {
+        return Err(format!(
+            "{command} live mode requires --live --confirm and must not include --dry-run"
+        ));
+    }
+    if args.live {
+        Ok(JobMode::Live)
+    } else if args.dry_run {
+        Ok(JobMode::DryRun)
+    } else {
+        Err(format!(
+            "{command} is safe-by-default: pass --dry-run or explicitly pass --live --confirm"
+        ))
+    }
+}
+
+fn job_db_path(args: &Args) -> PathBuf {
+    args.db
+        .clone()
+        .unwrap_or_else(|| PathBuf::from(".ebirforms/jobs.sqlite"))
+}
+
+fn submission_records_path(args: &Args) -> PathBuf {
+    args.records
+        .clone()
+        .unwrap_or_else(|| PathBuf::from(".ebirforms/submissions.json"))
 }
 
 fn read_json(path: &Path) -> Result<Value, String> {
