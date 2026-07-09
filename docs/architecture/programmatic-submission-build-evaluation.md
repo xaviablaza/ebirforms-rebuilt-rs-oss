@@ -1,8 +1,8 @@
 # Programmatic Submission Build Evaluation
 
-This evaluates the implemented Rust build against `optimized-programmatic-submission-plan.md` through Milestone 4.
+This evaluates the implemented Rust build against `optimized-programmatic-submission-plan.md` through the first post-Milestone-4 queue/daemon slice.
 
-## Implemented through Milestone 4
+## Implemented through Milestone 5 slice
 
 - **Milestone 1 — 1601C transform:** implemented and fixture-tested in `crates/ebirforms-core/src/crypto.rs`.
   - Private captured fixture test still proves `plaintext-v2.xml -> encrypted-v2.xml` byte-for-byte.
@@ -20,9 +20,17 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
   - Durable JSON `SubmissionRecord` storage is written before network transport attempts.
   - Automatic retry is blocked when a previous non-dry-run record is `Running`, `AwaitingReceipt`, `Confirmed`, or `Uncertain`.
   - Missing live SFTP configuration fails safely and records a `Failed` audit entry.
-  - SFTP transport is now wired through the system `sftp` client behind `--live --confirm` and `BIR_SFTP_*` environment variables. Real credentials were not configured or used in this verification.
+  - SFTP transport is wired through the system `sftp` client behind `--live --confirm` and `BIR_SFTP_*` environment variables. Real credentials were not configured or used in verification.
   - Uncertain SFTP failures are mapped to `SubmissionStatus::Uncertain`, preserving manual-review semantics before retry.
   - Repeat dry-runs remain allowed so smoke tests do not create false duplicate filing blocks.
+- **Milestone 5 — queue/daemon around proven CLI:** partially implemented as a CLI-driven worker loop in `crates/ebirforms-core/src/job.rs` and `ebirforms-cli` queue commands.
+  - SQLite job table is created in `.ebirforms/jobs.sqlite` by default, or at `--db <jobs.sqlite>`.
+  - Job statuses use the plan vocabulary: `queued`, `running`, `awaiting_receipt`, `confirmed`, `failed`, `uncertain`, `cancelled`.
+  - CLI commands added: `queue`, `run-queue`, and `jobs`.
+  - Queued 1601C jobs execute through dry-run transport and write durable submission records.
+  - Validation/package failures become `Failed` with no retry.
+  - Retryable transport failures requeue with exponential backoff.
+  - Duplicate-risk and uncertain upload cases become `Uncertain` and require manual review.
 
 ## Verification run
 
@@ -30,7 +38,7 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
 cargo test
 ```
 
-Result: 12 Rust tests passed, including private captured transform tests, public render/package fixture tests, validation error behavior, dry-run duplicate blocking, persistent submission records, live missing-config failure recording, dry-run repeat behavior, and uncertain-prior duplicate blocking.
+Result: 16 Rust tests passed, including private captured transform tests, public render/package fixture tests, validation error behavior, durable submission records, live missing-config failure recording, dry-run repeat behavior, SQLite queue execution, no-retry validation failure, retry/backoff behavior, and uncertain-prior duplicate blocking.
 
 ```text
 cargo run -q -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/official_encrypted.xml
@@ -43,34 +51,23 @@ fixture match: 855 bytes, sha256 0d4a1280dbf166d4b57372ff1065bed16805c8325ad6e7e
 ```
 
 ```text
-rm -f /tmp/ebirforms-m4-dry.json
-cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-m4-dry.json
-cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-m4-dry.json
-python3 -m json.tool /tmp/ebirforms-m4-dry.json
+rm -f /tmp/ebirforms-m5-jobs.sqlite /tmp/ebirforms-m5-records.json
+cargo run -q -p ebirforms-cli -- queue --form 1601C --input tests/fixtures/1601C/input.json --dry-run --db /tmp/ebirforms-m5-jobs.sqlite --max-attempts 3
+cargo run -q -p ebirforms-cli -- run-queue --dry-run --db /tmp/ebirforms-m5-jobs.sqlite --records /tmp/ebirforms-m5-records.json --limit 1
+cargo run -q -p ebirforms-cli -- jobs --db /tmp/ebirforms-m5-jobs.sqlite
+python3 -m json.tool /tmp/ebirforms-m5-records.json
 ```
 
-Result: both dry-runs succeeded and the record store contained one durable dry-run record:
+Result: queued dry-run job executed through the worker and wrote one durable submission record:
 
 ```text
-status: AwaitingReceipt
-idempotency_key: 1601C:062026:0d4a1280dbf166d4b57372ff1065bed16805c8325ad6e7e6869edc1abbe9f470
+job status: AwaitingReceipt
+attempts: 1
+submission_idempotency_key: 1601C:062026:0d4a1280dbf166d4b57372ff1065bed16805c8325ad6e7e6869edc1abbe9f470
+submission record status: AwaitingReceipt
 payload_size: 855
 payload_sha256: 0d4a1280dbf166d4b57372ff1065bed16805c8325ad6e7e6869edc1abbe9f470
 remote_path: /1601C/12345678900000-1601C-062026V2#authorized@example.test#.xml
-```
-
-```text
-rm -f /tmp/ebirforms-m4-live.json
-cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --live --confirm --records /tmp/ebirforms-m4-live.json
-python3 -m json.tool /tmp/ebirforms-m4-live.json
-```
-
-Result: live mode failed safely because no real `BIR_SFTP_*` credentials were configured, and the pre-network audit record was persisted as `Failed` with a non-secret error:
-
-```text
-error: live SFTP transport requires configured BIR_SFTP_* environment variables
-status: Failed
-last_error: live SFTP transport requires configured BIR_SFTP_* environment variables
 ```
 
 ```text
@@ -83,17 +80,30 @@ Result:
 error: submit is safe-by-default: pass --dry-run or explicitly pass --live --confirm
 ```
 
+```text
+cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --live --confirm --records /tmp/ebirforms-m4-live.json
+```
+
+Result: live mode failed safely because no real `BIR_SFTP_*` credentials were configured, and the pre-network audit record was persisted as `Failed` with a non-secret error:
+
+```text
+error: live SFTP transport requires configured BIR_SFTP_* environment variables
+status: Failed
+last_error: live SFTP transport requires configured BIR_SFTP_* environment variables
+```
+
 ## Deliberate deviations from the optimized directory sketch
 
-- The plan sketches separate crates (`payload`, `form-engine`, `transport`, `submission`). The current repo started with `ebirforms-core`, so this build adds those layers as modules inside the existing core crate instead of splitting crates immediately. This keeps the MVP small and avoids workspace churn before the API stabilizes.
+- The plan sketches separate crates (`payload`, `form-engine`, `transport`, `submission`, `db`, `daemon`). The current repo started with `ebirforms-core`, so this build adds those layers as modules inside the existing core crate instead of splitting crates immediately. This keeps the MVP small and avoids workspace churn before the API stabilizes.
 - Public committed fixtures are redacted smoke fixtures, not raw taxpayer captures. The real captured private fixtures remain gitignored under `fixtures/private/1601c/` and continue to drive the official byte-compatible transform tests locally.
 - Live upload is wired but not verified against BIR because no explicit real credentials were provided. The CLI therefore proves the gated path, pre-network persistence, and safe missing-config failure, not successful production filing.
-- The durable record store is JSON, not SQLite. This satisfies Milestone 4's pre-network durable audit/idempotency requirement while deferring daemon-scale queue semantics.
+- Milestone 5 is implemented as a CLI-run worker, not a resident daemon or IPC server yet. The durable SQLite job table and queue semantics are in place; long-running process supervision and IPC remain future work.
 
-## Remaining plan gaps after Milestone 4
+## Remaining plan gaps after this slice
 
-- SQLite-backed daemon queue, IPC, desktop UI, and background submission lifecycle.
+- Resident daemon process, IPC endpoints, and background scheduler.
 - Receipt/status tracking and reconciliation against real BIR responses.
+- Desktop UI/IPC integration.
 - Production credential vaulting and operator runbook for `BIR_SFTP_*` configuration.
 - Additional form expansion fixtures beyond 1601C.
-- Richer audit log events beyond the current durable latest-state `SubmissionRecord`.
+- Richer append-only audit log events beyond the current durable latest-state submission records and SQLite job rows.

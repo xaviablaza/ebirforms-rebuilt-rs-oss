@@ -11,7 +11,8 @@ Implemented programmatic-submission MVP slices from `docs/architecture/optimized
 - `ebirforms-core::package` for JSON → plaintext → encrypted upload artifact plus manifest, hashes, remote path, and filename.
 - `ebirforms-core::transport` for safe dry-run submission receipts, idempotency-key duplicate protection, and a gated live SFTP abstraction.
 - `ebirforms-core::submission` for durable JSON submission records, audit status, pre-network idempotency persistence, and `Uncertain` duplicate-risk blocking.
-- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, and safe-by-default `submit --dry-run` / `submit --live --confirm`.
+- `ebirforms-core::job` for a SQLite submission job queue, queued/running/final statuses, retry/backoff policy, and worker execution through the proven submit path.
+- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, and queue commands (`queue`, `run-queue`, `jobs`).
 - Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus private captured fixture tests.
 
 ## Knowledge handoff
@@ -56,8 +57,13 @@ cargo run -p ebirforms-cli -- package --form 1601C --input tests/fixtures/1601C/
 cargo run -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/official_encrypted.xml
 cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-submissions.json
 cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --live --confirm --records /tmp/ebirforms-live-submissions.json
+
+# Queue/worker MVP flow
+cargo run -p ebirforms-cli -- queue --form 1601C --input tests/fixtures/1601C/input.json --dry-run --db /tmp/ebirforms-jobs.sqlite
+cargo run -p ebirforms-cli -- run-queue --dry-run --db /tmp/ebirforms-jobs.sqlite --records /tmp/ebirforms-submissions.json --limit 1
+cargo run -p ebirforms-cli -- jobs --db /tmp/ebirforms-jobs.sqlite
 ```
 
-The default persistent record store is `.ebirforms/submissions.json`, which is gitignored. Use `--records <path>` for test runs.
+The default persistent stores are `.ebirforms/submissions.json` for latest-state submission audit records and `.ebirforms/jobs.sqlite` for the queue; `.ebirforms/` is gitignored. Use `--records <path>` and `--db <path>` for test runs.
 
 Live submission is gated behind `--live --confirm` and `BIR_SFTP_*` environment variables. The implementation writes a durable submission record before attempting network transport. Missing credentials fail safely with a `Failed` record; uncertain SFTP failures are recorded as `Uncertain` so later automatic retries with the same idempotency key are blocked for manual review.
