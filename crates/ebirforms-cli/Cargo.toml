@@ -1,0 +1,11 @@
+[package]
+name = "ebirforms-cli"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+ebirforms-core = { path = "../ebirforms-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

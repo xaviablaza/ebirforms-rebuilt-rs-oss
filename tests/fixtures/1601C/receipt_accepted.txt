@@ -1,0 +1,6 @@
+Receipt-ID: TEST-1601C-001
+Status: ACCEPTED
+Filename: 12345678900000-1601C-062026V2#authorized@example.test#.xml
+Form: 1601C
+Period: 062026
+Received-At: 2026-07-09T10:00:00Z

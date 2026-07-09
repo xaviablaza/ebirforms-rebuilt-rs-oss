@@ -1,0 +1,19 @@
+[package]
+name = "ebirforms-core"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aes = "0.8"
+cipher = "0.4"
+flate2 = { version = "1", default-features = false, features = ["zlib"] }
+hex = "0.4"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+rusqlite = { version = "0.30.0", features = ["bundled"] }
+serde_json = "1"
+sha2 = "0.10"
+thiserror = "1"
+toml = "0.7.8"
