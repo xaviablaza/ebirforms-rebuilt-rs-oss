@@ -161,8 +161,9 @@ pub fn submit_with_store<T: SubmissionTransport>(
     mode: SubmitMode,
 ) -> Result<SubmissionRecord, SubmissionError> {
     let key = idempotency_key(package);
+    let dry_run = mode == SubmitMode::DryRun;
     if let Some(existing) = store.find(&key)? {
-        if blocks_automatic_retry(&existing.status) {
+        if !existing.dry_run && blocks_automatic_retry(&existing.status) {
             return Err(SubmissionError::DuplicateRisk {
                 idempotency_key: key,
                 status: existing.status,
@@ -170,7 +171,6 @@ pub fn submit_with_store<T: SubmissionTransport>(
         }
     }
 
-    let dry_run = mode == SubmitMode::DryRun;
     let mut record = SubmissionRecord::from_package(package, dry_run, SubmissionStatus::Running);
     record.attempts = 1;
     store.upsert(record.clone())?;
@@ -238,6 +238,27 @@ mod tests {
         assert_eq!(record.status, SubmissionStatus::AwaitingReceipt);
         assert!(record.dry_run);
         assert_eq!(record.payload_sha256, package.manifest.payload_sha256);
+        assert_eq!(store.load().unwrap().len(), 1);
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn dry_run_records_do_not_block_repeat_dry_runs() {
+        let path = std::env::temp_dir().join(format!(
+            "ebirforms-dry-repeat-test-{}.json",
+            std::process::id()
+        ));
+        let _ = fs::remove_file(&path);
+        let store = SubmissionStore::new(&path);
+        let package = build_submission_package("1601C", &fixture_input()).unwrap();
+        let mut first_transport = DryRunTransport::new();
+        let mut second_transport = DryRunTransport::new();
+
+        submit_with_store(&package, &store, &mut first_transport, SubmitMode::DryRun).unwrap();
+        let second =
+            submit_with_store(&package, &store, &mut second_transport, SubmitMode::DryRun).unwrap();
+
+        assert_eq!(second.status, SubmissionStatus::AwaitingReceipt);
         assert_eq!(store.load().unwrap().len(), 1);
         let _ = fs::remove_file(&path);
     }
