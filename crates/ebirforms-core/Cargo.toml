@@ -1,0 +1,16 @@
+[package]
+name = "ebirforms-core"
+version = "0.1.0"
+edition.workspace = true
+license-file.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+aes = "0.8"
+cipher = "0.4"
+flate2 = { version = "1", default-features = false, features = ["zlib"] }
+sha2 = "0.10"
+thiserror = "1"
+
+[dev-dependencies]
+hex = "0.4"

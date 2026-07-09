@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "crates/ebirforms-core",
+    "crates/ebirforms-cli",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license-file = "LICENSE.md"
+rust-version = "1.75"
