@@ -1,8 +1,8 @@
 # Programmatic Submission Build Evaluation
 
-This evaluates the implemented Rust build against `optimized-programmatic-submission-plan.md` through the first post-Milestone-4 queue/daemon slice.
+This evaluates the implemented Rust build against `optimized-programmatic-submission-plan.md` through the post-Milestone-5 IPC slice and the first receipt-tracking fixture slice.
 
-## Implemented through Milestone 5 slice
+## Implemented through post-Milestone-5 / early Milestone 7 slices
 
 - **Milestone 1 — 1601C transform:** implemented and fixture-tested in `crates/ebirforms-core/src/crypto.rs`.
   - Private captured fixture test still proves `plaintext-v2.xml -> encrypted-v2.xml` byte-for-byte.
@@ -23,7 +23,7 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
   - SFTP transport is wired through the system `sftp` client behind `--live --confirm` and `BIR_SFTP_*` environment variables. Real credentials were not configured or used in verification.
   - Uncertain SFTP failures are mapped to `SubmissionStatus::Uncertain`, preserving manual-review semantics before retry.
   - Repeat dry-runs remain allowed so smoke tests do not create false duplicate filing blocks.
-- **Milestone 5 — queue/daemon around proven CLI:** partially implemented as a CLI-driven worker loop in `crates/ebirforms-core/src/job.rs` and `ebirforms-cli` queue commands.
+- **Milestone 5 — queue/daemon around proven CLI:** implemented as a CLI-driven worker loop plus local HTTP IPC in `crates/ebirforms-core/src/job.rs` and `ebirforms-cli` queue/server commands.
   - SQLite job table is created in `.ebirforms/jobs.sqlite` by default, or at `--db <jobs.sqlite>`.
   - Job statuses use the plan vocabulary: `queued`, `running`, `awaiting_receipt`, `confirmed`, `failed`, `uncertain`, `cancelled`.
   - CLI commands added: `queue`, `run-queue`, and `jobs`.
@@ -31,6 +31,11 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
   - Validation/package failures become `Failed` with no retry.
   - Retryable transport failures requeue with exponential backoff.
   - Duplicate-risk and uncertain upload cases become `Uncertain` and require manual review.
+  - Local IPC server added via `ebirforms-cli serve`, exposing `GET /health`, `GET /jobs`, `GET /submissions`, `POST /jobs`, and `POST /run-queue` on an explicitly bound local address.
+- **Milestone 7 — receipt tracking:** first fixture-driven parser/matcher slice implemented in `crates/ebirforms-core/src/receipt.rs` and `ebirforms-cli receipt-match`.
+  - Accepted receipt fixture under `tests/fixtures/1601C/receipt_accepted.txt` parses into receipt metadata.
+  - Matching by filename/form/period updates a durable `SubmissionRecord` from `AwaitingReceipt` to `Confirmed` and attaches receipt metadata.
+  - This does not yet include Gmail OAuth, IMAP polling, or live mailbox activation.
 
 ## Verification run
 
@@ -38,7 +43,7 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
 cargo test
 ```
 
-Result: 16 Rust tests passed, including private captured transform tests, public render/package fixture tests, validation error behavior, durable submission records, live missing-config failure recording, dry-run repeat behavior, SQLite queue execution, no-retry validation failure, retry/backoff behavior, and uncertain-prior duplicate blocking.
+Result: 18 Rust tests passed, including private captured transform tests, public render/package fixture tests, validation error behavior, durable submission records, live missing-config failure recording, dry-run repeat behavior, SQLite queue execution, no-retry validation failure, retry/backoff behavior, uncertain-prior duplicate blocking, receipt parsing, and receipt-to-submission confirmation.
 
 ```text
 cargo run -q -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/official_encrypted.xml
@@ -71,6 +76,35 @@ remote_path: /1601C/12345678900000-1601C-062026V2#authorized@example.test#.xml
 ```
 
 ```text
+cargo run -q -p ebirforms-cli -- serve --addr 127.0.0.1:8765 --db /tmp/ebirforms-ipc-jobs.sqlite --records /tmp/ebirforms-ipc-records.json
+curl http://127.0.0.1:8765/health
+curl -X POST 'http://127.0.0.1:8765/jobs?form=1601C&mode=dry_run&max_attempts=3' --data-binary @tests/fixtures/1601C/input.json
+curl -X POST 'http://127.0.0.1:8765/run-queue?mode=dry_run&limit=1'
+curl http://127.0.0.1:8765/submissions
+```
+
+Result: local IPC server accepted a queue request, executed one dry-run job, and exposed one awaiting-receipt submission record:
+
+```text
+health: true
+queued: Queued
+ran: AwaitingReceipt attempts=1 idempotency=1601C:062026:0d4a1280dbf166d4b57372ff1065bed16805c8325ad6e7e6869edc1abbe9f470
+submission: AwaitingReceipt dry_run=true payload_size=855
+```
+
+```text
+cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-receipt-records.json
+cargo run -q -p ebirforms-cli -- receipt-match --receipt tests/fixtures/1601C/receipt_accepted.txt --records /tmp/ebirforms-receipt-records.json
+```
+
+Result: fixture receipt matched the stored 1601C submission and confirmed it:
+
+```text
+before: AwaitingReceipt
+after: Confirmed receipt_id=TEST-1601C-001 status=ACCEPTED
+```
+
+```text
 cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json
 ```
 
@@ -97,12 +131,13 @@ last_error: live SFTP transport requires configured BIR_SFTP_* environment varia
 - The plan sketches separate crates (`payload`, `form-engine`, `transport`, `submission`, `db`, `daemon`). The current repo started with `ebirforms-core`, so this build adds those layers as modules inside the existing core crate instead of splitting crates immediately. This keeps the MVP small and avoids workspace churn before the API stabilizes.
 - Public committed fixtures are redacted smoke fixtures, not raw taxpayer captures. The real captured private fixtures remain gitignored under `fixtures/private/1601c/` and continue to drive the official byte-compatible transform tests locally.
 - Live upload is wired but not verified against BIR because no explicit real credentials were provided. The CLI therefore proves the gated path, pre-network persistence, and safe missing-config failure, not successful production filing.
-- Milestone 5 is implemented as a CLI-run worker, not a resident daemon or IPC server yet. The durable SQLite job table and queue semantics are in place; long-running process supervision and IPC remain future work.
+- Milestone 5 now includes a local HTTP IPC server, but it is intentionally minimal and local-operator oriented; it is not a supervised resident service with authentication, process lifecycle, or Tauri IPC wiring yet.
+- Receipt tracking is fixture-driven only. It proves parser/matcher/state-transition semantics, not Gmail OAuth, IMAP polling, or live BIR email receipt integration.
 
 ## Remaining plan gaps after this slice
 
-- Resident daemon process, IPC endpoints, and background scheduler.
-- Receipt/status tracking and reconciliation against real BIR responses.
+- Resident daemon process supervision, IPC authentication, and background scheduler.
+- Gmail OAuth/IMAP mailbox activation and polling against real receipt emails.
 - Desktop UI/IPC integration.
 - Production credential vaulting and operator runbook for `BIR_SFTP_*` configuration.
 - Additional form expansion fixtures beyond 1601C.

@@ -12,7 +12,8 @@ Implemented programmatic-submission MVP slices from `docs/architecture/optimized
 - `ebirforms-core::transport` for safe dry-run submission receipts, idempotency-key duplicate protection, and a gated live SFTP abstraction.
 - `ebirforms-core::submission` for durable JSON submission records, audit status, pre-network idempotency persistence, and `Uncertain` duplicate-risk blocking.
 - `ebirforms-core::job` for a SQLite submission job queue, queued/running/final statuses, retry/backoff policy, and worker execution through the proven submit path.
-- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, and queue commands (`queue`, `run-queue`, `jobs`).
+- `ebirforms-core::receipt` for fixture-proven receipt parsing/matching that confirms stored submissions without resubmitting.
+- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, queue commands (`queue`, `run-queue`, `jobs`), local IPC server (`serve`), and `receipt-match`.
 - Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus private captured fixture tests.
 
 ## Knowledge handoff
@@ -62,6 +63,15 @@ cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/i
 cargo run -p ebirforms-cli -- queue --form 1601C --input tests/fixtures/1601C/input.json --dry-run --db /tmp/ebirforms-jobs.sqlite
 cargo run -p ebirforms-cli -- run-queue --dry-run --db /tmp/ebirforms-jobs.sqlite --records /tmp/ebirforms-submissions.json --limit 1
 cargo run -p ebirforms-cli -- jobs --db /tmp/ebirforms-jobs.sqlite
+
+# Local daemon/IPC slice
+cargo run -p ebirforms-cli -- serve --addr 127.0.0.1:8765 --db /tmp/ebirforms-jobs.sqlite --records /tmp/ebirforms-submissions.json
+curl http://127.0.0.1:8765/health
+curl -X POST 'http://127.0.0.1:8765/jobs?form=1601C&mode=dry_run' --data-binary @tests/fixtures/1601C/input.json
+curl -X POST 'http://127.0.0.1:8765/run-queue?mode=dry_run&limit=1'
+
+# Receipt matching fixture
+cargo run -p ebirforms-cli -- receipt-match --receipt tests/fixtures/1601C/receipt_accepted.txt --records /tmp/ebirforms-submissions.json
 ```
 
 The default persistent stores are `.ebirforms/submissions.json` for latest-state submission audit records and `.ebirforms/jobs.sqlite` for the queue; `.ebirforms/` is gitignored. Use `--records <path>` and `--db <path>` for test runs.
