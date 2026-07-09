@@ -1,8 +1,8 @@
 # Programmatic Submission Build Evaluation
 
-This evaluates the implemented Rust build against `optimized-programmatic-submission-plan.md` through the post-Milestone-5 IPC slice and the first receipt-tracking fixture slice.
+This evaluates the implemented Rust build against `optimized-programmatic-submission-plan.md` through the post-Milestone-5 IPC slice, a desktop-ready Milestone 6 data/security slice, and local-directory receipt polling for Milestone 7.
 
-## Implemented through post-Milestone-5 / early Milestone 7 slices
+## Implemented through post-Milestone-5 / Milestone 6 data / Milestone 7 local polling slices
 
 - **Milestone 1 — 1601C transform:** implemented and fixture-tested in `crates/ebirforms-core/src/crypto.rs`.
   - Private captured fixture test still proves `plaintext-v2.xml -> encrypted-v2.xml` byte-for-byte.
@@ -32,9 +32,15 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
   - Retryable transport failures requeue with exponential backoff.
   - Duplicate-risk and uncertain upload cases become `Uncertain` and require manual review.
   - Local IPC server added via `ebirforms-cli serve`, exposing `GET /health`, `GET /jobs`, `GET /submissions`, `POST /jobs`, and `POST /run-queue` on an explicitly bound local address.
-- **Milestone 7 — receipt tracking:** first fixture-driven parser/matcher slice implemented in `crates/ebirforms-core/src/receipt.rs` and `ebirforms-cli receipt-match`.
+  - IPC now also exposes desktop-facing `GET /profiles`, `POST /profiles`, `GET /settings`, `POST /settings/theme`, `POST /lock/init`, and `POST /lock/check` endpoints.
+- **Milestone 6 — desktop-ready app state slice:** implemented in `crates/ebirforms-core/src/profile.rs` and profile/settings CLI commands.
+  - Taxpayer profiles persist as redaction-safe JSON app state with TIN, email, display name, optional RDO/address/ZIP, and update timestamp.
+  - Settings persist a light/dark/system theme value.
+  - A local master-PIN verifier stores salted SHA-256 material and verifies unlock checks without plaintext PIN persistence. This is a minimal local gate, not final OS-keychain credential vaulting.
+- **Milestone 7 — receipt tracking:** fixture-driven parser/matcher plus local receipt-directory polling implemented in `crates/ebirforms-core/src/receipt.rs`, `ebirforms-cli receipt-match`, and `ebirforms-cli receipt-poll`.
   - Accepted receipt fixture under `tests/fixtures/1601C/receipt_accepted.txt` parses into receipt metadata.
   - Matching by filename/form/period updates a durable `SubmissionRecord` from `AwaitingReceipt` to `Confirmed` and attaches receipt metadata.
+  - `receipt-poll` scans local `.txt`/`.eml` receipt files and returns a JSON report with `scanned`, `confirmed`, and `errors` counts/details.
   - This does not yet include Gmail OAuth, IMAP polling, or live mailbox activation.
 
 ## Verification run
@@ -43,7 +49,7 @@ This evaluates the implemented Rust build against `optimized-programmatic-submis
 cargo test
 ```
 
-Result: 18 Rust tests passed, including private captured transform tests, public render/package fixture tests, validation error behavior, durable submission records, live missing-config failure recording, dry-run repeat behavior, SQLite queue execution, no-retry validation failure, retry/backoff behavior, uncertain-prior duplicate blocking, receipt parsing, and receipt-to-submission confirmation.
+Result: 20 Rust tests passed, including private captured transform tests, public render/package fixture tests, validation error behavior, durable submission records, live missing-config failure recording, dry-run repeat behavior, SQLite queue execution, no-retry validation failure, retry/backoff behavior, uncertain-prior duplicate blocking, profile/settings/PIN persistence, receipt parsing, and receipt directory polling/confirmation.
 
 ```text
 cargo run -q -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/official_encrypted.xml
@@ -93,6 +99,24 @@ submission: AwaitingReceipt dry_run=true payload_size=855
 ```
 
 ```text
+rm -f /tmp/ebirforms-state.json
+cargo run -q -p ebirforms-cli -- profile-create --profile-id p1 --tin 123-456-789-00000 --email authorized@example.test --name 'AUTHORIZED TEST TAXPAYER' --rdo 044 --address 'REDACTED TEST ADDRESS' --zip 0000 --state /tmp/ebirforms-state.json
+cargo run -q -p ebirforms-cli -- settings --theme dark --state /tmp/ebirforms-state.json
+cargo run -q -p ebirforms-cli -- lock-init --pin 1234 --state /tmp/ebirforms-state.json
+cargo run -q -p ebirforms-cli -- unlock-check --pin 1234 --state /tmp/ebirforms-state.json
+cargo run -q -p ebirforms-cli -- unlock-check --pin 9999 --state /tmp/ebirforms-state.json
+```
+
+Result: app-state persistence retained one profile, dark theme, and expected lock behavior:
+
+```text
+profile p1
+theme Dark
+unlock_ok True
+unlock_bad False
+```
+
+```text
 cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-receipt-records.json
 cargo run -q -p ebirforms-cli -- receipt-match --receipt tests/fixtures/1601C/receipt_accepted.txt --records /tmp/ebirforms-receipt-records.json
 ```
@@ -102,6 +126,23 @@ Result: fixture receipt matched the stored 1601C submission and confirmed it:
 ```text
 before: AwaitingReceipt
 after: Confirmed receipt_id=TEST-1601C-001 status=ACCEPTED
+```
+
+```text
+rm -f /tmp/ebirforms-poll-records.json
+rm -rf /tmp/ebirforms-receipt-dir && mkdir -p /tmp/ebirforms-receipt-dir
+cargo run -q -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-poll-records.json
+cp tests/fixtures/1601C/receipt_accepted.txt /tmp/ebirforms-receipt-dir/receipt_accepted.txt
+cargo run -q -p ebirforms-cli -- receipt-poll --receipt-dir /tmp/ebirforms-receipt-dir --records /tmp/ebirforms-poll-records.json
+```
+
+Result: receipt directory polling confirmed the awaiting record without resubmission:
+
+```text
+poll_before AwaitingReceipt
+poll_scanned 1
+poll_confirmed 1 Confirmed TEST-1601C-001
+poll_errors 0
 ```
 
 ```text
@@ -132,13 +173,14 @@ last_error: live SFTP transport requires configured BIR_SFTP_* environment varia
 - Public committed fixtures are redacted smoke fixtures, not raw taxpayer captures. The real captured private fixtures remain gitignored under `fixtures/private/1601c/` and continue to drive the official byte-compatible transform tests locally.
 - Live upload is wired but not verified against BIR because no explicit real credentials were provided. The CLI therefore proves the gated path, pre-network persistence, and safe missing-config failure, not successful production filing.
 - Milestone 5 now includes a local HTTP IPC server, but it is intentionally minimal and local-operator oriented; it is not a supervised resident service with authentication, process lifecycle, or Tauri IPC wiring yet.
-- Receipt tracking is fixture-driven only. It proves parser/matcher/state-transition semantics, not Gmail OAuth, IMAP polling, or live BIR email receipt integration.
+- Milestone 6 is represented by durable app state/profile/settings primitives and a basic master-PIN verifier, not a complete Tauri/React desktop UI or production-grade OS credential vault.
+- Receipt tracking now supports local directory polling for saved `.txt`/`.eml` receipt messages. It proves parser/matcher/state-transition semantics, not Gmail OAuth, IMAP polling, or live BIR email receipt integration.
 
 ## Remaining plan gaps after this slice
 
 - Resident daemon process supervision, IPC authentication, and background scheduler.
+- Full Tauri/React desktop UI integration on top of the profile/settings/queue IPC primitives.
 - Gmail OAuth/IMAP mailbox activation and polling against real receipt emails.
-- Desktop UI/IPC integration.
 - Production credential vaulting and operator runbook for `BIR_SFTP_*` configuration.
 - Additional form expansion fixtures beyond 1601C.
 - Richer append-only audit log events beyond the current durable latest-state submission records and SQLite job rows.

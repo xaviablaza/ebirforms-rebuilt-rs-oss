@@ -12,8 +12,9 @@ Implemented programmatic-submission MVP slices from `docs/architecture/optimized
 - `ebirforms-core::transport` for safe dry-run submission receipts, idempotency-key duplicate protection, and a gated live SFTP abstraction.
 - `ebirforms-core::submission` for durable JSON submission records, audit status, pre-network idempotency persistence, and `Uncertain` duplicate-risk blocking.
 - `ebirforms-core::job` for a SQLite submission job queue, queued/running/final statuses, retry/backoff policy, and worker execution through the proven submit path.
-- `ebirforms-core::receipt` for fixture-proven receipt parsing/matching that confirms stored submissions without resubmitting.
-- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, queue commands (`queue`, `run-queue`, `jobs`), local IPC server (`serve`), and `receipt-match`.
+- `ebirforms-core::profile` for desktop-ready taxpayer profiles, theme settings, and a basic local master-PIN verifier.
+- `ebirforms-core::receipt` for fixture-proven receipt parsing/matching and local directory polling that confirms stored submissions without resubmitting.
+- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, queue commands (`queue`, `run-queue`, `jobs`), local IPC server (`serve`), profile/settings commands, and receipt commands (`receipt-match`, `receipt-poll`).
 - Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus private captured fixture tests.
 
 ## Knowledge handoff
@@ -70,8 +71,15 @@ curl http://127.0.0.1:8765/health
 curl -X POST 'http://127.0.0.1:8765/jobs?form=1601C&mode=dry_run' --data-binary @tests/fixtures/1601C/input.json
 curl -X POST 'http://127.0.0.1:8765/run-queue?mode=dry_run&limit=1'
 
-# Receipt matching fixture
+# Desktop-ready profile/settings slice
+cargo run -p ebirforms-cli -- profile-create --profile-id redacted-test-profile --tin 123-456-789-00000 --email authorized@example.test --name 'AUTHORIZED TEST TAXPAYER' --rdo 044 --state /tmp/ebirforms-app-state.json
+cargo run -p ebirforms-cli -- settings --theme dark --state /tmp/ebirforms-app-state.json
+cargo run -p ebirforms-cli -- lock-init --pin 1234 --state /tmp/ebirforms-app-state.json
+cargo run -p ebirforms-cli -- unlock-check --pin 1234 --state /tmp/ebirforms-app-state.json
+
+# Receipt matching / polling fixtures
 cargo run -p ebirforms-cli -- receipt-match --receipt tests/fixtures/1601C/receipt_accepted.txt --records /tmp/ebirforms-submissions.json
+cargo run -p ebirforms-cli -- receipt-poll --receipt-dir /tmp/ebirforms-receipts --records /tmp/ebirforms-submissions.json
 ```
 
 The default persistent stores are `.ebirforms/submissions.json` for latest-state submission audit records and `.ebirforms/jobs.sqlite` for the queue; `.ebirforms/` is gitignored. Use `--records <path>` and `--db <path>` for test runs.
