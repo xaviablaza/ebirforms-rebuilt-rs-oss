@@ -4,3 +4,4 @@
 .env.*
 # Captured taxpayer fixtures may contain real PII. Keep them local/private.
 /fixtures/private/
+/.ebirforms/

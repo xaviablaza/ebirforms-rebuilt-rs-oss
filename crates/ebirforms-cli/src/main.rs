@@ -1,6 +1,6 @@
 use ebirforms_core::{
-    build_submission_package, decrypt_payload, encrypt_payload, sha256_hex, DryRunTransport,
-    SftpTransport, SubmissionTransport,
+    build_submission_package, decrypt_payload, encrypt_payload, sha256_hex, submit_with_store,
+    DryRunTransport, SftpTransport, SubmissionStore, SubmitMode,
 };
 use serde_json::Value;
 use std::env;
@@ -15,8 +15,8 @@ fn usage(program: &str) {
     eprintln!("  {program} render --form 1601C --input <input.json> --out <plaintext.xml>");
     eprintln!("  {program} package --form 1601C --input <input.json> --out <upload.xml> [--manifest <manifest.json>]");
     eprintln!("  {program} diff-fixture --form 1601C --input <input.json> --fixture <official_encrypted.xml>");
-    eprintln!("  {program} submit --form 1601C --input <input.json> --dry-run");
-    eprintln!("  {program} submit --form 1601C --input <input.json> --live --confirm");
+    eprintln!("  {program} submit --form 1601C --input <input.json> --dry-run [--records <submissions.json>]");
+    eprintln!("  {program} submit --form 1601C --input <input.json> --live --confirm [--records <submissions.json>]");
 }
 
 #[derive(Debug, Default)]
@@ -26,6 +26,7 @@ struct Args {
     out: Option<PathBuf>,
     manifest: Option<PathBuf>,
     fixture: Option<PathBuf>,
+    records: Option<PathBuf>,
     dry_run: bool,
     live: bool,
     confirm: bool,
@@ -89,6 +90,12 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                 i += 1;
                 parsed.fixture = Some(PathBuf::from(
                     args.get(i).ok_or("--fixture requires a value")?,
+                ));
+            }
+            "--records" => {
+                i += 1;
+                parsed.records = Some(PathBuf::from(
+                    args.get(i).ok_or("--records requires a value")?,
                 ));
             }
             "--dry-run" => parsed.dry_run = true,
@@ -211,16 +218,26 @@ fn run_submit(args: Result<Args, String>) -> Result<(), String> {
     let input = read_json(input_path)?;
     let package = build_submission_package(form, &input).map_err(|err| err.to_string())?;
 
+    let records_path = args
+        .records
+        .unwrap_or_else(|| PathBuf::from(".ebirforms/submissions.json"));
+    let store = SubmissionStore::new(&records_path);
+
     if args.live {
-        let mut transport = SftpTransport;
-        transport.submit(&package).map_err(|err| err.to_string())?;
+        let mut transport = SftpTransport::from_env();
+        let record = submit_with_store(&package, &store, &mut transport, SubmitMode::Live)
+            .map_err(|err| err.to_string())?;
+        let json = serde_json::to_string_pretty(&record).map_err(|err| err.to_string())?;
+        println!("{json}");
     } else {
         let mut transport = DryRunTransport::new();
-        let receipt = transport.submit(&package).map_err(|err| err.to_string())?;
-        let json = serde_json::to_string_pretty(&receipt).map_err(|err| err.to_string())?;
+        let record = submit_with_store(&package, &store, &mut transport, SubmitMode::DryRun)
+            .map_err(|err| err.to_string())?;
+        let json = serde_json::to_string_pretty(&record).map_err(|err| err.to_string())?;
         println!("{json}");
     }
 
+    eprintln!("submission record store: {}", store.path().display());
     Ok(())
 }
 
