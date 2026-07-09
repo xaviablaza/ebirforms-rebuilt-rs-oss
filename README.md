@@ -9,8 +9,9 @@ Implemented programmatic-submission MVP slices from `docs/architecture/optimized
 - `ebirforms-core::crypto::{encrypt_payload,decrypt_payload}` for the confirmed zlib + DCPcrypt-compatible AES-256 transform.
 - `ebirforms-core::form` for template-first 1601C rendering from JSON using bundled `form.toml`, `mapping.toml`, and `template.xml`.
 - `ebirforms-core::package` for JSON → plaintext → encrypted upload artifact plus manifest, hashes, remote path, and filename.
-- `ebirforms-core::transport` for safe dry-run submission receipts, idempotency-key duplicate protection, and a gated live SFTP abstraction placeholder.
-- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, and safe-by-default `submit --dry-run`.
+- `ebirforms-core::transport` for safe dry-run submission receipts, idempotency-key duplicate protection, and a gated live SFTP abstraction.
+- `ebirforms-core::submission` for durable JSON submission records, audit status, pre-network idempotency persistence, and `Uncertain` duplicate-risk blocking.
+- `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, and safe-by-default `submit --dry-run` / `submit --live --confirm`.
 - Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus private captured fixture tests.
 
 ## Knowledge handoff
@@ -53,7 +54,10 @@ cargo run -p ebirforms-cli -- decrypt fixtures/private/1601c/encrypted-v2.xml /t
 cargo run -p ebirforms-cli -- render --form 1601C --input tests/fixtures/1601C/input.json --out /tmp/plaintext.xml
 cargo run -p ebirforms-cli -- package --form 1601C --input tests/fixtures/1601C/input.json --out /tmp/upload.xml --manifest /tmp/manifest.json
 cargo run -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/official_encrypted.xml
-cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run
+cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-submissions.json
+cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --live --confirm --records /tmp/ebirforms-live-submissions.json
 ```
 
-Live submission is intentionally not wired to credentials yet. The CLI requires `--live --confirm`; the current `SftpTransport` returns a safe `LiveNotConfigured` error until credentials, persistence, and audit logging are implemented.
+The default persistent record store is `.ebirforms/submissions.json`, which is gitignored. Use `--records <path>` for test runs.
+
+Live submission is gated behind `--live --confirm` and `BIR_SFTP_*` environment variables. The implementation writes a durable submission record before attempting network transport. Missing credentials fail safely with a `Failed` record; uncertain SFTP failures are recorded as `Uncertain` so later automatic retries with the same idempotency key are blocked for manual review.
