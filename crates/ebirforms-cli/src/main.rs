@@ -4,8 +4,11 @@ use ebirforms_core::{
     SftpTransport, SubmissionStore, SubmitMode,
 };
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::env;
 use std::fs;
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
@@ -23,6 +26,7 @@ fn usage(program: &str) {
     eprintln!("  {program} run-queue --dry-run [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
     eprintln!("  {program} run-queue --live --confirm [--db <jobs.sqlite>] [--records <submissions.json>] [--limit <n>]");
     eprintln!("  {program} jobs [--db <jobs.sqlite>]");
+    eprintln!("  {program} serve [--addr 127.0.0.1:8765] [--db <jobs.sqlite>] [--records <submissions.json>]");
 }
 
 #[derive(Debug, Default)]
@@ -36,6 +40,7 @@ struct Args {
     db: Option<PathBuf>,
     limit: Option<usize>,
     max_attempts: Option<u32>,
+    addr: Option<String>,
     dry_run: bool,
     live: bool,
     confirm: bool,
@@ -58,6 +63,7 @@ fn main() -> ExitCode {
         "queue" => run_queue(parse_flags(&argv[2..])),
         "run-queue" => run_run_queue(parse_flags(&argv[2..])),
         "jobs" => run_jobs(parse_flags(&argv[2..])),
+        "serve" => run_serve(parse_flags(&argv[2..])),
         _ => {
             usage(program);
             return ExitCode::from(2);
@@ -131,6 +137,10 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                         .parse()
                         .map_err(|_| "--max-attempts must be a positive integer".to_string())?,
                 );
+            }
+            "--addr" => {
+                i += 1;
+                parsed.addr = Some(args.get(i).ok_or("--addr requires a value")?.clone());
             }
             "--dry-run" => parsed.dry_run = true,
             "--live" => parsed.live = true,
@@ -356,6 +366,172 @@ fn submission_records_path(args: &Args) -> PathBuf {
     args.records
         .clone()
         .unwrap_or_else(|| PathBuf::from(".ebirforms/submissions.json"))
+}
+
+fn run_serve(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let addr = args
+        .addr
+        .clone()
+        .unwrap_or_else(|| "127.0.0.1:8765".to_string());
+    let job_store = JobStore::open(job_db_path(&args)).map_err(|err| err.to_string())?;
+    let submission_store = SubmissionStore::new(submission_records_path(&args));
+    let listener =
+        TcpListener::bind(&addr).map_err(|err| format!("failed to bind {addr}: {err}"))?;
+    eprintln!("ebirforms local IPC listening on http://{addr}");
+    for stream in listener.incoming() {
+        match stream {
+            Ok(stream) => {
+                if let Err(err) = handle_http_connection(stream, &job_store, &submission_store) {
+                    eprintln!("ipc request failed: {err}");
+                }
+            }
+            Err(err) => eprintln!("ipc accept failed: {err}"),
+        }
+    }
+    Ok(())
+}
+
+fn handle_http_connection(
+    mut stream: TcpStream,
+    job_store: &JobStore,
+    submission_store: &SubmissionStore,
+) -> Result<(), String> {
+    let mut buffer = [0_u8; 64 * 1024];
+    let read = stream
+        .read(&mut buffer)
+        .map_err(|err| format!("read failed: {err}"))?;
+    let request = String::from_utf8_lossy(&buffer[..read]);
+    let (head, body) = request
+        .split_once("\r\n\r\n")
+        .ok_or("malformed HTTP request")?;
+    let mut lines = head.lines();
+    let request_line = lines.next().ok_or("missing request line")?;
+    let mut parts = request_line.split_whitespace();
+    let method = parts.next().ok_or("missing method")?;
+    let target = parts.next().ok_or("missing path")?;
+    let (path, query) = target.split_once('?').unwrap_or((target, ""));
+    let query = parse_query(query);
+
+    let response = match (method, path) {
+        ("GET", "/health") => json_response(200, serde_json::json!({"ok": true})),
+        ("GET", "/jobs") => json_result(job_store.list().map_err(|err| err.to_string())),
+        ("GET", "/submissions") => {
+            json_result(submission_store.load().map_err(|err| err.to_string()))
+        }
+        ("POST", "/jobs") => {
+            let form = query.get("form").map(String::as_str).unwrap_or("1601C");
+            let mode = match query.get("mode").map(String::as_str) {
+                Some("live") => JobMode::Live,
+                _ => JobMode::DryRun,
+            };
+            let max_attempts = query
+                .get("max_attempts")
+                .and_then(|value| value.parse::<u32>().ok())
+                .unwrap_or(3);
+            let input: Value = serde_json::from_str(body)
+                .map_err(|err| format!("failed to parse POST /jobs body: {err}"))?;
+            json_result(
+                job_store
+                    .enqueue(form, &input, mode, max_attempts)
+                    .map_err(|err| err.to_string()),
+            )
+        }
+        ("POST", "/run-queue") => {
+            let limit = query
+                .get("limit")
+                .and_then(|value| value.parse::<usize>().ok())
+                .unwrap_or(1);
+            let mode = query.get("mode").map(String::as_str).unwrap_or("dry_run");
+            let result = match mode {
+                "dry_run" => run_due_jobs_dry_run(job_store, submission_store, limit),
+                "live" => run_due_jobs_live(job_store, submission_store, limit),
+                other => {
+                    return write_http_response(
+                        &mut stream,
+                        json_response(
+                            400,
+                            serde_json::json!({"error": format!("unknown mode {other}")}),
+                        ),
+                    )
+                }
+            };
+            json_result(result.map_err(|err| err.to_string()))
+        }
+        _ => json_response(
+            404,
+            serde_json::json!({"error": format!("unsupported route {method} {path}")}),
+        ),
+    };
+
+    write_http_response(&mut stream, response)
+}
+
+fn json_result<T: serde::Serialize>(result: Result<T, String>) -> HttpResponse {
+    match result {
+        Ok(value) => json_response(200, value),
+        Err(error) => json_response(500, serde_json::json!({"error": error})),
+    }
+}
+
+struct HttpResponse {
+    status: u16,
+    body: Vec<u8>,
+}
+
+fn json_response<T: serde::Serialize>(status: u16, value: T) -> HttpResponse {
+    let body = serde_json::to_vec_pretty(&value)
+        .unwrap_or_else(|_| b"{\"error\":\"serialization failed\"}".to_vec());
+    HttpResponse { status, body }
+}
+
+fn write_http_response(stream: &mut TcpStream, response: HttpResponse) -> Result<(), String> {
+    let reason = match response.status {
+        200 => "OK",
+        400 => "Bad Request",
+        404 => "Not Found",
+        _ => "Internal Server Error",
+    };
+    let header = format!(
+        "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        response.status,
+        reason,
+        response.body.len()
+    );
+    stream
+        .write_all(header.as_bytes())
+        .and_then(|_| stream.write_all(&response.body))
+        .map_err(|err| format!("write failed: {err}"))
+}
+
+fn parse_query(query: &str) -> BTreeMap<String, String> {
+    query
+        .split('&')
+        .filter(|part| !part.is_empty())
+        .filter_map(|part| {
+            let (key, value) = part.split_once('=').unwrap_or((part, ""));
+            Some((percent_decode(key)?, percent_decode(value)?))
+        })
+        .collect()
+}
+
+fn percent_decode(value: &str) -> Option<String> {
+    let bytes = value.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'+' => out.push(b' '),
+            b'%' if i + 2 < bytes.len() => {
+                let hex = std::str::from_utf8(&bytes[i + 1..i + 3]).ok()?;
+                out.push(u8::from_str_radix(hex, 16).ok()?);
+                i += 2;
+            }
+            byte => out.push(byte),
+        }
+        i += 1;
+    }
+    String::from_utf8(out).ok()
 }
 
 fn read_json(path: &Path) -> Result<Value, String> {

@@ -121,6 +121,7 @@ name = "ebirforms-cli"
 version = "0.1.0"
 dependencies = [
  "ebirforms-core",
+ "serde",
  "serde_json",
 ]
 

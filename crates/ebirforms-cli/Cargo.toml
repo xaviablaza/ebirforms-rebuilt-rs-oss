@@ -7,4 +7,5 @@ rust-version.workspace = true
 
 [dependencies]
 ebirforms-core = { path = "../ebirforms-core" }
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
