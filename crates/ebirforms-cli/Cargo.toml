@@ -7,3 +7,4 @@ rust-version.workspace = true
 
 [dependencies]
 ebirforms-core = { path = "../ebirforms-core" }
+serde_json = "1"
