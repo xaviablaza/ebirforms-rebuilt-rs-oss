@@ -72,7 +72,7 @@ A fuller presenter talk track lives in [`docs/desktop-tax-form-flow-demo-script.
 3. If no profile is saved, show that the Dashboard’s `Tax Form Library` asks the operator to create and save a profile first.
 4. Save or choose a profile under `Profiles`, then return to `Dashboard`.
 5. On `Dashboard`, click a form tile in `Tax Form Library` to open that form’s single-column `Tax Form Flow`. Supported demo forms are `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`.
-6. Review or edit the human-readable `BIR Form <code> data entry` fields; the UI generates the synthetic JSON payload behind the scenes, so operators do not edit raw JSON.
+6. For `1601C`, point out that the data-entry UI is modeled after the January 2018 BIR PDF: top-strip fields 1–5, Part I background information, Part II computation rows 14–36, Part III payment rows 37–40, and Part IV Schedule I carry-over fields. For the other forms, review or edit the human-readable generated fields; the UI generates the synthetic JSON payload behind the scenes, so operators do not edit raw JSON.
 7. Click `Validate`; explain that validation renders plaintext XML, encrypts/packages the payload, and locks the form for submission readiness.
 8. Show package details on the form: filename, remote path, period, payload size, encrypted payload SHA-256, and payload path.
 9. Click `Edit` to reopen the form if changes are needed, then `Validate` again.

@@ -24,6 +24,7 @@ Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Fo
 - Dashboard contains only a `Tax Form Library`; if no active saved profile exists, the library tells the operator to create and save a profile before creating a form.
 - Selecting a form opens the selected Tax Form flow in a single-column form view.
 - Each selected numbered BIR form renders human-readable data-entry controls for profile/period/return values and BIR line items/schedules; the UI updates the synthetic JSON payload internally and does not expose raw JSON editing to operators.
+- `1601C` uses labels and section layout mapped from the January 2018 BIR PDF: fields 1–5 top strip, Part I background information, Part II computation rows 14–36, Part III payment rows 37–40, and Part IV Schedule I carry-over fields.
 - Package, Jobs, Submissions, and Receipt are abstracted into the selected Tax Form flow rather than separate sidebar destinations.
 - Form action buttons mirror original eBIRForms terminology:
   - `Validate` renders plaintext XML, encrypts/packages payload, shows package details, and locks the form.

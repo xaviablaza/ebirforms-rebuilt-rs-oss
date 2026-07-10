@@ -751,6 +751,10 @@ fn render_human_tax_form_fields(
         return view! { <div class="alert warning">"The current form data cannot be parsed. Choose a form from the Tax Form Library to reset the human form."</div> }.into_view();
     };
 
+    if form_code == "1601C" {
+        return render_1601c_physical_form(input, set_form_input_text, locked);
+    }
+
     let profile = input.get("profile").and_then(Value::as_object).cloned().unwrap_or_default();
     let return_obj = input.get("return").and_then(Value::as_object).cloned().unwrap_or_default();
     let period = return_obj.get("period").and_then(Value::as_object).cloned().unwrap_or_default();
@@ -1009,6 +1013,269 @@ fn human_field_label(key: &str) -> String {
     }
     let label = label.replace("No", " No. ").replace("  ", " ");
     format!("{} ({})", label.trim(), key)
+}
+
+
+fn render_1601c_physical_form(
+    input: Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    view! {
+        <div class="bir-paper form-1601c">
+            <div class="bir-title-grid">
+                <div class="bir-form-no"><span>"BIR Form No."</span><strong>"1601-C"</strong><small>"January 2018 (ENCS)"</small></div>
+                <div class="bir-title"><strong>"Monthly Remittance Return"</strong><span>"of Income Taxes Withheld on Compensation"</span></div>
+                <div class="bir-barcode">"1601-C 01/18ENCS P1"</div>
+            </div>
+            <div class="bir-grid top-strip">
+                {render_1601c_period_box(&input, set_form_input_text, locked)}
+                {render_1601c_pair_box("2", "Amended Return?", "AmendedRtn_1", "AmendedRtn_2", &input, set_form_input_text, locked)}
+                {render_1601c_pair_box("3", "Any Taxes Withheld?", "TaxWithheld_1", "TaxWithheld_2", &input, set_form_input_text, locked)}
+                {render_1601c_field_box("4", "Number of Sheet/s Attached", "txtSheets", &input, set_form_input_text, locked)}
+                {render_1601c_field_box("5", "ATC", "txtATC", &input, set_form_input_text, locked)}
+            </div>
+            <div class="bir-section-title">"Part I – Background Information"</div>
+            <div class="bir-grid background-grid">
+                {render_1601c_tin_box(&input, set_form_input_text, locked)}
+                {render_1601c_field_box("7", "RDO Code", "txtRDOCode", &input, set_form_input_text, locked)}
+                {render_1601c_wide_field_box("8", "Withholding Agent’s Name", "txtTaxpayerName", &input, set_form_input_text, locked)}
+                {render_1601c_wide_field_box("9", "Registered Address", "txtAddress", &input, set_form_input_text, locked)}
+                {render_1601c_field_box("9A", "ZIP Code", "txtZipCode", &input, set_form_input_text, locked)}
+                {render_1601c_field_box("10", "Contact Number", "txtTelNum", &input, set_form_input_text, locked)}
+                {render_1601c_pair_box("11", "Category of Withholding Agent", "CatAgent_P", "CatAgent_G", &input, set_form_input_text, locked)}
+                {render_1601c_profile_email_box(&input, set_form_input_text, locked)}
+                {render_1601c_pair_box("13", "Payees availing of tax relief under Special Law or International Tax Treaty?", "SpecialTax_1", "SpecialTax_2", &input, set_form_input_text, locked)}
+                {render_1601c_field_box("13A", "If yes, specify", "selTreaty", &input, set_form_input_text, locked)}
+            </div>
+            <div class="bir-section-title">"Part II – Computation of Tax"</div>
+            <div class="bir-table computation-table">
+                {render_1601c_amount_row("14", "Total Amount of Compensation", "txtTax14", &input, set_form_input_text, locked)}
+                <div class="bir-subrow">"Less: Non-Taxable/Exempt Compensation"</div>
+                {render_1601c_amount_row("15", "Statutory Minimum Wage for Minimum Wage Earners (MWEs)", "txtTax15", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("16", "Holiday Pay, Overtime Pay, Night Shift Differential Pay, Hazard Pay (for MWEs only)", "txtTax16", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("17", "13th Month Pay and Other Benefits", "txtTax17", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("18", "De Minimis Benefits", "txtTax18", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("19", "SSS, GSIS, PHIC, HDMF Mandatory Contributions & Union Dues (employee’s share only)", "txtTax19", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row_with_specify("20", "Other Non-Taxable Compensation", "txt20Other", "txtTax20", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("21", "Total Non-Taxable Compensation (Sum of Items 15 to 20)", "txtTax21", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("22", "Total Taxable Compensation (Item 14 Less Item 21)", "txtTax22", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("23", "Less: Taxable compensation not subject to withholding tax", "txtTax23", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("24", "Net Taxable Compensation (Item 22 Less Item 23)", "txtTax24", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("25", "Total Taxes Withheld", "txtTax25", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("26", "Add/(Less): Adjustment of Taxes Withheld from Previous Month/s (From Part IV-Schedule 1, Item 4)", "txtTax26", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("27", "Taxes Withheld for Remittance (Sum of Items 25 and 26)", "txtTax27", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("28", "Less: Tax Remitted in Return Previously Filed, if this is an amended return", "txtTax28", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row_with_specify("29", "Other Remittances Made", "txt29Other", "txtTax29", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("30", "Total Tax Remittances Made (Sum of Items 28 and 29)", "txtTax30", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("31", "Tax Still Due/(Over-remittance) (Item 27 Less Item 30)", "txtTax31", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("32", "Add: Penalties – Surcharge", "txtTax32", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("33", "Add: Penalties – Interest", "txtTax33", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("34", "Add: Penalties – Compromise", "txtTax34", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("35", "Total Penalties (Sum of Items 32 to 34)", "txtTax35", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("36", "TOTAL AMOUNT STILL DUE/(Over-remittance) (Sum of Items 31 and 35)", "txtTax36", &input, set_form_input_text, locked)}
+            </div>
+            <div class="bir-section-title">"Part III – Details of Payment"</div>
+            <div class="bir-payment-grid">
+                {render_1601c_payment_row("37", "Cash/Bank Debit Memo", Some("txtAgency37"), "txtNumber37", "txtDate37", "txtAmount37", &input, set_form_input_text, locked)}
+                {render_1601c_payment_row("38", "Check", Some("txtAgency38"), "txtNumber38", "txtDate38", "txtAmount38", &input, set_form_input_text, locked)}
+                {render_1601c_payment_row("39", "Tax Debit Memo", None, "txtNumber39", "txtDate39", "txtAmount39", &input, set_form_input_text, locked)}
+                {render_1601c_payment_row("40", "Others", Some("txtAgency40"), "txtNumber40", "txtDate40", "txtAmount40", &input, set_form_input_text, locked)}
+                {render_1601c_field_box("40 specify", "Other payment particulars", "txtParticular40", &input, set_form_input_text, locked)}
+            </div>
+            <div class="bir-section-title">"Part IV – Schedule I: Adjustment of Taxes Withheld on Compensation from Previous Months"</div>
+            <div class="bir-grid background-grid">
+                {render_1601c_wide_field_box("Page 2 TIN", "TIN carried to page 2", "txtPg2TIN1", &input, set_form_input_text, locked)}
+                {render_1601c_wide_field_box("Page 2 name", "Withholding Agent’s Name carried to page 2", "txtPg2TaxpayerName", &input, set_form_input_text, locked)}
+                {render_1601c_amount_row("Schedule I Item 4", "Total Adjustment (Sum of Items 1 to 3) – maps to Part II Item 26", "sched1:txtTotal1", &input, set_form_input_text, locked)}
+            </div>
+        </div>
+    }.into_view()
+}
+
+fn render_1601c_period_box(input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let month = field_value(input, "txtMonth");
+    let year = field_value(input, "txtYear");
+    view! {
+        <label class="bir-box">"1 For the Month (MM/YYYY)"
+            <div class="split-inputs">
+                <input aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_1601c_period(set_form_input_text, "month", event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_1601c_period(set_form_input_text, "year", event_target_value(&ev)) />
+            </div>
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_tin_box(input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let tin1 = field_value(input, "txtTIN1");
+    let tin2 = field_value(input, "txtTIN2");
+    let tin3 = field_value(input, "txtTIN3");
+    let branch = field_value(input, "txtBranchCode");
+    view! {
+        <label class="bir-box span-2">"6 Taxpayer Identification Number (TIN)"
+            <div class="split-inputs tin-inputs">
+                <input aria-label="TIN first block" prop:value=tin1 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN1", event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="TIN second block" prop:value=tin2 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN2", event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="TIN third block" prop:value=tin3 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN3", event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="Branch code" prop:value=branch prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtBranchCode", event_target_value(&ev)) />
+            </div>
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_profile_email_box(input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let value = input
+        .get("profile")
+        .and_then(|profile| profile.get("email"))
+        .map(value_to_form_string)
+        .unwrap_or_default();
+    view! {
+        <label class="bir-box span-2">"12 Email Address"
+            <input prop:value=value prop:readonly=locked on:input=move |ev| update_top_level_value(set_form_input_text, "profile", "email", Value::String(event_target_value(&ev))) />
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_field_box(item: &'static str, label: &'static str, key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let value = field_value(input, key);
+    view! {
+        <label class="bir-box">{format!("{item} {label}")}
+            <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_wide_field_box(item: &'static str, label: &'static str, key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let value = field_value(input, key);
+    view! {
+        <label class="bir-box span-2">{format!("{item} {label}")}
+            <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_pair_box(item: &'static str, label: &'static str, yes_key: &'static str, no_key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let yes = field_value(input, yes_key) == "true";
+    let no = field_value(input, no_key) == "true";
+    view! {
+        <div class="bir-box checkbox-pair">
+            <span>{format!("{item} {label}")}</span>
+            <label><input type="checkbox" prop:checked=yes prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_checkbox_pair(set_form_input_text, yes_key, no_key, true) } />"Yes"</label>
+            <label><input type="checkbox" prop:checked=no prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_checkbox_pair(set_form_input_text, yes_key, no_key, false) } />"No"</label>
+        </div>
+    }.into_view()
+}
+
+fn render_1601c_amount_row(item: &'static str, label: &'static str, key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let value = field_value(input, key);
+    view! {
+        <label class="bir-row">
+            <span class="item-no">{item}</span><span class="item-label">{label}</span>
+            <input class="amount-input" prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_amount_row_with_specify(item: &'static str, label: &'static str, specify_key: &'static str, amount_key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let specify = field_value(input, specify_key);
+    let amount = field_value(input, amount_key);
+    view! {
+        <label class="bir-row specify-row">
+            <span class="item-no">{item}</span><span class="item-label">{label}</span>
+            <input class="specify-input" placeholder="specify" prop:value=specify prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, specify_key, event_target_value(&ev)) />
+            <input class="amount-input" prop:value=amount prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, amount_key, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_1601c_payment_row(item: &'static str, label: &'static str, agency_key: Option<&'static str>, number_key: &'static str, date_key: &'static str, amount_key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+    let agency = agency_key.map(|key| field_value(input, key)).unwrap_or_default();
+    let number = field_value(input, number_key);
+    let date = field_value(input, date_key);
+    let amount = field_value(input, amount_key);
+    view! {
+        <div class="payment-row">
+            <strong>{format!("{item} {label}")}</strong>
+            <input placeholder="Drawee Bank/Agency" prop:value=agency prop:readonly=locked on:input=move |ev| if let Some(key) = agency_key { update_field_string(set_form_input_text, key, event_target_value(&ev)) } />
+            <input placeholder="Number" prop:value=number prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, number_key, event_target_value(&ev)) />
+            <input placeholder="Date (MM/DD/YYYY)" prop:value=date prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, date_key, event_target_value(&ev)) />
+            <input class="amount-input" placeholder="Amount" prop:value=amount prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, amount_key, event_target_value(&ev)) />
+        </div>
+    }.into_view()
+}
+
+fn field_value(input: &Value, key: &str) -> String {
+    input
+        .get("fields")
+        .and_then(|fields| fields.get(key))
+        .map(value_to_form_string)
+        .unwrap_or_default()
+}
+
+fn update_1601c_period(set_form_input_text: WriteSignal<String>, part: &str, value: String) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            let normalized = if part == "month" { format!("{:0>2}", value.trim()) } else { value.trim().to_string() };
+            let field_key = if part == "month" { "txtMonth" } else { "txtYear" };
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                fields.insert(field_key.to_string(), Value::String(normalized.clone()));
+            }
+            if let Some(period) = root
+                .get_mut("return")
+                .and_then(Value::as_object_mut)
+                .and_then(|ret| ret.get_mut("period"))
+                .and_then(Value::as_object_mut)
+            {
+                if let Ok(number) = normalized.parse::<i64>() {
+                    period.insert(part.to_string(), Value::Number(number.into()));
+                }
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
+}
+
+fn update_1601c_tin(set_form_input_text: WriteSignal<String>, key: &str, value: String) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                fields.insert(key.to_string(), Value::String(value));
+                let tin1 = fields.get("txtTIN1").map(value_to_form_string).unwrap_or_default();
+                let tin2 = fields.get("txtTIN2").map(value_to_form_string).unwrap_or_default();
+                let tin3 = fields.get("txtTIN3").map(value_to_form_string).unwrap_or_default();
+                let branch = fields.get("txtBranchCode").map(value_to_form_string).unwrap_or_default();
+                fields.insert("txtPg2TIN1".to_string(), Value::String(tin1.clone()));
+                fields.insert("txtPg2TIN2".to_string(), Value::String(tin2.clone()));
+                fields.insert("txtPg2TIN3".to_string(), Value::String(tin3.clone()));
+                fields.insert("txtPg2BranchCode".to_string(), Value::String(branch.clone()));
+                if let Some(profile) = root.get_mut("profile").and_then(Value::as_object_mut) {
+                    profile.insert("tin".to_string(), Value::String(format!("{tin1}-{tin2}-{tin3}-{branch}")));
+                }
+                *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+            }
+        }
+    });
+}
+
+fn update_checkbox_pair(set_form_input_text: WriteSignal<String>, yes_key: &str, no_key: &str, yes_selected: bool) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                fields.insert(yes_key.to_string(), Value::String(yes_selected.to_string()));
+                fields.insert(no_key.to_string(), Value::String((!yes_selected).to_string()));
+            }
+            if yes_key == "AmendedRtn_1" {
+                if let Some(ret) = root.get_mut("return").and_then(Value::as_object_mut) {
+                    ret.insert("is_amended".to_string(), Value::Bool(yes_selected));
+                }
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
 }
 
 #[component]

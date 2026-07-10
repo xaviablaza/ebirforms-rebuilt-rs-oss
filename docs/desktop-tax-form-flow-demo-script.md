@@ -52,13 +52,13 @@ Supported demo forms:
 Show:
 
 1. In the selected form’s single-column `Tax Form Flow`, point to `BIR Form <code> data entry`.
-2. Show the human-readable filing fields, taxpayer/profile fields, and BIR line items/schedules.
-3. Make a tiny edit if useful, for example an amount, RDO code, or amendment flag.
+2. For `1601C`, show that the screen now follows the physical January 2018 BIR PDF: fields 1–5 across the top, Part I background information, Part II computation rows 14–36, Part III payment details, and Part IV Schedule I adjustment carry-over.
+3. Make a tiny edit if useful, for example Item 14 Total Amount of Compensation, Item 25 Total Taxes Withheld, RDO code, or amended return.
 4. Click `Save`.
 
 Say:
 
-> “The form view is intentionally single-column: actions, final-copy confirmation, form data, package details, XML preview, jobs, submissions, and receipt matching all flow downward on the selected tax form. Operators no longer edit JSON directly. Each numbered BIR form gets a human-readable data-entry form that updates the synthetic payload behind the scenes for XML rendering.”
+> “The form view is intentionally single-column: actions, final-copy confirmation, form data, package details, XML preview, jobs, submissions, and receipt matching all flow downward on the selected tax form. For 1601-C, operators now see the same numbered labels and parts as the physical BIR form. The UI maps those human fields back to the same synthetic JSON keys that render into XML, so nobody has to edit raw JSON directly.”
 
 ## 4. Validate locks the form and packages it
 
