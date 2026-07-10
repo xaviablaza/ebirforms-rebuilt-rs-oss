@@ -116,6 +116,8 @@ pre { padding: 14px; overflow: auto; }
 .form-tile span, .form-tile small { color: var(--muted); }
 .active-profile { border-top: 1px solid color-mix(in srgb, var(--sidebar-text) 22%, transparent); padding-top: 16px; }
 .active-profile strong, .active-profile small { display: block; overflow-wrap: anywhere; }
+.checkbox-row { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; }
+.checkbox-row input { width: auto; margin-top: 3px; }
 .pin-row { display: grid; grid-template-columns: minmax(180px, 260px) auto; gap: 12px; align-items: end; margin: 12px 0; }
 .lock-screen { min-height: calc(100vh - 100px); display: grid; place-items: center; }
 .lock-card { width: min(420px, 100%); background: var(--surface); border: 1px solid var(--border); border-radius: 28px; padding: 32px; text-align: center; box-shadow: 0 18px 50px rgba(0,0,0,.18); }

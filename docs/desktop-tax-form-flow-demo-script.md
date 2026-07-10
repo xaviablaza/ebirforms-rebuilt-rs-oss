@@ -92,30 +92,34 @@ Say:
 
 > “Like the original eBIRForms pattern, validation locks the form. Edit reopens it for changes, and validating again regenerates the plaintext XML and encrypted payload.”
 
-## 6. Print and Submit Final Copy are intentionally disabled
+## 6. Submit Final Copy is gated by validation and confirmation
 
 Show:
 
-1. Point to `Print` and `Submit Final Copy` disabled buttons.
+1. Point to `Print`; it remains disabled because printing is not implemented.
+2. Point to the `Final copy confirmation` box.
+3. Before ticking it, point to `Submit Final Copy`; it is disabled.
+4. Tick `I confirm the whole form is validated, locked, and ready to submit as the final copy.`
+5. Click `Submit Final Copy`.
+6. Show that the app queues and runs the dry-run delivery, then displays a waiting-for-receipt state.
 
 Say:
 
-> “These buttons are present for familiarity with the original eBIRForms action model, but they intentionally do not work in this demo. Live final submission remains gated; the demo uses a dry-run queue.”
+> “Submit Final Copy is no longer a dead button, but it is gated. The operator must first validate the whole form, review the package details, and explicitly confirm the locked final copy. Only then does the button enable. Clicking it queues the job, runs the dry-run delivery, and leaves the submission waiting for the BIR receipt confirmation.”
 
-## 7. Queue, run, and reconcile receipt inside the same flow
+## 7. Receipt reconciliation completes the filing loop
 
 Show:
 
-1. Click `Queue dry-run`.
-2. Click `Run dry-run queue`.
-3. Show the `Jobs` cards under `Submission Activity`.
-4. Show `Submissions / receipt matching`.
-5. Click `Simulate receipt and match`.
-6. Confirm the submission record changes to `Confirmed`.
+1. Click `Submit Final Copy` after validation and final-copy confirmation.
+2. Show the `Jobs` cards under `Submission Activity`.
+3. Show `Submissions / receipt matching` in its waiting-for-receipt state.
+4. Click `Simulate received BIR receipt`.
+5. Confirm the submission record changes to `Confirmed`.
 
 Say:
 
-> “Package, jobs, submissions, and receipts are no longer separate navigation destinations. They are part of the tax form flow. The queue creates an idempotent dry-run submission, then the simulated BIR receipt is matched back to the local submission record by filename.”
+> “Package, jobs, submissions, and receipts are no longer separate navigation destinations. They are part of the tax form flow. Submit Final Copy creates an idempotent dry-run submission and waits for the BIR receipt; the simulated receipt is then matched back to the local submission record by filename.”
 
 ## Closing line
 

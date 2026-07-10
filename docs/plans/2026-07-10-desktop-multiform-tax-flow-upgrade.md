@@ -27,7 +27,7 @@ Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Fo
   - `Edit` reopens the locked form for changes.
   - `Save` persists current form edits in the demo session.
   - `Print` is visible but disabled.
-  - `Submit Final Copy` is visible but disabled.
+  - `Submit Final Copy`: enabled only after successful validation plus explicit final-copy confirmation; it queues and runs dry-run delivery, then leaves the submission waiting for a BIR receipt.
 - Package details shown on-form:
   - Filename
   - Remote path
@@ -38,7 +38,8 @@ Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Fo
 - Dry-run queue and receipt matching remain available inside the flow:
   - `Queue dry-run`
   - `Run dry-run queue`
-  - `Simulate receipt and match`
+  - `Submit Final Copy` (validated + confirmed forms only; internally queues and runs dry-run delivery)
+  - `Simulate received BIR receipt`
 
 ## Source files
 

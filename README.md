@@ -74,9 +74,9 @@ A fuller presenter talk track lives in [`docs/desktop-tax-form-flow-demo-script.
 5. Click `Validate`; explain that validation renders plaintext XML, encrypts/packages the payload, and locks the form for submission readiness.
 6. Show package details on the form: filename, remote path, period, payload size, encrypted payload SHA-256, and payload path.
 7. Click `Edit` to reopen the form if changes are needed, then `Validate` again.
-8. Point out that `Print` and `Submit Final Copy` are intentionally disabled in the dry-run demo.
-9. Click `Queue dry-run`, then `Run dry-run queue`; show the embedded job/submission activity.
-10. Click `Simulate receipt and match`; show the submission record changes to `Confirmed`.
+8. Point out that `Print` remains disabled, while `Submit Final Copy` is gated by validation plus the `Final copy confirmation` checkbox.
+9. Tick final-copy confirmation, then click `Submit Final Copy`; show that it queues and runs the dry-run job and enters a waiting-for-receipt state.
+10. Click `Simulate received BIR receipt`; show the submission record changes to `Confirmed`.
 
 Typical macOS bundle output path after a successful Tauri build:
 

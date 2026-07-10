@@ -154,6 +154,8 @@ fn App() -> impl IntoView {
     let (jobs, set_jobs) = create_signal(Vec::<JobResponse>::new());
     let (submissions, set_submissions) = create_signal(Vec::<SafeSubmissionRecordResponse>::new());
     let (receipt_text, set_receipt_text) = create_signal(sample_bir_receipt_for_filename("12345678900000-1601C-062026#authorized@example.test#.xml"));
+    let (final_copy_confirmed, set_final_copy_confirmed) = create_signal(false);
+    let (waiting_for_receipt, set_waiting_for_receipt) = create_signal(false);
 
     spawn_local(async move {
         match invoke_json("app_snapshot", json!({})).await {
@@ -203,7 +205,7 @@ fn App() -> impl IntoView {
                 <div class="status">{move || status.get()}</div>
                 {move || match route.get().as_str() {
                     "Profiles" => view! { <Profiles profile=profile set_profile=set_profile profiles=profiles set_profiles=set_profiles set_active_profile_id=set_active_profile_id set_status=set_status /> }.into_view(),
-                    _ => view! { <Dashboard selected_form=selected_form set_selected_form=set_selected_form form_input_text=form_input_text set_form_input_text=set_form_input_text saved_form_input_text=saved_form_input_text set_saved_form_input_text=set_saved_form_input_text form_locked=form_locked set_form_locked=set_form_locked plaintext_preview=plaintext_preview set_plaintext_preview=set_plaintext_preview package_preview=package_preview set_package_preview=set_package_preview jobs=jobs set_jobs=set_jobs submissions=submissions set_submissions=set_submissions receipt_text=receipt_text set_receipt_text=set_receipt_text set_status=set_status /> }.into_view(),
+                    _ => view! { <Dashboard selected_form=selected_form set_selected_form=set_selected_form form_input_text=form_input_text set_form_input_text=set_form_input_text saved_form_input_text=saved_form_input_text set_saved_form_input_text=set_saved_form_input_text form_locked=form_locked set_form_locked=set_form_locked plaintext_preview=plaintext_preview set_plaintext_preview=set_plaintext_preview package_preview=package_preview set_package_preview=set_package_preview jobs=jobs set_jobs=set_jobs submissions=submissions set_submissions=set_submissions receipt_text=receipt_text set_receipt_text=set_receipt_text final_copy_confirmed=final_copy_confirmed set_final_copy_confirmed=set_final_copy_confirmed waiting_for_receipt=waiting_for_receipt set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
                 }}
             </section>
         </main>
@@ -318,6 +320,10 @@ fn Dashboard(
     set_submissions: WriteSignal<Vec<SafeSubmissionRecordResponse>>,
     receipt_text: ReadSignal<String>,
     set_receipt_text: WriteSignal<String>,
+    final_copy_confirmed: ReadSignal<bool>,
+    set_final_copy_confirmed: WriteSignal<bool>,
+    waiting_for_receipt: ReadSignal<bool>,
+    set_waiting_for_receipt: WriteSignal<bool>,
     set_status: WriteSignal<String>,
 ) -> impl IntoView {
     let choose_form = move |code: &'static str| {
@@ -328,6 +334,8 @@ fn Dashboard(
             set_form_locked.set(false);
             set_plaintext_preview.set("Validate a form to preview the plaintext XML.".to_string());
             set_package_preview.set(None);
+            set_final_copy_confirmed.set(false);
+            set_waiting_for_receipt.set(false);
             set_status.set(format!("Selected BIR Form {}.", option.code));
         }
     };
@@ -339,7 +347,9 @@ fn Dashboard(
 
     let edit_form = move || {
         set_form_locked.set(false);
-        set_status.set("Form reopened for editing.".to_string());
+        set_final_copy_confirmed.set(false);
+        set_waiting_for_receipt.set(false);
+        set_status.set("Form reopened for editing; final-copy confirmation was cleared.".to_string());
     };
 
     let validate_form = move || {
@@ -367,9 +377,12 @@ fn Dashboard(
                 Ok(value) => match serde_json::from_value::<PackagePreviewResponse>(value) {
                     Ok(package) => {
                         set_receipt_text.set(sample_bir_receipt_for_filename(&package.manifest.filename));
+                        set_saved_form_input_text.set(input_text.clone());
                         set_package_preview.set(Some(package));
                         set_form_locked.set(true);
-                        set_status.set("Validated. Form is locked and ready for queueing/submission simulation.".to_string());
+                        set_final_copy_confirmed.set(false);
+                        set_waiting_for_receipt.set(false);
+                        set_status.set("Validated. Form is locked; review package details, then confirm before Submit Final Copy.".to_string());
                     }
                     Err(err) => set_status.set(format!("Package parse failed: {err}")),
                 },
@@ -420,11 +433,50 @@ fn Dashboard(
                 Ok(value) => match serde_json::from_value::<Vec<SafeSubmissionRecordResponse>>(value) {
                     Ok(records) => {
                         set_submissions.set(records);
+                        set_waiting_for_receipt.set(false);
                         set_status.set("Receipt matched against submission records.".to_string());
                     }
                     Err(err) => set_status.set(format!("receipt response parse failed: {err}")),
                 },
                 Err(msg) => set_status.set(format!("match_receipt failed: {msg}")),
+            }
+        });
+    };
+
+    let submit_final_copy = move || {
+        if !form_locked.get_untracked() || package_preview.get_untracked().is_none() {
+            set_status.set("Submit Final Copy requires a fully validated form first.".to_string());
+            return;
+        }
+        if !final_copy_confirmed.get_untracked() {
+            set_status.set("Confirm the validated final copy before submitting.".to_string());
+            return;
+        }
+        if waiting_for_receipt.get_untracked() {
+            set_status.set("Already submitted. Waiting for a BIR receipt.".to_string());
+            return;
+        }
+        let form_code = selected_form.get_untracked();
+        let Ok(input_json) = serde_json::from_str::<Value>(&saved_form_input_text.get_untracked()) else {
+            set_status.set("Submit Final Copy failed: validated form JSON is invalid.".to_string());
+            return;
+        };
+        set_status.set("Submit Final Copy: queueing and running dry-run delivery…".to_string());
+        spawn_local(async move {
+            match invoke_json("queue_tax_form_dry_run", json!({"formCode": form_code, "input": input_json})).await {
+                Ok(_) => {}
+                Err(msg) => {
+                    set_status.set(format!("Submit Final Copy queue failed: {msg}"));
+                    return;
+                }
+            }
+            match invoke_json("run_queue_dry_run", json!({"limit": 10})).await {
+                Ok(_) => {
+                    set_waiting_for_receipt.set(true);
+                    refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await;
+                    set_status.set("Submit Final Copy queued and ran. Waiting for a BIR receipt confirmation.".to_string());
+                }
+                Err(msg) => set_status.set(format!("Submit Final Copy run failed: {msg}")),
             }
         });
     };
@@ -456,20 +508,43 @@ fn Dashboard(
                     {move || if form_locked.get() { view! { <span class="badge success">"Validated / locked"</span> }.into_view() } else { view! { <span class="badge warning">"Editable"</span> }.into_view() }}
                 </div>
                 <div class="actions">
-                    <button on:click=move |_| validate_form()>"Validate"</button>
-                    <button on:click=move |_| edit_form()>"Edit"</button>
-                    <button on:click=move |_| save_form()>"Save"</button>
-                    <button disabled=true title="Print is intentionally disabled in this demo">"Print"</button>
-                    <button disabled=true title="Live Submit Final Copy is intentionally disabled; use dry-run queue below.">"Submit Final Copy"</button>
+                    <button on:click=move |_| validate_form() disabled=move || waiting_for_receipt.get()>"Validate"</button>
+                    <button on:click=move |_| edit_form() disabled=move || waiting_for_receipt.get()>"Edit"</button>
+                    <button on:click=move |_| save_form() disabled=move || form_locked.get() || waiting_for_receipt.get()>"Save"</button>
+                    <button disabled=true title="Print is not implemented in this demo">"Print"</button>
+                    <button
+                        on:click=move |_| submit_final_copy()
+                        disabled=move || !form_locked.get() || package_preview.get().is_none() || !final_copy_confirmed.get() || waiting_for_receipt.get()
+                        title="Enabled only after Validate and final-copy confirmation"
+                    >"Submit Final Copy"</button>
+                </div>
+                <div class="checklist-card">
+                    <h3>"Final copy confirmation"</h3>
+                    <label class="checkbox-row">
+                        <input
+                            type="checkbox"
+                            prop:checked=move || final_copy_confirmed.get()
+                            prop:disabled=move || !form_locked.get() || package_preview.get().is_none() || waiting_for_receipt.get()
+                            on:change=move |ev| set_final_copy_confirmed.set(event_target_checked(&ev))
+                        />
+                        <span>"I confirm the whole form is validated, locked, and ready to submit as the final copy."</span>
+                    </label>
+                    {move || if waiting_for_receipt.get() {
+                        view! { <p class="muted">"Final copy has been queued and run. Waiting for BIR receipt confirmation."</p> }.into_view()
+                    } else if form_locked.get() && package_preview.get().is_some() {
+                        view! { <p class="muted">"Review package details, then tick the confirmation to enable Submit Final Copy."</p> }.into_view()
+                    } else {
+                        view! { <p class="muted">"Validate the form before final-copy confirmation is available."</p> }.into_view()
+                    }}
                 </div>
                 <label>"Application data (synthetic JSON backing the XML)"
                     <textarea class="json-editor" prop:readonly=move || form_locked.get() prop:value=form_input_text on:input=move |ev| set_form_input_text.set(event_target_value(&ev)) />
                 </label>
                 <PackageDetails package_preview=package_preview />
                 <div class="actions">
-                    <button on:click=move |_| queue_dry_run() disabled=move || !form_locked.get()>"Queue dry-run"</button>
-                    <button on:click=move |_| run_queue()>"Run dry-run queue"</button>
-                    <button on:click=move |_| simulate_receipt()>"Simulate receipt and match"</button>
+                    <button on:click=move |_| queue_dry_run() disabled=move || !form_locked.get() || waiting_for_receipt.get()>"Queue dry-run"</button>
+                    <button on:click=move |_| run_queue() disabled=move || waiting_for_receipt.get()>"Run dry-run queue"</button>
+                    <button on:click=move |_| simulate_receipt() disabled=move || package_preview.get().is_none() && submissions.get().is_empty()>"Simulate received BIR receipt"</button>
                 </div>
             </Panel>
 
@@ -548,6 +623,10 @@ async fn refresh_jobs_and_submissions(
         },
         Err(msg) => set_status.set(format!("list_submissions failed: {msg}")),
     }
+}
+
+fn event_target_checked(ev: &web_sys::Event) -> bool {
+    event_target::<web_sys::HtmlInputElement>(ev).checked()
 }
 
 fn form_option(code: &str) -> Option<TaxFormOption> {
