@@ -17,7 +17,7 @@ Licensed under the Functional Source License, Version 1.1, ALv2 Future License (
 - `ebirforms-core::receipt`: synthetic receipt parsing/matching and local directory polling.
 - `ebirforms-cli`: command-line access to the above.
 
-Only a synthetic 1601C fixture is included. Other forms require clean-room, redistributable templates/mappings.
+Synthetic fixtures are included for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`. Additional forms require clean-room, redistributable templates/mappings.
 
 ## Build with mise
 
@@ -72,7 +72,7 @@ A fuller presenter talk track lives in [`docs/desktop-tax-form-flow-demo-script.
 3. If no profile is saved, show that the Dashboard’s `Tax Form Library` asks the operator to create and save a profile first.
 4. Save or choose a profile under `Profiles`, then return to `Dashboard`.
 5. On `Dashboard`, click a form tile in `Tax Form Library` to open that form’s single-column `Tax Form Flow`. Supported demo forms are `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`.
-6. Review or edit `Application data (synthetic JSON backing the XML)` and click `Save`.
+6. Review or edit the human-readable `BIR Form <code> data entry` fields; the UI generates the synthetic JSON payload behind the scenes, so operators do not edit raw JSON.
 7. Click `Validate`; explain that validation renders plaintext XML, encrypts/packages the payload, and locks the form for submission readiness.
 8. Show package details on the form: filename, remote path, period, payload size, encrypted payload SHA-256, and payload path.
 9. Click `Edit` to reopen the form if changes are needed, then `Validate` again.

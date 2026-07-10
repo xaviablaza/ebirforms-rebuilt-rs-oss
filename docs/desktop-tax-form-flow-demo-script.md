@@ -51,13 +51,14 @@ Supported demo forms:
 
 Show:
 
-1. In the selected form’s single-column `Tax Form Flow`, point to `Application data (synthetic JSON backing the XML)`.
-3. Make a tiny edit if useful.
+1. In the selected form’s single-column `Tax Form Flow`, point to `BIR Form <code> data entry`.
+2. Show the human-readable filing fields, taxpayer/profile fields, and BIR line items/schedules.
+3. Make a tiny edit if useful, for example an amount, RDO code, or amendment flag.
 4. Click `Save`.
 
 Say:
 
-> “The form view is intentionally single-column: actions, final-copy confirmation, form data, package details, XML preview, jobs, submissions, and receipt matching all flow downward on the selected tax form. The editor is deliberately labeled synthetic for this demo.”
+> “The form view is intentionally single-column: actions, final-copy confirmation, form data, package details, XML preview, jobs, submissions, and receipt matching all flow downward on the selected tax form. Operators no longer edit JSON directly. Each numbered BIR form gets a human-readable data-entry form that updates the synthetic payload behind the scenes for XML rendering.”
 
 ## 4. Validate locks the form and packages it
 

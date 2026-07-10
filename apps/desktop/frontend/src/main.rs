@@ -691,9 +691,12 @@ fn TaxFormFlow(
                         view! { <p class="muted">"Validate the form before final-copy confirmation is available."</p> }.into_view()
                     }}
                 </div>
-                <label>"Application data (synthetic JSON backing the XML)"
-                    <textarea class="json-editor" prop:readonly=move || form_locked.get() prop:value=form_input_text on:input=move |ev| set_form_input_text.set(event_target_value(&ev)) />
-                </label>
+                <HumanTaxForm
+                    selected_form=selected_form
+                    form_input_text=form_input_text
+                    set_form_input_text=set_form_input_text
+                    form_locked=form_locked
+                />
                 <PackageDetails package_preview=package_preview />
                 <div class="actions">
                     <button on:click=move |_| queue_dry_run() disabled=move || !form_locked.get() || waiting_for_receipt.get()>"Queue dry-run"</button>
@@ -715,6 +718,297 @@ fn TaxFormFlow(
             </Panel>
         </section>
     }
+}
+
+
+#[component]
+fn HumanTaxForm(
+    selected_form: ReadSignal<String>,
+    form_input_text: ReadSignal<String>,
+    set_form_input_text: WriteSignal<String>,
+    form_locked: ReadSignal<bool>,
+) -> impl IntoView {
+    view! {
+        <div class="human-form">
+            <div class="record-header">
+                <div>
+                    <h3>{move || format!("BIR Form {} data entry", selected_form.get())}</h3>
+                    <p class="muted">"Human-readable fields generate the synthetic JSON payload used for XML rendering and packaging. Operators do not edit JSON directly."</p>
+                </div>
+            </div>
+            {move || render_human_tax_form_fields(selected_form.get(), form_input_text.get(), set_form_input_text, form_locked.get())}
+        </div>
+    }
+}
+
+fn render_human_tax_form_fields(
+    form_code: String,
+    input_text: String,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let Ok(input) = serde_json::from_str::<Value>(&input_text) else {
+        return view! { <div class="alert warning">"The current form data cannot be parsed. Choose a form from the Tax Form Library to reset the human form."</div> }.into_view();
+    };
+
+    let profile = input.get("profile").and_then(Value::as_object).cloned().unwrap_or_default();
+    let return_obj = input.get("return").and_then(Value::as_object).cloned().unwrap_or_default();
+    let period = return_obj.get("period").and_then(Value::as_object).cloned().unwrap_or_default();
+    let mut field_items: Vec<(String, String)> = input
+        .get("fields")
+        .and_then(Value::as_object)
+        .map(|fields| fields.iter().map(|(key, value)| (key.clone(), value_to_form_string(value))).collect())
+        .unwrap_or_default();
+    field_items.sort_by(|a, b| field_sort_key(&a.0).cmp(&field_sort_key(&b.0)));
+
+    let profile_fields = vec![
+        ("profile_id", "Profile ID"),
+        ("tin", "TIN"),
+        ("email", "Authorized email"),
+    ];
+    let period_fields = vec![
+        ("month", "Month"),
+        ("quarter", "Quarter"),
+        ("year", "Year"),
+    ];
+    let return_fields = vec![
+        ("is_amended", "Amended return?"),
+        ("amendment_number", "Amendment number"),
+    ];
+
+    view! {
+        <div class="form-section">
+            <h3>{format!("Form {} filing details", form_code)}</h3>
+            <div class="form-grid">
+                {profile_fields.into_iter().map(|(key, label)| {
+                    let value = profile.get(key).map(value_to_form_string).unwrap_or_default();
+                    render_json_input("profile", key, label, value, locked, set_form_input_text)
+                }).collect_view()}
+                {period_fields.into_iter().filter_map(|(key, label)| {
+                    period.get(key).map(|value| render_nested_json_input("return", "period", key, label, value_to_form_string(value), locked, set_form_input_text))
+                }).collect_view()}
+                {return_fields.into_iter().filter_map(|(key, label)| {
+                    return_obj.get(key).map(|value| render_json_input("return", key, label, value_to_form_string(value), locked, set_form_input_text))
+                }).collect_view()}
+            </div>
+        </div>
+        <div class="form-section">
+            <h3>"BIR line items and schedules"</h3>
+            <p class="muted">"These controls cover the available numbered BIR form fields while keeping the generated JSON hidden."</p>
+            <div class="form-grid dense">
+                {field_items.into_iter().map(|(key, value)| {
+                    let label = human_field_label(&key);
+                    render_field_value_input(key, label, value, locked, set_form_input_text)
+                }).collect_view()}
+            </div>
+        </div>
+    }.into_view()
+}
+
+fn render_json_input(
+    section: &'static str,
+    key: &'static str,
+    label: &'static str,
+    value: String,
+    locked: bool,
+    set_form_input_text: WriteSignal<String>,
+) -> View {
+    let is_bool = matches!(value.as_str(), "true" | "false");
+    if is_bool {
+        let checked = value == "true";
+        view! {
+            <label class="checkbox-row field-control">
+                <input
+                    type="checkbox"
+                    prop:checked=checked
+                    prop:disabled=locked
+                    on:change=move |ev| update_top_level_value(set_form_input_text, section, key, Value::Bool(event_target_checked(&ev)))
+                />
+                <span>{label}</span>
+            </label>
+        }.into_view()
+    } else {
+        view! {
+            <label class="field-control">{label}
+                <input
+                    prop:value=value
+                    prop:readonly=locked
+                    on:input=move |ev| update_top_level_value(set_form_input_text, section, key, typed_json_value(section, key, event_target_value(&ev)))
+                />
+            </label>
+        }.into_view()
+    }
+}
+
+fn render_nested_json_input(
+    section: &'static str,
+    nested: &'static str,
+    key: &'static str,
+    label: &'static str,
+    value: String,
+    locked: bool,
+    set_form_input_text: WriteSignal<String>,
+) -> View {
+    view! {
+        <label class="field-control">{label}
+            <input
+                prop:value=value
+                prop:readonly=locked
+                on:input=move |ev| update_nested_value(set_form_input_text, section, nested, key, typed_json_value(nested, key, event_target_value(&ev)))
+            />
+        </label>
+    }.into_view()
+}
+
+fn render_field_value_input(
+    key: String,
+    label: String,
+    value: String,
+    locked: bool,
+    set_form_input_text: WriteSignal<String>,
+) -> View {
+    if matches!(value.as_str(), "true" | "false") {
+        let checked = value == "true";
+        let checkbox_key = key.clone();
+        view! {
+            <label class="checkbox-row field-control">
+                <input
+                    type="checkbox"
+                    prop:checked=checked
+                    prop:disabled=locked
+                    on:change=move |ev| update_field_string(set_form_input_text, &checkbox_key, event_target_checked(&ev).to_string())
+                />
+                <span>{label}</span>
+            </label>
+        }.into_view()
+    } else {
+        let input_key = key.clone();
+        view! {
+            <label class="field-control">{label}
+                <input
+                    type="text"
+                    prop:value=value
+                    prop:readonly=locked
+                    on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev))
+                />
+            </label>
+        }.into_view()
+    }
+}
+
+fn update_top_level_value(
+    set_form_input_text: WriteSignal<String>,
+    section: &str,
+    key: &str,
+    value: Value,
+) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(obj) = root.get_mut(section).and_then(Value::as_object_mut) {
+                obj.insert(key.to_string(), value);
+                *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+            }
+        }
+    });
+}
+
+fn update_nested_value(
+    set_form_input_text: WriteSignal<String>,
+    section: &str,
+    nested: &str,
+    key: &str,
+    value: Value,
+) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(obj) = root
+                .get_mut(section)
+                .and_then(Value::as_object_mut)
+                .and_then(|section| section.get_mut(nested))
+                .and_then(Value::as_object_mut)
+            {
+                obj.insert(key.to_string(), value);
+                *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+            }
+        }
+    });
+}
+
+fn update_field_string(set_form_input_text: WriteSignal<String>, key: &str, value: String) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                fields.insert(key.to_string(), Value::String(value));
+                *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+            }
+        }
+    });
+}
+
+fn typed_json_value(section: &str, key: &str, value: String) -> Value {
+    if matches!((section, key), ("period", "month") | ("period", "quarter") | ("period", "year") | ("return", "amendment_number")) {
+        value
+            .trim()
+            .parse::<i64>()
+            .map(|number| Value::Number(number.into()))
+            .unwrap_or_else(|_| Value::String(value))
+    } else {
+        Value::String(value)
+    }
+}
+
+fn value_to_form_string(value: &Value) -> String {
+    match value {
+        Value::String(value) => value.clone(),
+        Value::Number(value) => value.to_string(),
+        Value::Bool(value) => value.to_string(),
+        Value::Null => String::new(),
+        _ => value.to_string(),
+    }
+}
+
+fn field_sort_key(key: &str) -> String {
+    let lower = key.to_ascii_lowercase();
+    let priority = if lower.contains("tin") || lower.contains("taxpayer") || lower.contains("rdo") || lower.contains("address") || lower.contains("email") {
+        "0"
+    } else if lower.contains("month") || lower.contains("year") || lower.contains("quarter") || lower.contains("period") || lower.contains("amended") {
+        "1"
+    } else if lower.contains("tax") || lower.contains("total") || lower.contains("amount") || lower.contains("payment") || lower.contains("sales") || lower.contains("purchase") {
+        "2"
+    } else if lower.contains("sched") {
+        "3"
+    } else {
+        "4"
+    };
+    format!("{priority}:{lower}")
+}
+
+fn human_field_label(key: &str) -> String {
+    let cleaned = key
+        .rsplit(':')
+        .next()
+        .unwrap_or(key)
+        .trim_start_matches("txt")
+        .trim_start_matches("opt")
+        .trim_start_matches("chk")
+        .trim_start_matches("drp");
+    let mut label = String::new();
+    let mut previous_was_lower = false;
+    for ch in cleaned.chars() {
+        if matches!(ch, '_' | '-' ) {
+            label.push(' ');
+            previous_was_lower = false;
+        } else if ch.is_ascii_uppercase() && previous_was_lower {
+            label.push(' ');
+            label.push(ch);
+            previous_was_lower = false;
+        } else {
+            label.push(ch);
+            previous_was_lower = ch.is_ascii_lowercase() || ch.is_ascii_digit();
+        }
+    }
+    let label = label.replace("No", " No. ").replace("  ", " ");
+    format!("{} ({})", label.trim(), key)
 }
 
 #[component]

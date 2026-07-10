@@ -77,11 +77,16 @@ h2 { margin-top: 24px; }
 .metric { font-size: 42px; font-weight: 800; margin: 8px 0 18px; color: var(--text); }
 .two-col { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+.form-grid.dense { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.form-section { border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin: 16px 0; background: var(--surface-muted); }
+.form-section h3 { margin-top: 0; }
+.field-control { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px; min-width: 0; overflow-wrap: anywhere; }
+.field-control input { background: var(--surface-muted); }
+.human-form { margin-top: 12px; }
 label { display: block; font-weight: 700; color: var(--muted); margin: 0 0 12px; }
 input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 6px; background: var(--surface-muted); color: var(--text); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 textarea { min-height: 92px; resize: vertical; }
-.json-editor { width: 100%; min-height: 360px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
 .actions, .theme-controls { display: flex; gap: 12px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
 table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,.08); color: var(--text); }
 th, td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
