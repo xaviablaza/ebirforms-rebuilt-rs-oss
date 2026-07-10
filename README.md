@@ -37,7 +37,7 @@ The macOS binary will be at `./target/release/ebirforms-cli`.
 
 ## Desktop app
 
-A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard` and `Profiles`. The dashboard contains a Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; package, queue/job, submission, and receipt actions are embedded in the selected tax form flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run and automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain.
+A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard`, `Profiles`, and `Settings`. The dashboard contains only the Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; it requires a saved active taxpayer profile before opening a form. Package, queue/job, submission, and receipt actions are embedded in the selected form’s single-column Tax Form Flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run and automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain.
 
 ![eBIRForms Desktop dashboard running on Linux](docs/assets/desktop-linux-dashboard.png)
 
@@ -68,15 +68,17 @@ mise run desktop-check
 A fuller presenter talk track lives in [`docs/desktop-tax-form-flow-demo-script.md`](docs/desktop-tax-form-flow-demo-script.md).
 
 1. Launch: `mise run desktop-dev` or open the built app.
-2. Confirm the sidebar only shows `Dashboard` and `Profiles`; the active profile is shown at the bottom-left of the sidebar.
-3. On `Dashboard`, use `Tax Form Library` to choose a filing form and period. Supported demo forms are `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`.
-4. Review or edit `Application data (synthetic JSON backing the XML)` and click `Save`.
-5. Click `Validate`; explain that validation renders plaintext XML, encrypts/packages the payload, and locks the form for submission readiness.
-6. Show package details on the form: filename, remote path, period, payload size, encrypted payload SHA-256, and payload path.
-7. Click `Edit` to reopen the form if changes are needed, then `Validate` again.
-8. Point out that `Print` remains disabled, while `Submit Final Copy` is gated by validation plus the `Final copy confirmation` checkbox.
-9. Tick final-copy confirmation, then click `Submit Final Copy`; show that it queues and runs the dry-run job and enters a waiting-for-receipt state.
-10. Click `Simulate received BIR receipt`; show the submission record changes to `Confirmed`.
+2. Confirm the sidebar shows `Dashboard`, `Profiles`, and `Settings`; the active profile is shown at the bottom-left of the sidebar.
+3. If no profile is saved, show that the Dashboard’s `Tax Form Library` asks the operator to create and save a profile first.
+4. Save or choose a profile under `Profiles`, then return to `Dashboard`.
+5. On `Dashboard`, click a form tile in `Tax Form Library` to open that form’s single-column `Tax Form Flow`. Supported demo forms are `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`.
+6. Review or edit `Application data (synthetic JSON backing the XML)` and click `Save`.
+7. Click `Validate`; explain that validation renders plaintext XML, encrypts/packages the payload, and locks the form for submission readiness.
+8. Show package details on the form: filename, remote path, period, payload size, encrypted payload SHA-256, and payload path.
+9. Click `Edit` to reopen the form if changes are needed, then `Validate` again.
+10. Point out that `Print` remains disabled, while `Submit Final Copy` is gated by validation plus the `Final copy confirmation` checkbox.
+11. Tick final-copy confirmation, then click `Submit Final Copy`; show that it queues and runs the dry-run job and enters a waiting-for-receipt state.
+12. Click `Simulate received BIR receipt`; show the submission record changes to `Confirmed`.
 
 Typical macOS bundle output path after a successful Tauri build:
 

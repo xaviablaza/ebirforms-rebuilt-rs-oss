@@ -130,7 +130,11 @@ fn main() {
 #[component]
 fn App() -> impl IntoView {
     let (route, set_route) = create_signal("Dashboard".to_string());
-    let (status, set_status) = create_signal("Ready. Choose a tax form from the Dashboard.".to_string());
+    let (status, set_status) = create_signal("Ready. Create or choose a profile, then open a form from the Tax Form Library.".to_string());
+    let (theme, set_theme) = create_signal("system".to_string());
+    let (locked, set_locked) = create_signal(false);
+    let (unlock_pin, set_unlock_pin) = create_signal(String::new());
+    let (settings_pin, set_settings_pin) = create_signal(String::new());
     let (profiles, set_profiles) = create_signal(Vec::<TaxpayerProfileResponse>::new());
     let (active_profile_id, set_active_profile_id) = create_signal(None::<String>);
     let (profile, set_profile) = create_signal(ProfileInput {
@@ -160,6 +164,14 @@ fn App() -> impl IntoView {
     spawn_local(async move {
         match invoke_json("app_snapshot", json!({})).await {
             Ok(snapshot) => {
+                if let Some(saved_theme) = snapshot
+                    .get("settings")
+                    .and_then(|settings| settings.get("theme"))
+                    .and_then(|theme| theme.as_str())
+                    .and_then(normalize_theme)
+                {
+                    set_theme.set(saved_theme.to_string());
+                }
                 let loaded_profiles: Vec<TaxpayerProfileResponse> = serde_json::from_value(snapshot.get("profiles").cloned().unwrap_or_else(|| json!([]))).unwrap_or_default();
                 if active_profile_id.get_untracked().is_none() {
                     if let Some(first) = loaded_profiles.first() {
@@ -177,8 +189,78 @@ fn App() -> impl IntoView {
         profiles.get().into_iter().find(|p| Some(p.profile_id.clone()) == id)
     };
 
+    let set_theme_preference = move |theme_name: &'static str| {
+        let Some(next_theme) = normalize_theme(theme_name).map(str::to_string) else {
+            set_status.set(format!("Invalid theme preference: {theme_name}"));
+            return;
+        };
+        let previous_theme = theme.get_untracked();
+        set_theme.set(next_theme.clone());
+        set_status.set(format!("Saving {next_theme} theme preference…"));
+        spawn_local(async move {
+            match invoke_json("update_settings", json!({"theme": next_theme})).await {
+                Ok(value) => {
+                    let saved_theme = value
+                        .get("theme")
+                        .and_then(|theme| theme.as_str())
+                        .and_then(normalize_theme)
+                        .unwrap_or(theme_name);
+                    set_theme.set(saved_theme.to_string());
+                    set_status.set(format!("Theme preference saved: {saved_theme}"));
+                }
+                Err(msg) => {
+                    set_theme.set(previous_theme);
+                    set_status.set(format!("update_settings failed; theme preference reverted: {msg}"));
+                }
+            }
+        });
+    };
+
+    let lock_now = move || {
+        let pin_value = settings_pin.get_untracked();
+        if pin_value.len() != 4 || !pin_value.chars().all(|ch| ch.is_ascii_digit()) {
+            set_status.set("Enter exactly four digits before locking.".to_string());
+            return;
+        }
+        set_status.set("Saving PIN and locking app…".to_string());
+        spawn_local(async move {
+            match invoke_json("lock_init", json!({"pin": pin_value})).await {
+                Ok(_) => {
+                    set_unlock_pin.set(String::new());
+                    set_locked.set(true);
+                    set_status.set("App locked. Enter your 4-digit PIN to unlock.".to_string());
+                }
+                Err(msg) => set_status.set(format!("lock_init failed: {msg}")),
+            }
+        });
+    };
+
+    let unlock_app = move || {
+        let pin_value = unlock_pin.get_untracked();
+        if pin_value.len() != 4 || !pin_value.chars().all(|ch| ch.is_ascii_digit()) {
+            set_status.set("Enter the 4-digit PIN to unlock.".to_string());
+            return;
+        }
+        set_status.set("Checking PIN…".to_string());
+        spawn_local(async move {
+            match invoke_json("unlock_check", json!({"pin": pin_value})).await {
+                Ok(value) => {
+                    let ok = serde_json::from_value::<bool>(value).unwrap_or(false);
+                    if ok {
+                        set_unlock_pin.set(String::new());
+                        set_locked.set(false);
+                        set_status.set("Unlocked.".to_string());
+                    } else {
+                        set_status.set("Incorrect PIN.".to_string());
+                    }
+                }
+                Err(msg) => set_status.set(format!("unlock_check failed: {msg}")),
+            }
+        });
+    };
+
     view! {
-        <main class="app">
+        <main class=move || format!("app theme-{}", theme.get())>
             <aside class="sidebar">
                 <div>
                     <h1>"eBIRForms"</h1>
@@ -186,6 +268,7 @@ fn App() -> impl IntoView {
                     <nav>
                         <button on:click=move |_| set_route.set("Dashboard".to_string())>"Dashboard"</button>
                         <button on:click=move |_| set_route.set("Profiles".to_string())>"Profiles"</button>
+                        <button on:click=move |_| set_route.set("Settings".to_string())>"Settings"</button>
                     </nav>
                 </div>
                 <div class="active-profile">
@@ -203,10 +286,14 @@ fn App() -> impl IntoView {
             </aside>
             <section class="content">
                 <div class="status">{move || status.get()}</div>
-                {move || match route.get().as_str() {
+                {move || if locked.get() {
+                    view! { <LockScreen pin=unlock_pin set_pin=set_unlock_pin unlock_app=unlock_app /> }.into_view()
+                } else { match route.get().as_str() {
                     "Profiles" => view! { <Profiles profile=profile set_profile=set_profile profiles=profiles set_profiles=set_profiles set_active_profile_id=set_active_profile_id set_status=set_status /> }.into_view(),
-                    _ => view! { <Dashboard selected_form=selected_form set_selected_form=set_selected_form form_input_text=form_input_text set_form_input_text=set_form_input_text saved_form_input_text=saved_form_input_text set_saved_form_input_text=set_saved_form_input_text form_locked=form_locked set_form_locked=set_form_locked plaintext_preview=plaintext_preview set_plaintext_preview=set_plaintext_preview package_preview=package_preview set_package_preview=set_package_preview jobs=jobs set_jobs=set_jobs submissions=submissions set_submissions=set_submissions receipt_text=receipt_text set_receipt_text=set_receipt_text final_copy_confirmed=final_copy_confirmed set_final_copy_confirmed=set_final_copy_confirmed waiting_for_receipt=waiting_for_receipt set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
-                }}
+                    "Settings" => view! { <Settings theme=theme set_theme_preference=set_theme_preference pin=settings_pin set_pin=set_settings_pin lock_now=lock_now /> }.into_view(),
+                    "TaxFormFlow" => view! { <TaxFormFlow active_profile_id=active_profile_id set_route=set_route selected_form=selected_form form_input_text=form_input_text set_form_input_text=set_form_input_text saved_form_input_text=saved_form_input_text set_saved_form_input_text=set_saved_form_input_text form_locked=form_locked set_form_locked=set_form_locked plaintext_preview=plaintext_preview set_plaintext_preview=set_plaintext_preview package_preview=package_preview set_package_preview=set_package_preview jobs=jobs set_jobs=set_jobs submissions=submissions set_submissions=set_submissions receipt_text=receipt_text set_receipt_text=set_receipt_text final_copy_confirmed=final_copy_confirmed set_final_copy_confirmed=set_final_copy_confirmed waiting_for_receipt=waiting_for_receipt set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
+                    _ => view! { <Dashboard profiles=profiles active_profile_id=active_profile_id set_route=set_route selected_form=selected_form set_selected_form=set_selected_form set_form_input_text=set_form_input_text set_saved_form_input_text=set_saved_form_input_text set_form_locked=set_form_locked set_plaintext_preview=set_plaintext_preview set_package_preview=set_package_preview set_final_copy_confirmed=set_final_copy_confirmed set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
+                }}}
             </section>
         </main>
     }
@@ -299,11 +386,93 @@ fn Profiles(
     }
 }
 
+
 #[allow(clippy::too_many_arguments)]
 #[component]
 fn Dashboard(
+    profiles: ReadSignal<Vec<TaxpayerProfileResponse>>,
+    active_profile_id: ReadSignal<Option<String>>,
+    set_route: WriteSignal<String>,
     selected_form: ReadSignal<String>,
     set_selected_form: WriteSignal<String>,
+    set_form_input_text: WriteSignal<String>,
+    set_saved_form_input_text: WriteSignal<String>,
+    set_form_locked: WriteSignal<bool>,
+    set_plaintext_preview: WriteSignal<String>,
+    set_package_preview: WriteSignal<Option<PackagePreviewResponse>>,
+    set_final_copy_confirmed: WriteSignal<bool>,
+    set_waiting_for_receipt: WriteSignal<bool>,
+    set_status: WriteSignal<String>,
+) -> impl IntoView {
+    let has_active_profile = move || {
+        let id = active_profile_id.get();
+        profiles
+            .get()
+            .into_iter()
+            .any(|profile| Some(profile.profile_id) == id)
+    };
+
+    let open_form = move |code: &'static str| {
+        if !has_active_profile() {
+            set_status.set("Create a taxpayer profile, save it, then return to the Tax Form Library to create a form.".to_string());
+            set_route.set("Profiles".to_string());
+            return;
+        }
+        if let Some(option) = form_option(code) {
+            set_selected_form.set(option.code.to_string());
+            set_form_input_text.set(option.sample_input.to_string());
+            set_saved_form_input_text.set(option.sample_input.to_string());
+            set_form_locked.set(false);
+            set_plaintext_preview.set("Validate a form to preview the plaintext XML.".to_string());
+            set_package_preview.set(None);
+            set_final_copy_confirmed.set(false);
+            set_waiting_for_receipt.set(false);
+            set_status.set(format!("Opened BIR Form {}.", option.code));
+            set_route.set("TaxFormFlow".to_string());
+        }
+    };
+
+    view! {
+        <section class="dashboard-library">
+            <Panel title="Tax Form Library">
+                {move || if has_active_profile() {
+                    view! { <p>"Choose a tax form to create a filing flow for the active taxpayer profile."</p> }.into_view()
+                } else {
+                    view! {
+                        <div class="alert warning">
+                            "Create a taxpayer profile first. Save it in Profiles before creating a tax form."
+                            <div class="actions"><button on:click=move |_| set_route.set("Profiles".to_string())>"Create profile"</button></div>
+                        </div>
+                    }.into_view()
+                }}
+                <div class="form-library">
+                    {TAX_FORMS.iter().map(|option| {
+                        let code = option.code;
+                        view! {
+                            <button
+                                class=move || if selected_form.get() == code { "form-tile active" } else { "form-tile" }
+                                disabled=move || !has_active_profile()
+                                title=move || if has_active_profile() { "Open tax form flow" } else { "Create and save a taxpayer profile first" }
+                                on:click=move |_| open_form(code)
+                            >
+                                <strong>{option.code}</strong>
+                                <span>{option.name}</span>
+                                <small>{option.frequency}</small>
+                            </button>
+                        }
+                    }).collect_view()}
+                </div>
+            </Panel>
+        </section>
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+#[component]
+fn TaxFormFlow(
+    active_profile_id: ReadSignal<Option<String>>,
+    set_route: WriteSignal<String>,
+    selected_form: ReadSignal<String>,
     form_input_text: ReadSignal<String>,
     set_form_input_text: WriteSignal<String>,
     saved_form_input_text: ReadSignal<String>,
@@ -326,20 +495,6 @@ fn Dashboard(
     set_waiting_for_receipt: WriteSignal<bool>,
     set_status: WriteSignal<String>,
 ) -> impl IntoView {
-    let choose_form = move |code: &'static str| {
-        if let Some(option) = form_option(code) {
-            set_selected_form.set(option.code.to_string());
-            set_form_input_text.set(option.sample_input.to_string());
-            set_saved_form_input_text.set(option.sample_input.to_string());
-            set_form_locked.set(false);
-            set_plaintext_preview.set("Validate a form to preview the plaintext XML.".to_string());
-            set_package_preview.set(None);
-            set_final_copy_confirmed.set(false);
-            set_waiting_for_receipt.set(false);
-            set_status.set(format!("Selected BIR Form {}.", option.code));
-        }
-    };
-
     let save_form = move || {
         set_saved_form_input_text.set(form_input_text.get_untracked());
         set_status.set("Saved current form changes locally in the demo session.".to_string());
@@ -353,6 +508,10 @@ fn Dashboard(
     };
 
     let validate_form = move || {
+        if active_profile_id.get_untracked().is_none() {
+            set_status.set("Create and save a taxpayer profile before validating a tax form.".to_string());
+            return;
+        }
         let form_code = selected_form.get_untracked();
         let input_text = form_input_text.get_untracked();
         let Ok(input_json) = serde_json::from_str::<Value>(&input_text) else {
@@ -392,6 +551,10 @@ fn Dashboard(
     };
 
     let queue_dry_run = move || {
+        if active_profile_id.get_untracked().is_none() {
+            set_status.set("Create and save a taxpayer profile before queueing a tax form.".to_string());
+            return;
+        }
         let form_code = selected_form.get_untracked();
         let Ok(input_json) = serde_json::from_str::<Value>(&saved_form_input_text.get_untracked()) else {
             set_status.set("Queue failed: saved form JSON is invalid.".to_string());
@@ -444,6 +607,10 @@ fn Dashboard(
     };
 
     let submit_final_copy = move || {
+        if active_profile_id.get_untracked().is_none() {
+            set_status.set("Create and save a taxpayer profile before submitting a final copy.".to_string());
+            return;
+        }
         if !form_locked.get_untracked() || package_preview.get_untracked().is_none() {
             set_status.set("Submit Final Copy requires a fully validated form first.".to_string());
             return;
@@ -482,23 +649,10 @@ fn Dashboard(
     };
 
     view! {
-        <section class="card-grid">
-            <Panel title="Tax Form Library">
-                <p>"Choose the BIR form and filing period, then work through the form’s action buttons. Package, Jobs, Submissions, and Receipt are embedded inside this Tax Form flow."</p>
-                <div class="form-library">
-                    {TAX_FORMS.iter().map(|option| {
-                        let code = option.code;
-                        view! {
-                            <button class=move || if selected_form.get() == code { "form-tile active" } else { "form-tile" } on:click=move |_| choose_form(code)>
-                                <strong>{option.code}</strong>
-                                <span>{option.name}</span>
-                                <small>{option.frequency}</small>
-                            </button>
-                        }
-                    }).collect_view()}
-                </div>
-            </Panel>
-
+        <section class="form-flow-column">
+            <div class="actions">
+                <button on:click=move |_| set_route.set("Dashboard".to_string())>"← Tax Form Library"</button>
+            </div>
             <Panel title="Tax Form Flow">
                 <div class="record-header">
                     <div>
@@ -589,6 +743,70 @@ fn PackageDetails(package_preview: ReadSignal<Option<PackagePreviewResponse>>) -
 }
 
 #[component]
+fn LockScreen<F>(pin: ReadSignal<String>, set_pin: WriteSignal<String>, unlock_app: F) -> impl IntoView
+where
+    F: Fn() + Copy + 'static,
+{
+    view! {
+        <section class="lock-screen">
+            <div class="lock-card">
+                <div class="lock-icon">"🔒"</div>
+                <h2>"App locked"</h2>
+                <p class="muted">"Enter your 4-digit PIN to unlock the desktop UI."</p>
+                <input
+                    class="pin-input"
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="••••"
+                    prop:value=pin
+                    on:input=move |ev| set_pin.set(four_digit_pin(event_target_value(&ev)))
+                />
+                <button on:click=move |_| unlock_app()>"Unlock"</button>
+            </div>
+        </section>
+    }
+}
+
+#[component]
+fn Settings<T, L>(
+    theme: ReadSignal<String>,
+    set_theme_preference: T,
+    pin: ReadSignal<String>,
+    set_pin: WriteSignal<String>,
+    lock_now: L,
+) -> impl IntoView
+where
+    T: Fn(&'static str) + Copy + 'static,
+    L: Fn() + Copy + 'static,
+{
+    view! {
+        <Panel title="Settings">
+            <p>"Dry-run remains the default. Live submission is still gated by validation, final-copy confirmation, and receipt matching."</p>
+            <h3>"Theme"</h3>
+            <div class="theme-controls">
+                <button class=move || if theme.get() == "system" { "active" } else { "" } on:click=move |_| set_theme_preference("system")>"Use system theme"</button>
+                <button class=move || if theme.get() == "dark" { "active" } else { "" } on:click=move |_| set_theme_preference("dark")>"Use dark theme"</button>
+                <button class=move || if theme.get() == "light" { "active" } else { "" } on:click=move |_| set_theme_preference("light")>"Use light theme"</button>
+            </div>
+            <h3>"Lock"</h3>
+            <p class="muted">"Set a 4-digit PIN, then lock the UI. The app shows a phone-style lock screen until the PIN is entered."</p>
+            <div class="pin-row">
+                <input
+                    type="password"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="4-digit PIN"
+                    prop:value=pin
+                    on:input=move |ev| set_pin.set(four_digit_pin(event_target_value(&ev)))
+                />
+                <button on:click=move |_| lock_now()>"Lock app"</button>
+            </div>
+        </Panel>
+    }
+}
+
+#[component]
 fn Panel(title: &'static str, children: Children) -> impl IntoView {
     view! { <section class="panel"><h2>{title}</h2>{children()}</section> }
 }
@@ -623,6 +841,23 @@ async fn refresh_jobs_and_submissions(
         },
         Err(msg) => set_status.set(format!("list_submissions failed: {msg}")),
     }
+}
+
+fn normalize_theme(value: &str) -> Option<&'static str> {
+    match value.to_ascii_lowercase().as_str() {
+        "light" => Some("light"),
+        "dark" => Some("dark"),
+        "system" => Some("system"),
+        _ => None,
+    }
+}
+
+fn four_digit_pin(value: String) -> String {
+    value
+        .chars()
+        .filter(|ch| ch.is_ascii_digit())
+        .take(4)
+        .collect()
 }
 
 fn event_target_checked(ev: &web_sys::Event) -> bool {

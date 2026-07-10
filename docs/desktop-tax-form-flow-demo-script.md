@@ -5,7 +5,7 @@ Use this talk track for the upgraded multi-form desktop demo. The app is still a
 ## Setup before the call
 
 1. Launch with `mise run desktop-dev`, or open the built app.
-2. Keep the app wide enough to show the left sidebar and dashboard.
+2. Keep the app wide enough to show the left sidebar, dashboard library, and single-column form flow.
 3. Start on `Dashboard`.
 4. Frame all values as synthetic demo data. Do not represent this as a live filing.
 
@@ -18,23 +18,25 @@ Use this talk track for the upgraded multi-form desktop demo. The app is still a
 Show:
 
 1. Point to the left sidebar.
-2. Confirm it only contains `Dashboard` and `Profiles`.
+2. Confirm it contains `Dashboard`, `Profiles`, and the restored `Settings` tab.
 3. Point to the active profile area at bottom left.
 
 Say:
 
-> “The sidebar is intentionally simple: Dashboard for filing work, Profiles for taxpayer setup. The active taxpayer profile is always visible at the bottom left so the operator knows which taxpayer context they are filing under.”
+> “The sidebar is intentionally simple: Dashboard for the tax form library, Profiles for taxpayer setup, and Settings for theme and lock controls. The active taxpayer profile is always visible at the bottom left so the operator knows which taxpayer context they are filing under.”
 
 ## 2. Tax Form Library
 
 Show:
 
-1. On `Dashboard`, point to `Tax Form Library`.
-2. Choose several forms, for example `2000`, `2550Q`, `0619E`, `1601EQ`, `1702Q`, then return to `1601C` or any form you want to demo.
+1. On `Dashboard`, point to `Tax Form Library` as the only dashboard content.
+2. If no taxpayer profile is saved, show the warning telling the operator to create and save a profile first.
+3. Save or choose a profile under `Profiles`, then return to `Dashboard`.
+4. Choose several forms, for example `2000`, `2550Q`, `0619E`, `1601EQ`, `1702Q`, then return to `1601C` or any form you want to demo. Each click opens a single-column `Tax Form Flow`.
 
 Say:
 
-> “The library now supports multiple form families backed by XML templates captured from the original eBIRForms shape. These are synthetic fixtures, but the plaintext output keeps the same field-token style so it looks close enough to the proprietary application output for demo review.”
+> “The dashboard is now only the Tax Form Library. It will not let an operator create a tax form until a taxpayer profile has been saved. Once a profile exists, selecting a form opens that form’s single-column Tax Form Flow. The library supports multiple form families backed by XML templates captured from the original eBIRForms shape.”
 
 Supported demo forms:
 
@@ -49,14 +51,13 @@ Supported demo forms:
 
 Show:
 
-1. Select a form and filing period by choosing a tile.
-2. Point to `Application data (synthetic JSON backing the XML)`.
+1. In the selected form’s single-column `Tax Form Flow`, point to `Application data (synthetic JSON backing the XML)`.
 3. Make a tiny edit if useful.
 4. Click `Save`.
 
 Say:
 
-> “The editor is deliberately labeled synthetic. It lets us show that the application can persist current form changes in the session before validation. In a production version this can become a friendlier field-by-field form, but the backend contract is already form-code agnostic.”
+> “The form view is intentionally single-column: actions, final-copy confirmation, form data, package details, XML preview, jobs, submissions, and receipt matching all flow downward on the selected tax form. The editor is deliberately labeled synthetic for this demo.”
 
 ## 4. Validate locks the form and packages it
 
@@ -120,6 +121,18 @@ Show:
 Say:
 
 > “Package, jobs, submissions, and receipts are no longer separate navigation destinations. They are part of the tax form flow. Submit Final Copy creates an idempotent dry-run submission and waits for the BIR receipt; the simulated receipt is then matched back to the local submission record by filename.”
+
+## 8. Settings regression check
+
+Show:
+
+1. Click `Settings` in the sidebar.
+2. Toggle system/dark/light theme.
+3. Optionally set a 4-digit PIN and lock/unlock the app.
+
+Say:
+
+> “Settings is back in the navigation. Theme preference and the simple lock screen remain available while the filing workflow stays focused on Dashboard, Profiles, and Settings.”
 
 ## Closing line
 

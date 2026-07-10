@@ -19,8 +19,10 @@ Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Fo
 - Simplify left sidebar to:
   - `Dashboard`
   - `Profiles`
+  - `Settings`
 - Show active profile at the bottom-left of the sidebar.
-- Dashboard contains a `Tax Form Library` for choosing the tax form and filing period/sample.
+- Dashboard contains only a `Tax Form Library`; if no active saved profile exists, the library tells the operator to create and save a profile before creating a form.
+- Selecting a form opens the selected Tax Form flow in a single-column form view.
 - Package, Jobs, Submissions, and Receipt are abstracted into the selected Tax Form flow rather than separate sidebar destinations.
 - Form action buttons mirror original eBIRForms terminology:
   - `Validate` renders plaintext XML, encrypts/packages payload, shows package details, and locks the form.
