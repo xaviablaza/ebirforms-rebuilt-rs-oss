@@ -1,0 +1,10 @@
+code = "1702Q"
+version = "v2018C"
+display_name = "Quarterly Income Tax Return for Corporations"
+category = "income_tax"
+frequency = "quarterly"
+remote_directory = "/1702Q/"
+filename_pattern = "{tin}-1702Qv2018C-{period_mmYYYY}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = false
+requires_vat_registered = false

@@ -37,7 +37,7 @@ The macOS binary will be at `./target/release/ebirforms-cli`.
 
 ## Desktop app
 
-A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides screens for dashboard, profiles, 1601C package/queue, jobs, submissions, logs, settings, and PIN setup. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run and automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain.
+A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard` and `Profiles`. The dashboard contains a Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; package, queue/job, submission, and receipt actions are embedded in the selected tax form flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run and automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain.
 
 ![eBIRForms Desktop dashboard running on Linux](docs/assets/desktop-linux-dashboard.png)
 
@@ -65,19 +65,18 @@ mise run desktop-check
 
 ### Desktop demo walkthrough
 
-A fuller presenter talk track lives in [`docs/desktop-1601c-demo-script.md`](docs/desktop-1601c-demo-script.md).
+A fuller presenter talk track lives in [`docs/desktop-tax-form-flow-demo-script.md`](docs/desktop-tax-form-flow-demo-script.md).
 
 1. Launch: `mise run desktop-dev` or open the built app.
-2. Click `Settings` → `Use dark theme`, then `Use light theme`, then `Use system theme`.
-3. Click `1601C`.
-4. Review Filing period and return type, Taxpayer details, Classification, Tax calculation lines, and Payment/credits fields.
-5. Click `Render plaintext preview`; explain this is the XML the human verifies before encryption and point to the `Verification checklist`.
-6. Click `Package dry-run`; show filename, remote path, payload size, plaintext SHA-256, encrypted payload SHA-256, payload path, and manifest path.
-7. Click `Queue dry-run job`.
-8. Click `Jobs` → `Run dry-run queue`; show the job card status/attempts.
-9. Click `Submissions` → `Refresh submissions`; show the dry-run record, `AwaitingReceipt`, remote path, and payload hash.
-10. Click `Receipt` → `Use generated BIR receipt for latest package` → `Match receipt`.
-11. Return to `Submissions` → `Refresh submissions`; show the record is `Confirmed`.
+2. Confirm the sidebar only shows `Dashboard` and `Profiles`; the active profile is shown at the bottom-left of the sidebar.
+3. On `Dashboard`, use `Tax Form Library` to choose a filing form and period. Supported demo forms are `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`.
+4. Review or edit `Application data (synthetic JSON backing the XML)` and click `Save`.
+5. Click `Validate`; explain that validation renders plaintext XML, encrypts/packages the payload, and locks the form for submission readiness.
+6. Show package details on the form: filename, remote path, period, payload size, encrypted payload SHA-256, and payload path.
+7. Click `Edit` to reopen the form if changes are needed, then `Validate` again.
+8. Point out that `Print` and `Submit Final Copy` are intentionally disabled in the dry-run demo.
+9. Click `Queue dry-run`, then `Run dry-run queue`; show the embedded job/submission activity.
+10. Click `Simulate receipt and match`; show the submission record changes to `Confirmed`.
 
 Typical macOS bundle output path after a successful Tauri build:
 

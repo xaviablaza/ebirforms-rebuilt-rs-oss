@@ -1,0 +1,10 @@
+code = "1601EQ"
+version = ""
+display_name = "Quarterly Remittance Return of Creditable Income Taxes Withheld (Expanded)"
+category = "expanded_withholding"
+frequency = "quarterly"
+remote_directory = "/1601EQ/"
+filename_pattern = "{tin}-{form_code}-{period_mmYYYY}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = true
+requires_vat_registered = false

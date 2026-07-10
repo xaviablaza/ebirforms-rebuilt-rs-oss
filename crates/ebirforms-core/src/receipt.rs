@@ -220,29 +220,32 @@ fn bir_received_at(fields: &BTreeMap<String, String>) -> Option<String> {
 }
 
 fn infer_form_code(filename: &str) -> Option<String> {
-    if filename.contains("1601Cv2018") || filename.contains("1601C") {
-        Some("1601C".to_string())
-    } else {
-        None
+    for form_code in ["1601EQ", "1601C", "2550Q", "0619E", "1702Q", "2000"] {
+        if filename
+            .to_ascii_uppercase()
+            .contains(&form_code.to_ascii_uppercase())
+        {
+            return Some(form_code.to_string());
+        }
     }
+    None
 }
 
 fn infer_period_mm_yyyy(filename: &str) -> Option<String> {
-    filename
-        .split('-')
-        .find_map(|part| period_from_dash_segment(part))
-}
-
-fn period_from_dash_segment(segment: &str) -> Option<String> {
-    let candidate: String = segment.chars().take(6).collect();
-    if candidate.len() != 6 || !candidate.chars().all(|ch| ch.is_ascii_digit()) {
-        return None;
+    let quarterly_month_period = Regex::new(r"-(\d{6}Q[1-4])(?:V\d+|#|\.|$)").ok()?;
+    if let Some(caps) = quarterly_month_period.captures(filename) {
+        return Some(caps[1].to_string());
     }
 
-    match segment.chars().nth(6) {
-        Some('V' | 'v' | '.') | None => Some(candidate),
-        _ => None,
+    let quarterly_year_period = Regex::new(r"-(\d{4}Q[1-4])(?:V\d+|#|\.|$)").ok()?;
+    if let Some(caps) = quarterly_year_period.captures(filename) {
+        return Some(caps[1].to_string());
     }
+
+    let monthly_period = Regex::new(r"-(\d{6})(?:V\d+|#|\.|$)").ok()?;
+    monthly_period
+        .captures(filename)
+        .map(|caps| caps[1].to_string())
 }
 
 fn is_accepted_status(value: &str) -> bool {
@@ -322,6 +325,51 @@ Bureau of Internal Revenue"#,
             receipt.receipt_id,
             "BIR-010961925000-1601Cv2018-012026V1.xml"
         );
+    }
+
+    #[test]
+    fn infers_form_and_period_from_supported_bir_filenames() {
+        let cases = [
+            (
+                "12345678900000-1601C-062026#authorized@example.test#.xml",
+                "1601C",
+                "062026",
+            ),
+            (
+                "12345678900000-2000v2018-022026#authorized@example.test#.xml",
+                "2000",
+                "022026",
+            ),
+            (
+                "12345678900000-2550Qv2024-122026Q1#authorized@example.test#.xml",
+                "2550Q",
+                "122026Q1",
+            ),
+            (
+                "12345678900000-0619E-022026#authorized@example.test#.xml",
+                "0619E",
+                "022026",
+            ),
+            (
+                "12345678900000-1601EQ-2026Q1#authorized@example.test#.xml",
+                "1601EQ",
+                "2026Q1",
+            ),
+            (
+                "12345678900000-1702Qv2018C-2026Q1#authorized@example.test#.xml",
+                "1702Q",
+                "2026Q1",
+            ),
+        ];
+
+        for (filename, form_code, period) in cases {
+            let receipt = parse_receipt(&format!(
+                "File name: {filename}\nDate received by BIR: 15 April 2026\nTime received by BIR: 03:10 PM\n"
+            ))
+            .unwrap();
+            assert_eq!(receipt.form_code, form_code);
+            assert_eq!(receipt.period_mm_yyyy, period);
+        }
     }
 
     #[test]

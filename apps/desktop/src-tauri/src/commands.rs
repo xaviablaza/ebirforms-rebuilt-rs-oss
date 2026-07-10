@@ -124,13 +124,22 @@ pub fn unlock_check(app: AppHandle, pin: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub fn render_1601c(input: Value) -> Result<String, String> {
-    render_form("1601C", &input).map_err(|err| err.to_string())
+pub fn render_tax_form(form_code: String, input: Value) -> Result<String, String> {
+    render_form(&form_code, &input).map_err(|err| err.to_string())
 }
 
 #[tauri::command]
-pub fn package_1601c(app: AppHandle, input: Value) -> Result<PackagePreview, String> {
-    let package = build_submission_package("1601C", &input).map_err(|err| err.to_string())?;
+pub fn render_1601c(input: Value) -> Result<String, String> {
+    render_tax_form("1601C".to_string(), input)
+}
+
+#[tauri::command]
+pub fn package_tax_form(
+    app: AppHandle,
+    form_code: String,
+    input: Value,
+) -> Result<PackagePreview, String> {
+    let package = build_submission_package(&form_code, &input).map_err(|err| err.to_string())?;
     let artifacts = state::artifacts_dir(&app)?;
     let safe_stem = sanitize_filename(&package.manifest.filename);
     let payload_path = artifacts.join(&safe_stem);
@@ -144,10 +153,24 @@ pub fn package_1601c(app: AppHandle, input: Value) -> Result<PackagePreview, Str
 }
 
 #[tauri::command]
-pub fn queue_1601c_dry_run(app: AppHandle, input: Value) -> Result<SubmissionJob, String> {
+pub fn package_1601c(app: AppHandle, input: Value) -> Result<PackagePreview, String> {
+    package_tax_form(app, "1601C".to_string(), input)
+}
+
+#[tauri::command]
+pub fn queue_tax_form_dry_run(
+    app: AppHandle,
+    form_code: String,
+    input: Value,
+) -> Result<SubmissionJob, String> {
     state::job_store(&app)?
-        .enqueue("1601C", &input, JobMode::DryRun, 3)
+        .enqueue(&form_code, &input, JobMode::DryRun, 3)
         .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
+pub fn queue_1601c_dry_run(app: AppHandle, input: Value) -> Result<SubmissionJob, String> {
+    queue_tax_form_dry_run(app, "1601C".to_string(), input)
 }
 
 #[tauri::command]

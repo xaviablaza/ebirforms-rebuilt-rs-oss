@@ -46,6 +46,31 @@ impl FormDefinition {
                 include_str!("../forms/1601C/mapping.toml"),
                 include_str!("../forms/1601C/template.xml"),
             ),
+            "2000" => Self::from_static(
+                include_str!("../forms/2000/form.toml"),
+                include_str!("../forms/2000/mapping.toml"),
+                include_str!("../forms/2000/template.xml"),
+            ),
+            "2550Q" => Self::from_static(
+                include_str!("../forms/2550Q/form.toml"),
+                include_str!("../forms/2550Q/mapping.toml"),
+                include_str!("../forms/2550Q/template.xml"),
+            ),
+            "0619E" => Self::from_static(
+                include_str!("../forms/0619E/form.toml"),
+                include_str!("../forms/0619E/mapping.toml"),
+                include_str!("../forms/0619E/template.xml"),
+            ),
+            "1601EQ" => Self::from_static(
+                include_str!("../forms/1601EQ/form.toml"),
+                include_str!("../forms/1601EQ/mapping.toml"),
+                include_str!("../forms/1601EQ/template.xml"),
+            ),
+            "1702Q" => Self::from_static(
+                include_str!("../forms/1702Q/form.toml"),
+                include_str!("../forms/1702Q/mapping.toml"),
+                include_str!("../forms/1702Q/template.xml"),
+            ),
             other => Err(FormError::UnsupportedForm(other.to_string())),
         }
     }
@@ -117,21 +142,26 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    fn fixture_dir() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/1601C")
+    fn fixture_dir(form_code: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures")
+            .join(form_code)
     }
 
     #[test]
-    fn renders_1601c_public_fixture_byte_stable() {
-        let input: Value = serde_json::from_slice(
-            &fs::read(fixture_dir().join("input.json")).expect("read public input"),
-        )
-        .expect("parse public input");
-        let expected = fs::read_to_string(fixture_dir().join("synthetic_plaintext.xml"))
-            .expect("read expected plaintext");
+    fn renders_public_fixtures_byte_stable() {
+        for form_code in ["1601C", "2000", "2550Q", "0619E", "1601EQ", "1702Q"] {
+            let input: Value = serde_json::from_slice(
+                &fs::read(fixture_dir(form_code).join("input.json")).expect("read public input"),
+            )
+            .expect("parse public input");
+            let expected =
+                fs::read_to_string(fixture_dir(form_code).join("synthetic_plaintext.xml"))
+                    .expect("read expected plaintext");
 
-        let rendered = render_form("1601C", &input).expect("render 1601C");
-        assert_eq!(rendered, expected);
+            let rendered = render_form(form_code, &input).expect("render fixture");
+            assert_eq!(rendered, expected, "{form_code} fixture drifted");
+        }
     }
 
     #[test]

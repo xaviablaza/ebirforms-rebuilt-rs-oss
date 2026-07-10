@@ -1,0 +1,10 @@
+code = "2550Q"
+version = "v2024"
+display_name = "Quarterly Value-Added Tax Return"
+category = "vat"
+frequency = "quarterly"
+remote_directory = "/2550Q/"
+filename_pattern = "{tin}-2550Qv2024-{period_mmYYYY}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = false
+requires_vat_registered = true

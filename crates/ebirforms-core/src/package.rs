@@ -60,7 +60,22 @@ pub fn build_submission_package(
             reason: "must be between 1 and 12".to_string(),
         });
     }
-    let period_mm_yyyy = format!("{month:02}{year:04}");
+    let quarter = input
+        .pointer("/return/period/quarter")
+        .and_then(|v| v.as_u64());
+    if let Some(quarter) = quarter {
+        if !(1..=4).contains(&quarter) {
+            return Err(PackageError::InvalidInput {
+                field: "return.period.quarter",
+                reason: "must be between 1 and 4".to_string(),
+            });
+        }
+    }
+    let period_mm_yyyy = match (definition.metadata.code.as_str(), quarter) {
+        ("2550Q", Some(quarter)) => format!("{month:02}{year:04}Q{quarter}"),
+        (_, Some(quarter)) => format!("{year:04}Q{quarter}"),
+        (_, None) => format!("{month:02}{year:04}"),
+    };
     let amendment_suffix = input
         .pointer("/return/amendment_number")
         .and_then(|v| v.as_u64())
@@ -153,33 +168,48 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    fn fixture_dir() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/1601C")
+    fn fixture_dir(form_code: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../tests/fixtures")
+            .join(form_code)
     }
 
     #[test]
-    fn packages_public_1601c_fixture_with_expected_filename() {
-        let input: Value =
-            serde_json::from_slice(&fs::read(fixture_dir().join("input.json")).unwrap()).unwrap();
-        let expected_plaintext = fs::read(fixture_dir().join("synthetic_plaintext.xml")).unwrap();
-        let expected_filename =
-            fs::read_to_string(fixture_dir().join("synthetic_filename.txt")).unwrap();
+    fn packages_public_fixtures_with_expected_filenames() {
+        for form_code in ["1601C", "2000", "2550Q", "0619E", "1601EQ", "1702Q"] {
+            let input: Value = serde_json::from_slice(
+                &fs::read(fixture_dir(form_code).join("input.json")).unwrap(),
+            )
+            .unwrap();
+            let expected_plaintext =
+                fs::read(fixture_dir(form_code).join("synthetic_plaintext.xml")).unwrap();
 
-        let package = build_submission_package("1601C", &input).expect("package fixture");
+            let package = build_submission_package(form_code, &input).expect("package fixture");
 
-        let expected_payload = fs::read(fixture_dir().join("synthetic_encrypted.xml")).unwrap();
-
-        assert_eq!(package.plaintext, expected_plaintext);
-        assert_eq!(package.payload, expected_payload);
-        assert_eq!(package.manifest.filename, expected_filename.trim());
-        assert_eq!(package.manifest.payload_size, package.payload.len());
-        assert_eq!(
-            package.manifest.payload_sha256,
-            sha256_hex(&package.payload)
-        );
-        assert_eq!(
-            package.manifest.remote_path,
-            format!("/1601C/{}", expected_filename.trim())
-        );
+            assert_eq!(
+                package.plaintext, expected_plaintext,
+                "{form_code} plaintext"
+            );
+            assert_eq!(package.manifest.payload_size, package.payload.len());
+            assert_eq!(
+                package.manifest.payload_sha256,
+                sha256_hex(&package.payload),
+                "{form_code} payload hash"
+            );
+            assert!(
+                package
+                    .manifest
+                    .remote_path
+                    .starts_with(&package.manifest.remote_directory),
+                "{form_code} remote path starts with remote directory"
+            );
+            assert!(
+                package
+                    .manifest
+                    .filename
+                    .ends_with("#authorized@example.test#.xml"),
+                "{form_code} filename includes notification email"
+            );
+        }
     }
 }

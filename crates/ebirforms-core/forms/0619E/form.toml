@@ -1,0 +1,10 @@
+code = "0619E"
+version = ""
+display_name = "Monthly Remittance Form of Creditable Income Taxes Withheld (Expanded)"
+category = "expanded_withholding"
+frequency = "monthly"
+remote_directory = "/0619E/"
+filename_pattern = "{tin}-{form_code}-{period_mmYYYY}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = true
+requires_vat_registered = false

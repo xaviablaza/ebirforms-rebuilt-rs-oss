@@ -1,0 +1,10 @@
+code = "2000"
+version = "v2018"
+display_name = "Documentary Stamp Tax Declaration/Return"
+category = "documentary_stamp"
+frequency = "monthly"
+remote_directory = "/2000/"
+filename_pattern = "{tin}-2000v2018-{period_mmYYYY}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = false
+requires_vat_registered = false
