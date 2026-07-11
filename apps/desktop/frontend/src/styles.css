@@ -96,6 +96,10 @@ h2 { margin-top: 24px; }
 .bir-barcode { display: grid; place-items: center; font-family: ui-monospace, monospace; letter-spacing: .08em; }
 .bir-grid { display: grid; }
 .top-strip { grid-template-columns: 1.3fr 1fr 1fr 1fr .6fr; border-bottom: 2px solid #111; }
+.physical-top-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: 2px solid #111; }
+.physical-background-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.physical-schedule-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.multi-form-title .bir-form-no strong { font-size: 34px; }
 .background-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .bir-box { border-right: 1px solid #111; border-bottom: 1px solid #111; padding: 7px 9px; margin: 0; color: #111; font-weight: 700; background: #e6e6e6; }
 .bir-box.span-2 { grid-column: span 2; }
@@ -118,8 +122,10 @@ h2 { margin-top: 24px; }
 .payment-row { display: grid; grid-template-columns: 220px 1fr 1fr 1fr 180px; gap: 0; border-bottom: 1px solid #111; background: #eee; }
 .payment-row strong, .payment-row input { border-right: 1px solid #111; margin: 0; border-radius: 0; }
 .payment-row strong { padding: 8px; }
+.payment-field-row { grid-template-columns: 54px minmax(260px, 1fr) 220px; }
+.muted-empty { color: #444; font-style: italic; }
 .amount-input { font-variant-numeric: tabular-nums; text-align: right; }
-@media (max-width: 1180px) { .bir-title-grid, .top-strip, .background-grid, .payment-row { grid-template-columns: 1fr; } .bir-box.span-2 { grid-column: span 1; } .bir-row, .bir-row.specify-row { grid-template-columns: 48px 1fr; } .bir-row input, .bir-row .specify-input { grid-column: 1 / -1; } }
+@media (max-width: 1180px) { .bir-title-grid, .top-strip, .physical-top-strip, .background-grid, .physical-background-grid, .physical-schedule-grid, .payment-row { grid-template-columns: 1fr; } .bir-box.span-2 { grid-column: span 1; } .bir-row, .bir-row.specify-row, .payment-field-row { grid-template-columns: 48px 1fr; } .bir-row input, .bir-row .specify-input { grid-column: 1 / -1; } }
 label { display: block; font-weight: 700; color: var(--muted); margin: 0 0 12px; }
 input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 6px; background: var(--surface-muted); color: var(--text); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }

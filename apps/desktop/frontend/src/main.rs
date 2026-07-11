@@ -3,7 +3,9 @@
 use leptos::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::spawn_local;
 
 #[wasm_bindgen(module = "/src/tauri.js")]
@@ -28,12 +30,42 @@ struct TaxFormOption {
 }
 
 const TAX_FORMS: &[TaxFormOption] = &[
-    TaxFormOption { code: "1601C", name: "Monthly Remittance Return of Income Taxes Withheld on Compensation", frequency: "Monthly", sample_input: FORM_1601C },
-    TaxFormOption { code: "2000", name: "Documentary Stamp Tax Declaration/Return", frequency: "Monthly", sample_input: FORM_2000 },
-    TaxFormOption { code: "2550Q", name: "Quarterly Value-Added Tax Return", frequency: "Quarterly", sample_input: FORM_2550Q },
-    TaxFormOption { code: "0619E", name: "Monthly Remittance Form of Creditable Income Taxes Withheld (Expanded)", frequency: "Monthly", sample_input: FORM_0619E },
-    TaxFormOption { code: "1601EQ", name: "Quarterly Remittance Return of Creditable Income Taxes Withheld (Expanded)", frequency: "Quarterly", sample_input: FORM_1601EQ },
-    TaxFormOption { code: "1702Q", name: "Quarterly Income Tax Return for Corporations", frequency: "Quarterly", sample_input: FORM_1702Q },
+    TaxFormOption {
+        code: "1601C",
+        name: "Monthly Remittance Return of Income Taxes Withheld on Compensation",
+        frequency: "Monthly",
+        sample_input: FORM_1601C,
+    },
+    TaxFormOption {
+        code: "2000",
+        name: "Documentary Stamp Tax Declaration/Return",
+        frequency: "Monthly",
+        sample_input: FORM_2000,
+    },
+    TaxFormOption {
+        code: "2550Q",
+        name: "Quarterly Value-Added Tax Return",
+        frequency: "Quarterly",
+        sample_input: FORM_2550Q,
+    },
+    TaxFormOption {
+        code: "0619E",
+        name: "Monthly Remittance Form of Creditable Income Taxes Withheld (Expanded)",
+        frequency: "Monthly",
+        sample_input: FORM_0619E,
+    },
+    TaxFormOption {
+        code: "1601EQ",
+        name: "Quarterly Remittance Return of Creditable Income Taxes Withheld (Expanded)",
+        frequency: "Quarterly",
+        sample_input: FORM_1601EQ,
+    },
+    TaxFormOption {
+        code: "1702Q",
+        name: "Quarterly Income Tax Return for Corporations",
+        frequency: "Quarterly",
+        sample_input: FORM_1702Q,
+    },
 ];
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -130,7 +162,12 @@ fn main() {
 #[component]
 fn App() -> impl IntoView {
     let (route, set_route) = create_signal("Dashboard".to_string());
-    let (status, set_status) = create_signal("Ready. Create or choose a profile, then open a form from the Tax Form Library.".to_string());
+    let (previous_route, set_previous_route) = create_signal("Dashboard".to_string());
+    let (last_route, set_last_route) = create_signal("Dashboard".to_string());
+    let (status, set_status) = create_signal(
+        "Ready. Create or choose a profile, then open a form from the Tax Form Library."
+            .to_string(),
+    );
     let (theme, set_theme) = create_signal("system".to_string());
     let (locked, set_locked) = create_signal(false);
     let (unlock_pin, set_unlock_pin) = create_signal(String::new());
@@ -150,16 +187,55 @@ fn App() -> impl IntoView {
 
     let initial_form = TAX_FORMS[0];
     let (selected_form, set_selected_form) = create_signal(initial_form.code.to_string());
-    let (form_input_text, set_form_input_text) = create_signal(initial_form.sample_input.to_string());
-    let (saved_form_input_text, set_saved_form_input_text) = create_signal(initial_form.sample_input.to_string());
+    let (form_input_text, set_form_input_text) =
+        create_signal(initial_form.sample_input.to_string());
+    let (saved_form_input_text, set_saved_form_input_text) =
+        create_signal(initial_form.sample_input.to_string());
     let (form_locked, set_form_locked) = create_signal(false);
-    let (plaintext_preview, set_plaintext_preview) = create_signal("Validate a form to preview the plaintext XML.".to_string());
+    let (plaintext_preview, set_plaintext_preview) =
+        create_signal("Validate a form to preview the plaintext XML.".to_string());
     let (package_preview, set_package_preview) = create_signal(None::<PackagePreviewResponse>);
     let (jobs, set_jobs) = create_signal(Vec::<JobResponse>::new());
     let (submissions, set_submissions) = create_signal(Vec::<SafeSubmissionRecordResponse>::new());
-    let (receipt_text, set_receipt_text) = create_signal(sample_bir_receipt_for_filename("12345678900000-1601C-062026#authorized@example.test#.xml"));
+    let (receipt_text, set_receipt_text) = create_signal(sample_bir_receipt_for_filename(
+        "12345678900000-1601C-062026#authorized@example.test#.xml",
+    ));
     let (final_copy_confirmed, set_final_copy_confirmed) = create_signal(false);
     let (waiting_for_receipt, set_waiting_for_receipt) = create_signal(false);
+
+    create_effect(move |_| {
+        let current = route.get();
+        let last = last_route.get_untracked();
+        if current != last {
+            set_previous_route.set(last);
+            set_last_route.set(current);
+        }
+    });
+
+    if let Some(window) = web_sys::window() {
+        let keydown = Closure::<dyn FnMut(web_sys::KeyboardEvent)>::new(
+            move |event: web_sys::KeyboardEvent| {
+                if (event.meta_key() || event.ctrl_key()) && event.key() == "ArrowLeft" {
+                    event.prevent_default();
+                    let destination = previous_route.get_untracked();
+                    if route.get_untracked() != destination {
+                        set_route.set(destination.clone());
+                        set_status.set(format!("Returned to {destination}."));
+                    }
+                }
+            },
+        );
+        let _ =
+            window.add_event_listener_with_callback("keydown", keydown.as_ref().unchecked_ref());
+        on_cleanup(move || {
+            if let Some(window) = web_sys::window() {
+                let _ = window.remove_event_listener_with_callback(
+                    "keydown",
+                    keydown.as_ref().unchecked_ref(),
+                );
+            }
+        });
+    }
 
     spawn_local(async move {
         match invoke_json("app_snapshot", json!({})).await {
@@ -172,7 +248,13 @@ fn App() -> impl IntoView {
                 {
                     set_theme.set(saved_theme.to_string());
                 }
-                let loaded_profiles: Vec<TaxpayerProfileResponse> = serde_json::from_value(snapshot.get("profiles").cloned().unwrap_or_else(|| json!([]))).unwrap_or_default();
+                let loaded_profiles: Vec<TaxpayerProfileResponse> = serde_json::from_value(
+                    snapshot
+                        .get("profiles")
+                        .cloned()
+                        .unwrap_or_else(|| json!([])),
+                )
+                .unwrap_or_default();
                 if active_profile_id.get_untracked().is_none() {
                     if let Some(first) = loaded_profiles.first() {
                         set_active_profile_id.set(Some(first.profile_id.clone()));
@@ -186,7 +268,10 @@ fn App() -> impl IntoView {
 
     let active_profile = move || {
         let id = active_profile_id.get();
-        profiles.get().into_iter().find(|p| Some(p.profile_id.clone()) == id)
+        profiles
+            .get()
+            .into_iter()
+            .find(|p| Some(p.profile_id.clone()) == id)
     };
 
     let set_theme_preference = move |theme_name: &'static str| {
@@ -210,7 +295,9 @@ fn App() -> impl IntoView {
                 }
                 Err(msg) => {
                     set_theme.set(previous_theme);
-                    set_status.set(format!("update_settings failed; theme preference reverted: {msg}"));
+                    set_status.set(format!(
+                        "update_settings failed; theme preference reverted: {msg}"
+                    ));
                 }
             }
         });
@@ -386,7 +473,6 @@ fn Profiles(
     }
 }
 
-
 #[allow(clippy::too_many_arguments)]
 #[component]
 fn Dashboard(
@@ -504,12 +590,15 @@ fn TaxFormFlow(
         set_form_locked.set(false);
         set_final_copy_confirmed.set(false);
         set_waiting_for_receipt.set(false);
-        set_status.set("Form reopened for editing; final-copy confirmation was cleared.".to_string());
+        set_status
+            .set("Form reopened for editing; final-copy confirmation was cleared.".to_string());
     };
 
     let validate_form = move || {
         if active_profile_id.get_untracked().is_none() {
-            set_status.set("Create and save a taxpayer profile before validating a tax form.".to_string());
+            set_status.set(
+                "Create and save a taxpayer profile before validating a tax form.".to_string(),
+            );
             return;
         }
         let form_code = selected_form.get_untracked();
@@ -535,7 +624,8 @@ fn TaxFormFlow(
             match invoke_json("package_tax_form", package_args).await {
                 Ok(value) => match serde_json::from_value::<PackagePreviewResponse>(value) {
                     Ok(package) => {
-                        set_receipt_text.set(sample_bir_receipt_for_filename(&package.manifest.filename));
+                        set_receipt_text
+                            .set(sample_bir_receipt_for_filename(&package.manifest.filename));
                         set_saved_form_input_text.set(input_text.clone());
                         set_package_preview.set(Some(package));
                         set_form_locked.set(true);
@@ -552,17 +642,24 @@ fn TaxFormFlow(
 
     let queue_dry_run = move || {
         if active_profile_id.get_untracked().is_none() {
-            set_status.set("Create and save a taxpayer profile before queueing a tax form.".to_string());
+            set_status
+                .set("Create and save a taxpayer profile before queueing a tax form.".to_string());
             return;
         }
         let form_code = selected_form.get_untracked();
-        let Ok(input_json) = serde_json::from_str::<Value>(&saved_form_input_text.get_untracked()) else {
+        let Ok(input_json) = serde_json::from_str::<Value>(&saved_form_input_text.get_untracked())
+        else {
             set_status.set("Queue failed: saved form JSON is invalid.".to_string());
             return;
         };
         set_status.set("Queueing dry-run job…".to_string());
         spawn_local(async move {
-            match invoke_json("queue_tax_form_dry_run", json!({"formCode": form_code, "input": input_json})).await {
+            match invoke_json(
+                "queue_tax_form_dry_run",
+                json!({"formCode": form_code, "input": input_json}),
+            )
+            .await
+            {
                 Ok(_) => refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await,
                 Err(msg) => set_status.set(format!("queue_tax_form_dry_run failed: {msg}")),
             }
@@ -585,7 +682,8 @@ fn TaxFormFlow(
             .map(|p| p.manifest.filename)
             .or_else(|| latest_submission_filename(&submissions.get_untracked()));
         let Some(filename) = filename else {
-            set_status.set("Run Validate or the dry-run queue before simulating a receipt.".to_string());
+            set_status
+                .set("Run Validate or the dry-run queue before simulating a receipt.".to_string());
             return;
         };
         let synthetic_receipt = sample_bir_receipt_for_filename(&filename);
@@ -593,14 +691,17 @@ fn TaxFormFlow(
         set_status.set("Matching synthetic BIR receipt…".to_string());
         spawn_local(async move {
             match invoke_json("match_receipt", json!({"receiptText": synthetic_receipt})).await {
-                Ok(value) => match serde_json::from_value::<Vec<SafeSubmissionRecordResponse>>(value) {
-                    Ok(records) => {
-                        set_submissions.set(records);
-                        set_waiting_for_receipt.set(false);
-                        set_status.set("Receipt matched against submission records.".to_string());
+                Ok(value) => {
+                    match serde_json::from_value::<Vec<SafeSubmissionRecordResponse>>(value) {
+                        Ok(records) => {
+                            set_submissions.set(records);
+                            set_waiting_for_receipt.set(false);
+                            set_status
+                                .set("Receipt matched against submission records.".to_string());
+                        }
+                        Err(err) => set_status.set(format!("receipt response parse failed: {err}")),
                     }
-                    Err(err) => set_status.set(format!("receipt response parse failed: {err}")),
-                },
+                }
                 Err(msg) => set_status.set(format!("match_receipt failed: {msg}")),
             }
         });
@@ -608,7 +709,9 @@ fn TaxFormFlow(
 
     let submit_final_copy = move || {
         if active_profile_id.get_untracked().is_none() {
-            set_status.set("Create and save a taxpayer profile before submitting a final copy.".to_string());
+            set_status.set(
+                "Create and save a taxpayer profile before submitting a final copy.".to_string(),
+            );
             return;
         }
         if !form_locked.get_untracked() || package_preview.get_untracked().is_none() {
@@ -624,13 +727,19 @@ fn TaxFormFlow(
             return;
         }
         let form_code = selected_form.get_untracked();
-        let Ok(input_json) = serde_json::from_str::<Value>(&saved_form_input_text.get_untracked()) else {
+        let Ok(input_json) = serde_json::from_str::<Value>(&saved_form_input_text.get_untracked())
+        else {
             set_status.set("Submit Final Copy failed: validated form JSON is invalid.".to_string());
             return;
         };
         set_status.set("Submit Final Copy: queueing and running dry-run delivery…".to_string());
         spawn_local(async move {
-            match invoke_json("queue_tax_form_dry_run", json!({"formCode": form_code, "input": input_json})).await {
+            match invoke_json(
+                "queue_tax_form_dry_run",
+                json!({"formCode": form_code, "input": input_json}),
+            )
+            .await
+            {
                 Ok(_) => {}
                 Err(msg) => {
                     set_status.set(format!("Submit Final Copy queue failed: {msg}"));
@@ -641,7 +750,10 @@ fn TaxFormFlow(
                 Ok(_) => {
                     set_waiting_for_receipt.set(true);
                     refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await;
-                    set_status.set("Submit Final Copy queued and ran. Waiting for a BIR receipt confirmation.".to_string());
+                    set_status.set(
+                        "Submit Final Copy queued and ran. Waiting for a BIR receipt confirmation."
+                            .to_string(),
+                    );
                 }
                 Err(msg) => set_status.set(format!("Submit Final Copy run failed: {msg}")),
             }
@@ -720,7 +832,6 @@ fn TaxFormFlow(
     }
 }
 
-
 #[component]
 fn HumanTaxForm(
     selected_form: ReadSignal<String>,
@@ -755,148 +866,435 @@ fn render_human_tax_form_fields(
         return render_1601c_physical_form(input, set_form_input_text, locked);
     }
 
-    let profile = input.get("profile").and_then(Value::as_object).cloned().unwrap_or_default();
-    let return_obj = input.get("return").and_then(Value::as_object).cloned().unwrap_or_default();
-    let period = return_obj.get("period").and_then(Value::as_object).cloned().unwrap_or_default();
+    render_pdf_physical_form(form_code, input, set_form_input_text, locked)
+}
+
+fn render_pdf_physical_form(
+    form_code: String,
+    input: Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let mut field_items: Vec<(String, String)> = input
         .get("fields")
         .and_then(Value::as_object)
-        .map(|fields| fields.iter().map(|(key, value)| (key.clone(), value_to_form_string(value))).collect())
+        .map(|fields| {
+            fields
+                .iter()
+                .map(|(key, value)| (key.clone(), value_to_form_string(value)))
+                .collect()
+        })
         .unwrap_or_default();
-    field_items.sort_by(|a, b| field_sort_key(&a.0).cmp(&field_sort_key(&b.0)));
+    field_items.sort_by(|a, b| {
+        physical_field_sort_key(&form_code, &a.0).cmp(&physical_field_sort_key(&form_code, &b.0))
+    });
 
-    let profile_fields = vec![
-        ("profile_id", "Profile ID"),
-        ("tin", "TIN"),
-        ("email", "Authorized email"),
-    ];
-    let period_fields = vec![
-        ("month", "Month"),
-        ("quarter", "Quarter"),
-        ("year", "Year"),
-    ];
-    let return_fields = vec![
-        ("is_amended", "Amended return?"),
-        ("amendment_number", "Amendment number"),
-    ];
+    let header_fields =
+        fields_for_physical_section(&form_code, &field_items, PhysicalSectionKind::Header);
+    let background_fields =
+        fields_for_physical_section(&form_code, &field_items, PhysicalSectionKind::Background);
+    let computation_fields =
+        fields_for_physical_section(&form_code, &field_items, PhysicalSectionKind::Computation);
+    let vat_fields = fields_for_physical_section(
+        &form_code,
+        &field_items,
+        PhysicalSectionKind::VatComputation,
+    );
+    let payment_fields =
+        fields_for_physical_section(&form_code, &field_items, PhysicalSectionKind::Payment);
+    let schedule_fields =
+        fields_for_physical_section(&form_code, &field_items, PhysicalSectionKind::Schedule);
 
     view! {
-        <div class="form-section">
-            <h3>{format!("Form {} filing details", form_code)}</h3>
-            <div class="form-grid">
-                {profile_fields.into_iter().map(|(key, label)| {
-                    let value = profile.get(key).map(value_to_form_string).unwrap_or_default();
-                    render_json_input("profile", key, label, value, locked, set_form_input_text)
-                }).collect_view()}
-                {period_fields.into_iter().filter_map(|(key, label)| {
-                    period.get(key).map(|value| render_nested_json_input("return", "period", key, label, value_to_form_string(value), locked, set_form_input_text))
-                }).collect_view()}
-                {return_fields.into_iter().filter_map(|(key, label)| {
-                    return_obj.get(key).map(|value| render_json_input("return", key, label, value_to_form_string(value), locked, set_form_input_text))
-                }).collect_view()}
+        <div class=format!("bir-paper form-{}", form_code.to_ascii_lowercase())>
+            <div class="bir-title-grid multi-form-title">
+                <div class="bir-form-no"><span>"BIR Form No."</span><strong>{form_code.clone()}</strong><small>{physical_form_version(&form_code)}</small></div>
+                <div class="bir-title"><strong>{physical_form_title(&form_code)}</strong><span>{physical_form_subtitle(&form_code)}</span></div>
+                <div class="bir-barcode">{format!("{} PDF-LIKE DATA ENTRY", form_code)}</div>
             </div>
-        </div>
-        <div class="form-section">
-            <h3>"BIR line items and schedules"</h3>
-            <p class="muted">"These controls cover the available numbered BIR form fields while keeping the generated JSON hidden."</p>
-            <div class="form-grid dense">
-                {field_items.into_iter().map(|(key, value)| {
-                    let label = human_field_label(&key);
-                    render_field_value_input(key, label, value, locked, set_form_input_text)
-                }).collect_view()}
+            <div class="bir-grid physical-top-strip">
+                {render_physical_boxes(header_fields, locked, set_form_input_text)}
             </div>
+            <div class="bir-section-title">"Part I – Background Information"</div>
+            <div class="bir-grid physical-background-grid">
+                {render_physical_boxes(background_fields, locked, set_form_input_text)}
+            </div>
+            <div class="bir-section-title">{physical_computation_title(&form_code)}</div>
+            <div class="bir-table computation-table">
+                {render_physical_rows(computation_fields, locked, set_form_input_text)}
+            </div>
+            {if !vat_fields.is_empty() {
+                view! {
+                    <div class="bir-section-title">"Part IV – Computation of VAT Payable / Excess Input Tax"</div>
+                    <div class="bir-table computation-table">{render_physical_rows(vat_fields, locked, set_form_input_text)}</div>
+                }.into_view()
+            } else { view! {}.into_view() }}
+            <div class="bir-section-title">{physical_payment_title(&form_code)}</div>
+            <div class="bir-payment-grid physical-payment-grid">
+                {render_physical_payment_rows(payment_fields, locked, set_form_input_text)}
+            </div>
+            {if !schedule_fields.is_empty() {
+                view! {
+                    <div class="bir-section-title">{physical_schedule_title(&form_code)}</div>
+                    <div class="bir-grid physical-schedule-grid">{render_physical_boxes(schedule_fields, locked, set_form_input_text)}</div>
+                }.into_view()
+            } else { view! {}.into_view() }}
         </div>
     }.into_view()
 }
 
-fn render_json_input(
-    section: &'static str,
-    key: &'static str,
-    label: &'static str,
-    value: String,
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PhysicalSectionKind {
+    Header,
+    Background,
+    Computation,
+    VatComputation,
+    Payment,
+    Schedule,
+}
+
+fn fields_for_physical_section(
+    form_code: &str,
+    fields: &[(String, String)],
+    section: PhysicalSectionKind,
+) -> Vec<(String, String)> {
+    fields
+        .iter()
+        .filter(|(key, _)| classify_physical_field(form_code, key) == section)
+        .cloned()
+        .collect()
+}
+
+fn render_physical_boxes(
+    fields: Vec<(String, String)>,
     locked: bool,
     set_form_input_text: WriteSignal<String>,
 ) -> View {
-    let is_bool = matches!(value.as_str(), "true" | "false");
-    if is_bool {
-        let checked = value == "true";
+    if fields.is_empty() {
+        return view! { <div class="bir-box muted-empty">"No fields in this section for the selected fixture."</div> }.into_view();
+    }
+    fields.into_iter().map(|(key, value)| {
+        let label = physical_field_label(&key);
+        let input_key = key.clone();
+        let class_name = if is_wide_physical_field(&key) { "bir-box span-2" } else { "bir-box" };
         view! {
-            <label class="checkbox-row field-control">
-                <input
-                    type="checkbox"
-                    prop:checked=checked
-                    prop:disabled=locked
-                    on:change=move |ev| update_top_level_value(set_form_input_text, section, key, Value::Bool(event_target_checked(&ev)))
-                />
-                <span>{label}</span>
+            <label class=class_name>{label}
+                <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
             </label>
-        }.into_view()
-    } else {
+        }
+    }).collect_view().into_view()
+}
+
+fn render_physical_rows(
+    fields: Vec<(String, String)>,
+    locked: bool,
+    set_form_input_text: WriteSignal<String>,
+) -> View {
+    if fields.is_empty() {
+        return view! { <div class="bir-subrow">"No computation fields in this section for the selected fixture."</div> }.into_view();
+    }
+    fields.into_iter().map(|(key, value)| {
+        let item = physical_item_no(&key).unwrap_or_else(|| "—".to_string());
+        let label = physical_row_label(&key);
+        let input_key = key.clone();
         view! {
-            <label class="field-control">{label}
-                <input
-                    prop:value=value
-                    prop:readonly=locked
-                    on:input=move |ev| update_top_level_value(set_form_input_text, section, key, typed_json_value(section, key, event_target_value(&ev)))
-                />
+            <label class="bir-row">
+                <span class="item-no">{item}</span><span class="item-label">{label}</span>
+                <input class="amount-input" prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
             </label>
-        }.into_view()
+        }
+    }).collect_view().into_view()
+}
+
+fn render_physical_payment_rows(
+    fields: Vec<(String, String)>,
+    locked: bool,
+    set_form_input_text: WriteSignal<String>,
+) -> View {
+    if fields.is_empty() {
+        return view! { <div class="bir-subrow">"No payment fields in this section for the selected fixture."</div> }.into_view();
+    }
+    fields.into_iter().map(|(key, value)| {
+        let item = physical_item_no(&key).unwrap_or_else(|| "—".to_string());
+        let label = physical_row_label(&key);
+        let input_key = key.clone();
+        view! {
+            <label class="bir-row payment-field-row">
+                <span class="item-no">{item}</span><span class="item-label">{label}</span>
+                <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
+            </label>
+        }
+    }).collect_view().into_view()
+}
+
+fn classify_physical_field(form_code: &str, key: &str) -> PhysicalSectionKind {
+    let lower = key.to_ascii_lowercase();
+    if lower.contains("sched")
+        || lower.contains("schedule")
+        || lower.contains("pg2")
+        || lower.contains("page2")
+    {
+        return PhysicalSectionKind::Schedule;
+    }
+    if lower.contains("tin")
+        || lower.contains("branchcode")
+        || lower.contains("branch_code")
+        || lower.contains("rdocode")
+        || lower.contains("taxpayername")
+        || lower.contains("taxpayer_name")
+        || lower.contains("linebus")
+        || lower.contains("address")
+        || lower.contains("zipcode")
+        || lower.contains("telnum")
+        || lower.contains("contact")
+        || lower.contains("email")
+    {
+        return PhysicalSectionKind::Background;
+    }
+    let item = physical_item_no(key).and_then(|item| {
+        item.chars()
+            .take_while(|ch| ch.is_ascii_digit())
+            .collect::<String>()
+            .parse::<u32>()
+            .ok()
+    });
+    match form_code {
+        "0619E" => match item {
+            Some(1..=6) | None => PhysicalSectionKind::Header,
+            Some(7..=13) => PhysicalSectionKind::Background,
+            Some(14..=18) => PhysicalSectionKind::Computation,
+            Some(19..=22) => PhysicalSectionKind::Payment,
+            _ => PhysicalSectionKind::Schedule,
+        },
+        "1601EQ" => match item {
+            Some(1..=10) | None => PhysicalSectionKind::Header,
+            Some(11..=12) => PhysicalSectionKind::Background,
+            Some(13..=31) => PhysicalSectionKind::Computation,
+            Some(32..=35) => PhysicalSectionKind::Payment,
+            _ => PhysicalSectionKind::Schedule,
+        },
+        "1702Q" => match item {
+            Some(1..=12) | None => PhysicalSectionKind::Header,
+            Some(13..=25) => PhysicalSectionKind::Background,
+            Some(26..=51) => PhysicalSectionKind::Computation,
+            Some(52..=55) => PhysicalSectionKind::Payment,
+            _ => PhysicalSectionKind::Schedule,
+        },
+        "2000" => match item {
+            Some(1..=5) | None => PhysicalSectionKind::Header,
+            Some(6..=20) => PhysicalSectionKind::Background,
+            Some(21..=33) => PhysicalSectionKind::Computation,
+            Some(34..=37) => PhysicalSectionKind::Payment,
+            _ => PhysicalSectionKind::Schedule,
+        },
+        "2550Q" => match item {
+            Some(1..=6) | None => PhysicalSectionKind::Header,
+            Some(7..=14) => PhysicalSectionKind::Background,
+            Some(15..=30)
+                if lower.contains("agency")
+                    || lower.contains("number")
+                    || lower.contains("date")
+                    || lower.contains("amount") && item.unwrap_or(0) >= 27 =>
+            {
+                PhysicalSectionKind::Payment
+            }
+            Some(15..=30) => PhysicalSectionKind::Computation,
+            Some(31..=61) => PhysicalSectionKind::VatComputation,
+            _ => PhysicalSectionKind::Schedule,
+        },
+        _ => PhysicalSectionKind::Computation,
     }
 }
 
-fn render_nested_json_input(
-    section: &'static str,
-    nested: &'static str,
-    key: &'static str,
-    label: &'static str,
-    value: String,
-    locked: bool,
-    set_form_input_text: WriteSignal<String>,
-) -> View {
-    view! {
-        <label class="field-control">{label}
-            <input
-                prop:value=value
-                prop:readonly=locked
-                on:input=move |ev| update_nested_value(set_form_input_text, section, nested, key, typed_json_value(nested, key, event_target_value(&ev)))
-            />
-        </label>
-    }.into_view()
+fn physical_field_sort_key(form_code: &str, key: &str) -> String {
+    let section = match classify_physical_field(form_code, key) {
+        PhysicalSectionKind::Header => 0,
+        PhysicalSectionKind::Background => 1,
+        PhysicalSectionKind::Computation => 2,
+        PhysicalSectionKind::VatComputation => 3,
+        PhysicalSectionKind::Payment => 4,
+        PhysicalSectionKind::Schedule => 5,
+    };
+    let item = physical_item_no(key).unwrap_or_else(|| "999".to_string());
+    format!("{section:02}:{:>6}:{key}", item)
 }
 
-fn render_field_value_input(
-    key: String,
-    label: String,
-    value: String,
-    locked: bool,
-    set_form_input_text: WriteSignal<String>,
-) -> View {
-    if matches!(value.as_str(), "true" | "false") {
-        let checked = value == "true";
-        let checkbox_key = key.clone();
-        view! {
-            <label class="checkbox-row field-control">
-                <input
-                    type="checkbox"
-                    prop:checked=checked
-                    prop:disabled=locked
-                    on:change=move |ev| update_field_string(set_form_input_text, &checkbox_key, event_target_checked(&ev).to_string())
-                />
-                <span>{label}</span>
-            </label>
-        }.into_view()
+fn physical_item_no(key: &str) -> Option<String> {
+    let stem = key.rsplit(':').next().unwrap_or(key);
+    let patterns = [
+        "No",
+        "Tax",
+        "Amount",
+        "Agency",
+        "Number",
+        "Date",
+        "Particular",
+        "Item",
+        "Line",
+    ];
+    for pattern in patterns {
+        if let Some(pos) = stem.find(pattern) {
+            let tail = &stem[pos + pattern.len()..];
+            let item: String = tail
+                .chars()
+                .take_while(|ch| ch.is_ascii_digit() || ch.is_ascii_uppercase())
+                .collect();
+            if item.chars().any(|ch| ch.is_ascii_digit()) {
+                return Some(item);
+            }
+        }
+    }
+    let digits: String = stem
+        .chars()
+        .skip_while(|ch| !ch.is_ascii_digit())
+        .take_while(|ch| ch.is_ascii_digit() || ch.is_ascii_uppercase())
+        .collect();
+    if digits.is_empty() {
+        None
     } else {
-        let input_key = key.clone();
-        view! {
-            <label class="field-control">{label}
-                <input
-                    type="text"
-                    prop:value=value
-                    prop:readonly=locked
-                    on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev))
-                />
-            </label>
-        }.into_view()
+        Some(digits)
+    }
+}
+
+fn physical_field_label(key: &str) -> String {
+    let item = physical_item_no(key)
+        .map(|item| format!("{item} "))
+        .unwrap_or_default();
+    format!("{}{}", item, physical_label_without_item(key))
+}
+
+fn physical_row_label(key: &str) -> String {
+    physical_label_without_item(key)
+}
+
+fn physical_label_without_item(key: &str) -> String {
+    let stem = key.rsplit(':').next().unwrap_or(key);
+    let mut label = stem
+        .trim_start_matches("txt")
+        .trim_start_matches("opt")
+        .trim_start_matches("rb")
+        .trim_start_matches("cb")
+        .trim_start_matches("chk")
+        .trim_start_matches("drp")
+        .trim_start_matches("selected")
+        .replace("TIN", "Taxpayer Identification Number")
+        .replace("RDO", "RDO")
+        .replace("ATC", "ATC")
+        .replace("LineBus", "Line of Business")
+        .replace("TaxpayerName", "Taxpayer/Withholding Agent’s Name")
+        .replace("TelNum", "Contact Number")
+        .replace("BranchCode", "Branch Code")
+        .replace("ZipCode", "ZIP Code")
+        .replace("AmendedRtn", "Amended Return")
+        .replace("Amend", "Amended Return")
+        .replace("Withheld", "Taxes Withheld")
+        .replace("Quarter", "Quarter")
+        .replace("Month", "Month")
+        .replace("Year", "Year")
+        .replace("Agency", "Drawee Bank/Agency")
+        .replace("Number", "Reference Number")
+        .replace("Date", "Date")
+        .replace("Amount", "Amount")
+        .replace("Particular", "Particulars")
+        .replace("Tax", "Tax / Amount");
+    let prefixes = [
+        "No",
+        "Tax",
+        "Amount",
+        "Agency",
+        "Number",
+        "Date",
+        "Particular",
+        "Item",
+        "Line",
+    ];
+    for prefix in prefixes {
+        if let Some(item) = physical_item_no(key) {
+            label = label.replace(&format!("{prefix}{item}"), prefix);
+        }
+    }
+    let mut out = String::new();
+    let mut previous_was_lower = false;
+    for ch in label.chars() {
+        if matches!(ch, '_' | '-') {
+            out.push(' ');
+            previous_was_lower = false;
+        } else if ch.is_ascii_uppercase() && previous_was_lower {
+            out.push(' ');
+            out.push(ch);
+            previous_was_lower = false;
+        } else {
+            out.push(ch);
+            previous_was_lower = ch.is_ascii_lowercase() || ch.is_ascii_digit();
+        }
+    }
+    let cleaned = out.replace("  ", " ").trim().to_string();
+    if cleaned.is_empty() {
+        key.to_string()
+    } else {
+        cleaned
+    }
+}
+
+fn is_wide_physical_field(key: &str) -> bool {
+    let lower = key.to_ascii_lowercase();
+    lower.contains("taxpayername")
+        || lower.contains("address")
+        || lower.contains("email")
+        || lower.contains("linebus")
+}
+
+fn physical_form_title(form_code: &str) -> &'static str {
+    match form_code {
+        "0619E" => "Monthly Remittance Form",
+        "1601EQ" => "Quarterly Remittance Return",
+        "1702Q" => "Quarterly Income Tax Return",
+        "2000" => "Documentary Stamp Tax Declaration/Return",
+        "2550Q" => "Quarterly Value-Added Tax Return",
+        _ => "Tax Return",
+    }
+}
+
+fn physical_form_subtitle(form_code: &str) -> &'static str {
+    match form_code {
+        "0619E" => "Creditable Income Taxes Withheld (Expanded)",
+        "1601EQ" => "Creditable Income Taxes Withheld (Expanded)",
+        "1702Q" => "For Corporations, Partnerships and Other Non-Individual Taxpayers",
+        "2000" => "Documentary Stamp Tax",
+        "2550Q" => "Value-Added Tax",
+        _ => "BIR form data entry",
+    }
+}
+
+fn physical_form_version(form_code: &str) -> &'static str {
+    match form_code {
+        "2550Q" => "April 2024 (ENCS)",
+        "1601EQ" => "January 2019 (ENCS)",
+        _ => "January 2018 (ENCS)",
+    }
+}
+
+fn physical_computation_title(form_code: &str) -> &'static str {
+    match form_code {
+        "0619E" => "Part II – Tax Remittance",
+        "2550Q" => "Part II – Total Tax Payable",
+        _ => "Part II – Computation of Tax",
+    }
+}
+
+fn physical_payment_title(form_code: &str) -> &'static str {
+    match form_code {
+        "2550Q" => "Part III – Details of Payment",
+        _ => "Part III – Details of Payment",
+    }
+}
+
+fn physical_schedule_title(form_code: &str) -> &'static str {
+    match form_code {
+        "1601EQ" => "Page 2 – ATC / Tax Remittance Schedule",
+        "2550Q" => "Part V – Schedules",
+        "1702Q" => "Schedules / Other Supporting Fields",
+        _ => "Schedules / Other Supporting Fields",
     }
 }
 
@@ -916,28 +1314,6 @@ fn update_top_level_value(
     });
 }
 
-fn update_nested_value(
-    set_form_input_text: WriteSignal<String>,
-    section: &str,
-    nested: &str,
-    key: &str,
-    value: Value,
-) {
-    set_form_input_text.update(|text| {
-        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
-            if let Some(obj) = root
-                .get_mut(section)
-                .and_then(Value::as_object_mut)
-                .and_then(|section| section.get_mut(nested))
-                .and_then(Value::as_object_mut)
-            {
-                obj.insert(key.to_string(), value);
-                *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
-            }
-        }
-    });
-}
-
 fn update_field_string(set_form_input_text: WriteSignal<String>, key: &str, value: String) {
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
@@ -949,18 +1325,6 @@ fn update_field_string(set_form_input_text: WriteSignal<String>, key: &str, valu
     });
 }
 
-fn typed_json_value(section: &str, key: &str, value: String) -> Value {
-    if matches!((section, key), ("period", "month") | ("period", "quarter") | ("period", "year") | ("return", "amendment_number")) {
-        value
-            .trim()
-            .parse::<i64>()
-            .map(|number| Value::Number(number.into()))
-            .unwrap_or_else(|_| Value::String(value))
-    } else {
-        Value::String(value)
-    }
-}
-
 fn value_to_form_string(value: &Value) -> String {
     match value {
         Value::String(value) => value.clone(),
@@ -970,51 +1334,6 @@ fn value_to_form_string(value: &Value) -> String {
         _ => value.to_string(),
     }
 }
-
-fn field_sort_key(key: &str) -> String {
-    let lower = key.to_ascii_lowercase();
-    let priority = if lower.contains("tin") || lower.contains("taxpayer") || lower.contains("rdo") || lower.contains("address") || lower.contains("email") {
-        "0"
-    } else if lower.contains("month") || lower.contains("year") || lower.contains("quarter") || lower.contains("period") || lower.contains("amended") {
-        "1"
-    } else if lower.contains("tax") || lower.contains("total") || lower.contains("amount") || lower.contains("payment") || lower.contains("sales") || lower.contains("purchase") {
-        "2"
-    } else if lower.contains("sched") {
-        "3"
-    } else {
-        "4"
-    };
-    format!("{priority}:{lower}")
-}
-
-fn human_field_label(key: &str) -> String {
-    let cleaned = key
-        .rsplit(':')
-        .next()
-        .unwrap_or(key)
-        .trim_start_matches("txt")
-        .trim_start_matches("opt")
-        .trim_start_matches("chk")
-        .trim_start_matches("drp");
-    let mut label = String::new();
-    let mut previous_was_lower = false;
-    for ch in cleaned.chars() {
-        if matches!(ch, '_' | '-' ) {
-            label.push(' ');
-            previous_was_lower = false;
-        } else if ch.is_ascii_uppercase() && previous_was_lower {
-            label.push(' ');
-            label.push(ch);
-            previous_was_lower = false;
-        } else {
-            label.push(ch);
-            previous_was_lower = ch.is_ascii_lowercase() || ch.is_ascii_digit();
-        }
-    }
-    let label = label.replace("No", " No. ").replace("  ", " ");
-    format!("{} ({})", label.trim(), key)
-}
-
 
 fn render_1601c_physical_form(
     input: Value,
@@ -1093,7 +1412,11 @@ fn render_1601c_physical_form(
     }.into_view()
 }
 
-fn render_1601c_period_box(input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_period_box(
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let month = field_value(input, "txtMonth");
     let year = field_value(input, "txtYear");
     view! {
@@ -1107,7 +1430,11 @@ fn render_1601c_period_box(input: &Value, set_form_input_text: WriteSignal<Strin
     }.into_view()
 }
 
-fn render_1601c_tin_box(input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_tin_box(
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let tin1 = field_value(input, "txtTIN1");
     let tin2 = field_value(input, "txtTIN2");
     let tin3 = field_value(input, "txtTIN3");
@@ -1127,7 +1454,11 @@ fn render_1601c_tin_box(input: &Value, set_form_input_text: WriteSignal<String>,
     }.into_view()
 }
 
-fn render_1601c_profile_email_box(input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_profile_email_box(
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let value = input
         .get("profile")
         .and_then(|profile| profile.get("email"))
@@ -1140,7 +1471,14 @@ fn render_1601c_profile_email_box(input: &Value, set_form_input_text: WriteSigna
     }.into_view()
 }
 
-fn render_1601c_field_box(item: &'static str, label: &'static str, key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_field_box(
+    item: &'static str,
+    label: &'static str,
+    key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let value = field_value(input, key);
     view! {
         <label class="bir-box">{format!("{item} {label}")}
@@ -1149,7 +1487,14 @@ fn render_1601c_field_box(item: &'static str, label: &'static str, key: &'static
     }.into_view()
 }
 
-fn render_1601c_wide_field_box(item: &'static str, label: &'static str, key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_wide_field_box(
+    item: &'static str,
+    label: &'static str,
+    key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let value = field_value(input, key);
     view! {
         <label class="bir-box span-2">{format!("{item} {label}")}
@@ -1158,7 +1503,15 @@ fn render_1601c_wide_field_box(item: &'static str, label: &'static str, key: &'s
     }.into_view()
 }
 
-fn render_1601c_pair_box(item: &'static str, label: &'static str, yes_key: &'static str, no_key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_pair_box(
+    item: &'static str,
+    label: &'static str,
+    yes_key: &'static str,
+    no_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let yes = field_value(input, yes_key) == "true";
     let no = field_value(input, no_key) == "true";
     view! {
@@ -1170,7 +1523,14 @@ fn render_1601c_pair_box(item: &'static str, label: &'static str, yes_key: &'sta
     }.into_view()
 }
 
-fn render_1601c_amount_row(item: &'static str, label: &'static str, key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_amount_row(
+    item: &'static str,
+    label: &'static str,
+    key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let value = field_value(input, key);
     view! {
         <label class="bir-row">
@@ -1180,7 +1540,15 @@ fn render_1601c_amount_row(item: &'static str, label: &'static str, key: &'stati
     }.into_view()
 }
 
-fn render_1601c_amount_row_with_specify(item: &'static str, label: &'static str, specify_key: &'static str, amount_key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
+fn render_1601c_amount_row_with_specify(
+    item: &'static str,
+    label: &'static str,
+    specify_key: &'static str,
+    amount_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
     let specify = field_value(input, specify_key);
     let amount = field_value(input, amount_key);
     view! {
@@ -1192,8 +1560,20 @@ fn render_1601c_amount_row_with_specify(item: &'static str, label: &'static str,
     }.into_view()
 }
 
-fn render_1601c_payment_row(item: &'static str, label: &'static str, agency_key: Option<&'static str>, number_key: &'static str, date_key: &'static str, amount_key: &'static str, input: &Value, set_form_input_text: WriteSignal<String>, locked: bool) -> View {
-    let agency = agency_key.map(|key| field_value(input, key)).unwrap_or_default();
+fn render_1601c_payment_row(
+    item: &'static str,
+    label: &'static str,
+    agency_key: Option<&'static str>,
+    number_key: &'static str,
+    date_key: &'static str,
+    amount_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let agency = agency_key
+        .map(|key| field_value(input, key))
+        .unwrap_or_default();
     let number = field_value(input, number_key);
     let date = field_value(input, date_key);
     let amount = field_value(input, amount_key);
@@ -1219,8 +1599,16 @@ fn field_value(input: &Value, key: &str) -> String {
 fn update_1601c_period(set_form_input_text: WriteSignal<String>, part: &str, value: String) {
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
-            let normalized = if part == "month" { format!("{:0>2}", value.trim()) } else { value.trim().to_string() };
-            let field_key = if part == "month" { "txtMonth" } else { "txtYear" };
+            let normalized = if part == "month" {
+                format!("{:0>2}", value.trim())
+            } else {
+                value.trim().to_string()
+            };
+            let field_key = if part == "month" {
+                "txtMonth"
+            } else {
+                "txtYear"
+            };
             if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
                 fields.insert(field_key.to_string(), Value::String(normalized.clone()));
             }
@@ -1244,16 +1632,34 @@ fn update_1601c_tin(set_form_input_text: WriteSignal<String>, key: &str, value: 
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
                 fields.insert(key.to_string(), Value::String(value));
-                let tin1 = fields.get("txtTIN1").map(value_to_form_string).unwrap_or_default();
-                let tin2 = fields.get("txtTIN2").map(value_to_form_string).unwrap_or_default();
-                let tin3 = fields.get("txtTIN3").map(value_to_form_string).unwrap_or_default();
-                let branch = fields.get("txtBranchCode").map(value_to_form_string).unwrap_or_default();
+                let tin1 = fields
+                    .get("txtTIN1")
+                    .map(value_to_form_string)
+                    .unwrap_or_default();
+                let tin2 = fields
+                    .get("txtTIN2")
+                    .map(value_to_form_string)
+                    .unwrap_or_default();
+                let tin3 = fields
+                    .get("txtTIN3")
+                    .map(value_to_form_string)
+                    .unwrap_or_default();
+                let branch = fields
+                    .get("txtBranchCode")
+                    .map(value_to_form_string)
+                    .unwrap_or_default();
                 fields.insert("txtPg2TIN1".to_string(), Value::String(tin1.clone()));
                 fields.insert("txtPg2TIN2".to_string(), Value::String(tin2.clone()));
                 fields.insert("txtPg2TIN3".to_string(), Value::String(tin3.clone()));
-                fields.insert("txtPg2BranchCode".to_string(), Value::String(branch.clone()));
+                fields.insert(
+                    "txtPg2BranchCode".to_string(),
+                    Value::String(branch.clone()),
+                );
                 if let Some(profile) = root.get_mut("profile").and_then(Value::as_object_mut) {
-                    profile.insert("tin".to_string(), Value::String(format!("{tin1}-{tin2}-{tin3}-{branch}")));
+                    profile.insert(
+                        "tin".to_string(),
+                        Value::String(format!("{tin1}-{tin2}-{tin3}-{branch}")),
+                    );
                 }
                 *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
             }
@@ -1261,12 +1667,20 @@ fn update_1601c_tin(set_form_input_text: WriteSignal<String>, key: &str, value: 
     });
 }
 
-fn update_checkbox_pair(set_form_input_text: WriteSignal<String>, yes_key: &str, no_key: &str, yes_selected: bool) {
+fn update_checkbox_pair(
+    set_form_input_text: WriteSignal<String>,
+    yes_key: &str,
+    no_key: &str,
+    yes_selected: bool,
+) {
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
                 fields.insert(yes_key.to_string(), Value::String(yes_selected.to_string()));
-                fields.insert(no_key.to_string(), Value::String((!yes_selected).to_string()));
+                fields.insert(
+                    no_key.to_string(),
+                    Value::String((!yes_selected).to_string()),
+                );
             }
             if yes_key == "AmendedRtn_1" {
                 if let Some(ret) = root.get_mut("return").and_then(Value::as_object_mut) {
@@ -1304,7 +1718,11 @@ fn PackageDetails(package_preview: ReadSignal<Option<PackagePreviewResponse>>) -
 }
 
 #[component]
-fn LockScreen<F>(pin: ReadSignal<String>, set_pin: WriteSignal<String>, unlock_app: F) -> impl IntoView
+fn LockScreen<F>(
+    pin: ReadSignal<String>,
+    set_pin: WriteSignal<String>,
+    unlock_app: F,
+) -> impl IntoView
 where
     F: Fn() + Copy + 'static,
 {
