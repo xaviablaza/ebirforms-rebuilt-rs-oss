@@ -913,7 +913,7 @@ fn render_pdf_physical_form(
                 <div class="bir-barcode">{format!("{} PDF-LIKE DATA ENTRY", form_code)}</div>
             </div>
             <div class="bir-grid physical-top-strip">
-                {render_physical_boxes(&form_code, header_fields, locked, set_form_input_text)}
+                {render_pdf_header_controls(&form_code, &input, header_fields, locked, set_form_input_text)}
             </div>
             <div class="bir-section-title">"Part I – Background Information"</div>
             <div class="bir-grid physical-background-grid">
@@ -966,6 +966,219 @@ fn fields_for_physical_section(
         })
         .cloned()
         .collect()
+}
+
+fn render_pdf_header_controls(
+    form_code: &str,
+    input: &Value,
+    fallback_fields: Vec<(String, String)>,
+    locked: bool,
+    set_form_input_text: WriteSignal<String>,
+) -> View {
+    match form_code {
+        "0619E" => view! {
+            {render_physical_month_year_box("1", "For the Month", "frm0619E:txtMonth", "frm0619E:txtYear", true, input, set_form_input_text, locked)}
+            {render_physical_date_box("2", "Due Date", "frm0619E:txtDueMonth", "frm0619E:txtDueDay", "frm0619E:txtDueYear", input, set_form_input_text, locked)}
+            {render_physical_pair_box("3", "Amended Form?", "frm0619E:optAmend:Y", "frm0619E:optAmend:N", input, set_form_input_text, locked)}
+            {render_physical_pair_box("4", "Any Taxes Withheld?", "frm0619E:optWithheld:Y", "frm0619E:optWithheld:N", input, set_form_input_text, locked)}
+            {render_physical_field_box_dynamic("5", "ATC", "frm0619E:txtAtc", input, set_form_input_text, locked)}
+            {render_physical_field_box_dynamic("6", "Tax Type Code", "frm0619E:txtTaxTypeCode", input, set_form_input_text, locked)}
+        }.into_view(),
+        "1601EQ" => view! {
+            {render_physical_field_box_dynamic("1", "For the Year", "frm1601EQ:txtYear", input, set_form_input_text, locked)}
+            {render_physical_choice_box("2", "Quarter", vec![("1st", "frm1601EQ:optQuarter:1"), ("2nd", "frm1601EQ:optQuarter:2"), ("3rd", "frm1601EQ:optQuarter:3"), ("4th", "frm1601EQ:optQuarter:4")], input, set_form_input_text, locked)}
+            {render_physical_pair_box("3", "Amended Return?", "frm1601EQ:optAmend:Y", "frm1601EQ:optAmend:N", input, set_form_input_text, locked)}
+            {render_physical_pair_box("4", "Any Taxes Withheld?", "frm1601EQ:optWithheld:Y", "frm1601EQ:optWithheld:N", input, set_form_input_text, locked)}
+            {render_physical_field_box_dynamic("5", "No. of Sheet/s Attached", "frm1601EQ:txtNoSheets", input, set_form_input_text, locked)}
+        }.into_view(),
+        "1702Q" => view! {
+            {render_physical_choice_box("1", "For", vec![("Calendar", "frm1702q:rbForClndrFscl_1"), ("Fiscal", "frm1702q:rbForClndrFscl_2")], input, set_form_input_text, locked)}
+            {render_physical_month_year_box("2", "Year Ended", "frm1702q:rbYrEndMonth", "frm1702q:txtYrEndYear", false, input, set_form_input_text, locked)}
+            {render_physical_choice_box("3", "Quarter", vec![("1st", "frm1702q:rbQuarter_1"), ("2nd", "frm1702q:rbQuarter_2"), ("3rd", "frm1702q:rbQuarter_3")], input, set_form_input_text, locked)}
+            {render_physical_pair_box("4", "Amended Return?", "frm1702q:rbAmendedRtn_1", "frm1702q:rbAmendedRtn_2", input, set_form_input_text, locked)}
+            {render_physical_atc_1702q_box(input, set_form_input_text, locked)}
+        }.into_view(),
+        "2000" => view! {
+            {render_physical_month_year_box("1", "For the Month", "frm2000:txtMonth", "frm2000:txtYear", true, input, set_form_input_text, locked)}
+            {render_physical_pair_box("2", "Amended Return?", "frm2000:AmendedRtn_1", "frm2000:AmendedRtn_2", input, set_form_input_text, locked)}
+            {render_physical_field_box_dynamic("3", "No. of Sheet/s Attached", "frm2000:txtSheets", input, set_form_input_text, locked)}
+        }.into_view(),
+        "2550Q" => view! {
+            {render_physical_choice_box("1", "For", vec![("Calendar", "frm2550qv2024:calendarNo1"), ("Fiscal", "frm2550qv2024:fiscalNo1")], input, set_form_input_text, locked)}
+            {render_physical_month_year_box("2", "Year Ended", "frm2550qv2024:selectedMonthNo2", "frm2550qv2024:txtYearNo2", true, input, set_form_input_text, locked)}
+            {render_physical_choice_box("3", "Quarter", vec![("1st", "frm2550qv2024:OptQuarter1"), ("2nd", "frm2550qv2024:OptQuarter2"), ("3rd", "frm2550qv2024:OptQuarter3"), ("4th", "frm2550qv2024:OptQuarter4")], input, set_form_input_text, locked)}
+            {render_physical_period_range_box("4", "Return Period", "frm2550qv2024:RtnPeriodFromNo4", "frm2550qv2024:RtnPeriodToNo4", input, set_form_input_text, locked)}
+            {render_physical_pair_box("5", "Amended Return?", "frm2550qv2024:amendedReturnYesNo5", "frm2550qv2024:amendedReturnNo5", input, set_form_input_text, locked)}
+            {render_physical_pair_box("6", "Short Period Return?", "frm2550qv2024:OptShortPrd1", "frm2550qv2024:OptShortPrd2", input, set_form_input_text, locked)}
+        }.into_view(),
+        _ => render_physical_boxes(form_code, fallback_fields, locked, set_form_input_text),
+    }
+}
+
+fn render_physical_field_box_dynamic(
+    item: &'static str,
+    label: &'static str,
+    key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let value = field_value(input, key);
+    view! {
+        <label class="bir-box">{format!("{item} {label}")}
+            <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_physical_month_year_box(
+    item: &'static str,
+    label: &'static str,
+    month_key: &'static str,
+    year_key: &'static str,
+    sync_return_period: bool,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let month = field_value(input, month_key);
+    let year = field_value(input, year_key);
+    view! {
+        <label class="bir-box">{format!("{item} {label} (MM/YYYY)")}
+            <div class="split-inputs">
+                <input aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_period_component(set_form_input_text, month_key, "month", sync_return_period, event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_period_component(set_form_input_text, year_key, "year", sync_return_period, event_target_value(&ev)) />
+            </div>
+        </label>
+    }.into_view()
+}
+
+fn render_physical_date_box(
+    item: &'static str,
+    label: &'static str,
+    month_key: &'static str,
+    day_key: &'static str,
+    year_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let month = field_value(input, month_key);
+    let day = field_value(input, day_key);
+    let year = field_value(input, year_key);
+    view! {
+        <label class="bir-box span-2">{format!("{item} {label} (MM/DD/YYYY)")}
+            <div class="date-inputs">
+                <input aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, month_key, event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="Day" prop:value=day prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, day_key, event_target_value(&ev)) />
+                <span>"/"</span>
+                <input aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, year_key, event_target_value(&ev)) />
+            </div>
+        </label>
+    }.into_view()
+}
+
+fn render_physical_period_range_box(
+    item: &'static str,
+    label: &'static str,
+    from_key: &'static str,
+    to_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let from = field_value(input, from_key);
+    let to = field_value(input, to_key);
+    view! {
+        <label class="bir-box span-2">{format!("{item} {label}")}
+            <div class="period-range-inputs">
+                <input aria-label="From" placeholder="From MM/DD/YYYY" prop:value=from prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, from_key, event_target_value(&ev)) />
+                <span>"to"</span>
+                <input aria-label="To" placeholder="To MM/DD/YYYY" prop:value=to prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, to_key, event_target_value(&ev)) />
+            </div>
+        </label>
+    }.into_view()
+}
+
+fn render_physical_pair_box(
+    item: &'static str,
+    label: &'static str,
+    yes_key: &'static str,
+    no_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let yes = field_bool(input, yes_key);
+    let no = field_bool(input, no_key);
+    view! {
+        <div class="bir-box checkbox-pair">
+            <span>{format!("{item} {label}")}</span>
+            <label><input type="checkbox" prop:checked=yes prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_pair_fields(set_form_input_text, yes_key, no_key, true) } />"Yes"</label>
+            <label><input type="checkbox" prop:checked=no prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_pair_fields(set_form_input_text, yes_key, no_key, false) } />"No"</label>
+        </div>
+    }.into_view()
+}
+
+fn render_physical_choice_box(
+    item: &'static str,
+    label: &'static str,
+    choices: Vec<(&'static str, &'static str)>,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let keys: Vec<&'static str> = choices.iter().map(|(_, key)| *key).collect();
+    view! {
+        <div class="bir-box checkbox-pair">
+            <span>{format!("{item} {label}")}</span>
+            {choices.into_iter().map(|(choice_label, key)| {
+                let checked = field_bool(input, key);
+                let all_keys = keys.clone();
+                view! {
+                    <label><input type="checkbox" prop:checked=checked prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, all_keys.clone(), key) } />{choice_label}</label>
+                }
+            }).collect_view()}
+        </div>
+    }.into_view()
+}
+
+fn render_physical_atc_1702q_box(
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let regular = field_bool(input, "frm1702q:rbATC_1");
+    let special = field_bool(input, "frm1702q:rbATC_2");
+    let regular_code = field_value(input, "frm1702q:txtATC_1");
+    let special_code = field_value(input, "frm1702q:cbATC_2");
+    view! {
+        <div class="bir-box span-2 checkbox-pair atc-choice-box">
+            <span>"5 Alphanumeric Tax Code (ATC)"</span>
+            <label><input type="checkbox" prop:checked=regular prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec!["frm1702q:rbATC_1", "frm1702q:rbATC_2"], "frm1702q:rbATC_1") } />"Regular / Normal Rate"</label>
+            <input aria-label="Regular rate ATC" placeholder="ATC" prop:value=regular_code prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, "frm1702q:txtATC_1", event_target_value(&ev)) />
+            <label><input type="checkbox" prop:checked=special prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec!["frm1702q:rbATC_1", "frm1702q:rbATC_2"], "frm1702q:rbATC_2") } />"Special Rate"</label>
+            <input aria-label="Special rate ATC" placeholder="ATC" prop:value=special_code prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, "frm1702q:cbATC_2", event_target_value(&ev)) />
+        </div>
+    }.into_view()
+}
+
+fn field_bool(input: &Value, key: &str) -> bool {
+    input
+        .get("fields")
+        .and_then(|fields| fields.get(key))
+        .map(|value| match value {
+            Value::Bool(value) => *value,
+            Value::String(value) => {
+                value.eq_ignore_ascii_case("true")
+                    || value == "1"
+                    || value.eq_ignore_ascii_case("yes")
+            }
+            _ => false,
+        })
+        .unwrap_or(false)
 }
 
 fn render_physical_boxes(
@@ -1863,6 +2076,112 @@ fn update_field_string(set_form_input_text: WriteSignal<String>, key: &str, valu
             }
         }
     });
+}
+
+fn update_period_component(
+    set_form_input_text: WriteSignal<String>,
+    key: &str,
+    part: &str,
+    sync_return_period: bool,
+    value: String,
+) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            let normalized = if part == "month" {
+                format!("{:0>2}", value.trim())
+            } else {
+                value.trim().to_string()
+            };
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                fields.insert(key.to_string(), Value::String(normalized.clone()));
+            }
+            if sync_return_period {
+                if let Some(period) = root
+                    .get_mut("return")
+                    .and_then(Value::as_object_mut)
+                    .and_then(|ret| ret.get_mut("period"))
+                    .and_then(Value::as_object_mut)
+                {
+                    if let Ok(number) = normalized.parse::<i64>() {
+                        period.insert(part.to_string(), Value::Number(number.into()));
+                    }
+                }
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
+}
+
+fn update_pair_fields(
+    set_form_input_text: WriteSignal<String>,
+    yes_key: &str,
+    no_key: &str,
+    yes_selected: bool,
+) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                fields.insert(yes_key.to_string(), Value::String(yes_selected.to_string()));
+                fields.insert(
+                    no_key.to_string(),
+                    Value::String((!yes_selected).to_string()),
+                );
+            }
+            let marker = format!(
+                "{}{}",
+                yes_key.to_ascii_lowercase(),
+                no_key.to_ascii_lowercase()
+            );
+            if marker.contains("amend") {
+                if let Some(ret) = root.get_mut("return").and_then(Value::as_object_mut) {
+                    ret.insert("is_amended".to_string(), Value::Bool(yes_selected));
+                }
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
+}
+
+fn update_choice_fields(
+    set_form_input_text: WriteSignal<String>,
+    keys: Vec<&str>,
+    selected_key: &str,
+) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                for key in &keys {
+                    fields.insert(
+                        (*key).to_string(),
+                        Value::String((*key == selected_key).to_string()),
+                    );
+                }
+            }
+            if let Some(quarter) = selected_quarter_from_key(selected_key) {
+                if let Some(period) = root
+                    .get_mut("return")
+                    .and_then(Value::as_object_mut)
+                    .and_then(|ret| ret.get_mut("period"))
+                    .and_then(Value::as_object_mut)
+                {
+                    period.insert("quarter".to_string(), Value::Number(quarter.into()));
+                }
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
+}
+
+fn selected_quarter_from_key(key: &str) -> Option<i64> {
+    let lower = key.to_ascii_lowercase();
+    if !lower.contains("quarter") && !lower.contains("optquarter") {
+        return None;
+    }
+    key.chars()
+        .rev()
+        .find(|ch| ch.is_ascii_digit())
+        .and_then(|ch| ch.to_digit(10))
+        .map(i64::from)
 }
 
 fn value_to_form_string(value: &Value) -> String {
