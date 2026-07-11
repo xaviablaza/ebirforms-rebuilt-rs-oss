@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "identifier": "app.navegante.ebirforms",
   "build": {
-    "beforeDevCommand": "npm --prefix frontend install && scripts/ensure-trunk.sh serve --host 127.0.0.1 --port 1420",
+    "beforeDevCommand": "npm --prefix frontend install && scripts/ensure-trunk.sh serve --address 127.0.0.1 --port 1420",
     "devUrl": "http://127.0.0.1:1420",
     "beforeBuildCommand": "npm --prefix frontend install && scripts/ensure-trunk.sh build",
     "frontendDist": "../frontend/dist"

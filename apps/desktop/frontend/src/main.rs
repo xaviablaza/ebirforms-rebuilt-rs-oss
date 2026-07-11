@@ -913,30 +913,30 @@ fn render_pdf_physical_form(
                 <div class="bir-barcode">{format!("{} PDF-LIKE DATA ENTRY", form_code)}</div>
             </div>
             <div class="bir-grid physical-top-strip">
-                {render_physical_boxes(header_fields, locked, set_form_input_text)}
+                {render_physical_boxes(&form_code, header_fields, locked, set_form_input_text)}
             </div>
             <div class="bir-section-title">"Part I – Background Information"</div>
             <div class="bir-grid physical-background-grid">
-                {render_physical_boxes(background_fields, locked, set_form_input_text)}
+                {render_physical_boxes(&form_code, background_fields, locked, set_form_input_text)}
             </div>
             <div class="bir-section-title">{physical_computation_title(&form_code)}</div>
             <div class="bir-table computation-table">
-                {render_physical_rows(computation_fields, locked, set_form_input_text)}
+                {render_physical_rows(&form_code, computation_fields, locked, set_form_input_text)}
             </div>
             {if !vat_fields.is_empty() {
                 view! {
                     <div class="bir-section-title">"Part IV – Computation of VAT Payable / Excess Input Tax"</div>
-                    <div class="bir-table computation-table">{render_physical_rows(vat_fields, locked, set_form_input_text)}</div>
+                    <div class="bir-table computation-table">{render_physical_rows(&form_code, vat_fields, locked, set_form_input_text)}</div>
                 }.into_view()
             } else { view! {}.into_view() }}
             <div class="bir-section-title">{physical_payment_title(&form_code)}</div>
             <div class="bir-payment-grid physical-payment-grid">
-                {render_physical_payment_rows(payment_fields, locked, set_form_input_text)}
+                {render_physical_payment_rows(&form_code, payment_fields, locked, set_form_input_text)}
             </div>
             {if !schedule_fields.is_empty() {
                 view! {
                     <div class="bir-section-title">{physical_schedule_title(&form_code)}</div>
-                    <div class="bir-grid physical-schedule-grid">{render_physical_boxes(schedule_fields, locked, set_form_input_text)}</div>
+                    <div class="bir-grid physical-schedule-grid">{render_physical_boxes(&form_code, schedule_fields, locked, set_form_input_text)}</div>
                 }.into_view()
             } else { view! {}.into_view() }}
         </div>
@@ -960,12 +960,16 @@ fn fields_for_physical_section(
 ) -> Vec<(String, String)> {
     fields
         .iter()
-        .filter(|(key, _)| classify_physical_field(form_code, key) == section)
+        .filter(|(key, _)| {
+            is_renderable_physical_field(form_code, key)
+                && classify_physical_field(form_code, key) == section
+        })
         .cloned()
         .collect()
 }
 
 fn render_physical_boxes(
+    form_code: &str,
     fields: Vec<(String, String)>,
     locked: bool,
     set_form_input_text: WriteSignal<String>,
@@ -974,7 +978,7 @@ fn render_physical_boxes(
         return view! { <div class="bir-box muted-empty">"No fields in this section for the selected fixture."</div> }.into_view();
     }
     fields.into_iter().map(|(key, value)| {
-        let label = physical_field_label(&key);
+        let label = physical_field_label(form_code, &key);
         let input_key = key.clone();
         let class_name = if is_wide_physical_field(&key) { "bir-box span-2" } else { "bir-box" };
         view! {
@@ -986,6 +990,7 @@ fn render_physical_boxes(
 }
 
 fn render_physical_rows(
+    form_code: &str,
     fields: Vec<(String, String)>,
     locked: bool,
     set_form_input_text: WriteSignal<String>,
@@ -995,7 +1000,7 @@ fn render_physical_rows(
     }
     fields.into_iter().map(|(key, value)| {
         let item = physical_item_no(&key).unwrap_or_else(|| "—".to_string());
-        let label = physical_row_label(&key);
+        let label = physical_row_label(form_code, &key);
         let input_key = key.clone();
         view! {
             <label class="bir-row">
@@ -1007,6 +1012,7 @@ fn render_physical_rows(
 }
 
 fn render_physical_payment_rows(
+    form_code: &str,
     fields: Vec<(String, String)>,
     locked: bool,
     set_form_input_text: WriteSignal<String>,
@@ -1016,7 +1022,7 @@ fn render_physical_payment_rows(
     }
     fields.into_iter().map(|(key, value)| {
         let item = physical_item_no(&key).unwrap_or_else(|| "—".to_string());
-        let label = physical_row_label(&key);
+        let label = physical_row_label(form_code, &key);
         let input_key = key.clone();
         view! {
             <label class="bir-row payment-field-row">
@@ -1028,6 +1034,10 @@ fn render_physical_payment_rows(
 }
 
 fn classify_physical_field(form_code: &str, key: &str) -> PhysicalSectionKind {
+    if let Some(section) = official_physical_section(form_code, key) {
+        return section;
+    }
+
     let lower = key.to_ascii_lowercase();
     if lower.contains("sched")
         || lower.contains("schedule")
@@ -1156,18 +1166,548 @@ fn physical_item_no(key: &str) -> Option<String> {
     }
 }
 
-fn physical_field_label(key: &str) -> String {
+fn official_physical_section(form_code: &str, key: &str) -> Option<PhysicalSectionKind> {
+    let stem = key.rsplit(':').next().unwrap_or(key);
+    let lower = key.to_ascii_lowercase();
+    match form_code {
+        "0619E" => {
+            if matches!(
+                stem,
+                "txtMonth"
+                    | "txtYear"
+                    | "txtDueMonth"
+                    | "txtDueDay"
+                    | "txtDueYear"
+                    | "txtAtc"
+                    | "txtTaxTypeCode"
+            ) || lower.contains("optamend")
+                || lower.contains("optwithheld")
+            {
+                Some(PhysicalSectionKind::Header)
+            } else if matches!(
+                stem,
+                "txtTIN1"
+                    | "txtTIN2"
+                    | "txtTIN3"
+                    | "txtBranchCode"
+                    | "txtRDOCode"
+                    | "txtTaxpayerName"
+                    | "txtLineBus"
+                    | "txtAddress"
+                    | "txtZipCode"
+                    | "txtTelNum"
+                    | "txtEmail"
+            ) || lower.contains("optcategory")
+            {
+                Some(PhysicalSectionKind::Background)
+            } else if stem.starts_with("txtTax1") {
+                Some(PhysicalSectionKind::Computation)
+            } else if lower.contains("agency")
+                || lower.contains("number")
+                || lower.contains("date")
+                || lower.contains("amount")
+                || lower.contains("particular")
+            {
+                Some(PhysicalSectionKind::Payment)
+            } else {
+                None
+            }
+        }
+        "1601EQ" => {
+            if matches!(stem, "txtYear" | "txtNoSheets")
+                || lower.contains("optquarter")
+                || lower.contains("optamend")
+                || lower.contains("optwithheld")
+            {
+                Some(PhysicalSectionKind::Header)
+            } else if matches!(
+                stem,
+                "txtTIN1"
+                    | "txtTIN2"
+                    | "txtTIN3"
+                    | "txtBranchCode"
+                    | "txtRDOCode"
+                    | "txtTaxpayerName"
+                    | "txtLineBus"
+                    | "txtAddress"
+                    | "txtZipCode"
+                    | "txtTelNum"
+                    | "txtEmail"
+            ) || lower.contains("optcategory")
+            {
+                Some(PhysicalSectionKind::Background)
+            } else if stem.starts_with("txtAtcCd")
+                || stem.starts_with("txtTaxBase")
+                || stem.starts_with("txtTaxRate")
+                || stem.starts_with("txtTaxbeWithHeld")
+                || stem.starts_with("txtTotalOtherTax")
+                || stem.starts_with("txtTax")
+                || stem.starts_with("if")
+            {
+                Some(PhysicalSectionKind::Computation)
+            } else if lower.contains("agency")
+                || lower.contains("number")
+                || lower.contains("date")
+                || lower.contains("amount")
+                || lower.contains("particular")
+            {
+                Some(PhysicalSectionKind::Payment)
+            } else {
+                None
+            }
+        }
+        "1702Q" => {
+            if lower.contains("rbforclndrfscl")
+                || matches!(stem, "rbYrEndMonth" | "txtYrEndYear")
+                || lower.contains("rbquarter")
+                || lower.contains("rbamendedrtn")
+                || lower.contains("atc")
+            {
+                Some(PhysicalSectionKind::Header)
+            } else if matches!(
+                stem,
+                "txtTIN1"
+                    | "txtTIN2"
+                    | "txtTIN3"
+                    | "txtBranchCode"
+                    | "txtRDOCode"
+                    | "txtTaxpayerName1"
+                    | "txtAddress"
+                    | "txtZipCode"
+                    | "txtTelNum"
+                    | "txtEmail"
+            ) || lower.contains("mthdofddctns")
+                || lower.contains("txrlf")
+            {
+                Some(PhysicalSectionKind::Background)
+            } else if stem.starts_with("txtTax") || stem == "txtSheets" {
+                Some(PhysicalSectionKind::Computation)
+            } else if lower.contains("sched") {
+                Some(PhysicalSectionKind::Schedule)
+            } else {
+                None
+            }
+        }
+        "2000" => {
+            if matches!(stem, "txtMonth" | "txtYear" | "txtSheets") || lower.contains("amendedrtn")
+            {
+                Some(PhysicalSectionKind::Header)
+            } else if matches!(
+                stem,
+                "txtTIN1"
+                    | "txtTIN2"
+                    | "txtTIN3"
+                    | "txtBranchCode"
+                    | "txtRDOCode"
+                    | "txtTaxpayerName"
+                    | "txtAddress"
+                    | "txtZipCode"
+                    | "txtTelNum"
+                    | "txtEmail"
+                    | "txtOtherName"
+                    | "txtOtherTIN"
+            ) || lower.contains("optparty")
+                || lower.contains("optmode")
+            {
+                Some(PhysicalSectionKind::Background)
+            } else if stem.starts_with("txtTax1") {
+                Some(PhysicalSectionKind::Computation)
+            } else if lower.contains("agency")
+                || lower.contains("number")
+                || lower.contains("date")
+                || lower.contains("amount")
+                || lower.contains("particular")
+            {
+                Some(PhysicalSectionKind::Payment)
+            } else if lower.contains("sched") {
+                Some(PhysicalSectionKind::Schedule)
+            } else {
+                None
+            }
+        }
+        "2550Q" => {
+            if matches!(
+                stem,
+                "calendarNo1"
+                    | "fiscalNo1"
+                    | "selectedMonthNo2"
+                    | "txtYearNo2"
+                    | "RtnPeriodFromNo4"
+                    | "RtnPeriodToNo4"
+            ) || lower.contains("optquarter")
+                || lower.contains("amendedreturn")
+                || lower.contains("optshortprd")
+            {
+                Some(PhysicalSectionKind::Header)
+            } else if matches!(
+                stem,
+                "txtTIN1"
+                    | "txtTIN2"
+                    | "txtTIN3"
+                    | "branchCode"
+                    | "txtRDOCode"
+                    | "taxpayerName"
+                    | "taxpayerAddress"
+                    | "taxpayerZip"
+                    | "taxpayerContactNumber"
+                    | "taxpayerEmailAddress"
+                    | "internationalTreatyYn"
+                    | "specialRateYn"
+                    | "specifyInternationalTreaty"
+            ) || lower.contains("taxpayerclassification")
+            {
+                Some(PhysicalSectionKind::Background)
+            } else if matches!(
+                stem,
+                "excessInputTax"
+                    | "creditableVat"
+                    | "advVatPayment"
+                    | "vatPaidReturn"
+                    | "addSpecifyNo19"
+                    | "otherCreditsNo19"
+                    | "totalTaxCredits"
+                    | "excessCredits"
+                    | "surcharge"
+                    | "interest"
+                    | "compromise"
+                    | "penalties"
+                    | "totalPayable"
+            ) {
+                Some(PhysicalSectionKind::Computation)
+            } else if matches!(
+                stem,
+                "vatableSales"
+                    | "outputVatSales"
+                    | "zeroRatedSales"
+                    | "exemptSales"
+                    | "totalSales"
+                    | "outputTaxDue"
+                    | "lessOutputVat"
+                    | "addOutputVat"
+                    | "totalAdjOutput"
+                    | "inputTaxCarried"
+                    | "inputTaxDeferred"
+                    | "transitionalInputTax"
+                    | "presumptiveInputTax"
+                    | "addSpecifyNo42"
+                    | "otherSpecify42"
+                    | "total43"
+                    | "domesticPurchase"
+                    | "domesticInputTax"
+                    | "servicesPurchase"
+                    | "serviceInputTax"
+                    | "importPurchase"
+                    | "importInputTax"
+                    | "addSpecifyNo47"
+                    | "otherSpecify47"
+                    | "domesticPurchaseNoTax"
+                    | "vatExemptImports"
+                    | "totalCurPurchase"
+                    | "totalCurInputTax"
+                    | "totalAvailInputTax"
+                    | "importCapitalInputTax"
+                    | "inputTaxAttr"
+                    | "vatRefund"
+                    | "inputVatUnpaid"
+                    | "addSpecifyNo56"
+                    | "otherSpecify56"
+                    | "totalDeductions"
+                    | "addInputVat"
+                    | "adjDeductions"
+                    | "totalAllowInputTax"
+                    | "netVatPayable"
+            ) {
+                Some(PhysicalSectionKind::VatComputation)
+            } else if lower.contains("sched")
+                || lower.contains("datepurchase")
+                || lower.contains("datecovered")
+                || lower.contains("officialreceipt")
+                || lower.contains("amountpaid")
+            {
+                Some(PhysicalSectionKind::Schedule)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+fn is_renderable_physical_field(form_code: &str, key: &str) -> bool {
+    let lower = key.to_ascii_lowercase();
+
+    // XML captures contain desktop-app state and lookup/dropdown backing data that is required
+    // for byte-stable XML rendering, but does not exist on the printed BIR PDFs. Keep it in
+    // JSON/template mappings, but do not draw it on the physical form surface.
+    let internal_markers = [
+        "finalflag",
+        "enroll",
+        "ebironline",
+        "secret",
+        "driveselect",
+        "currentpage",
+        "maxpage",
+        "modlabel",
+        "delete",
+        "pg2tin",
+        "pg2branch",
+        "pg2taxpayer",
+        "txtpgtin",
+        "txtpg2",
+        "resultotherspecify",
+    ];
+    if internal_markers.iter().any(|marker| lower.contains(marker)) {
+        return false;
+    }
+    if form_code == "1601EQ"
+        && (lower.starts_with("atccode")
+            || lower.starts_with("atcdesc")
+            || lower.starts_with("atctaxrate"))
+    {
+        return false;
+    }
+    if form_code == "2000"
+        && (lower.starts_with("ds") || lower.contains("numofdays") || lower.contains("numofmonths"))
+    {
+        return false;
+    }
+
+    true
+}
+
+fn physical_field_label(form_code: &str, key: &str) -> String {
     let item = physical_item_no(key)
         .map(|item| format!("{item} "))
         .unwrap_or_default();
-    format!("{}{}", item, physical_label_without_item(key))
+    format!("{}{}", item, physical_label_without_item(form_code, key))
 }
 
-fn physical_row_label(key: &str) -> String {
-    physical_label_without_item(key)
+fn physical_row_label(form_code: &str, key: &str) -> String {
+    physical_label_without_item(form_code, key)
 }
 
-fn physical_label_without_item(key: &str) -> String {
+fn physical_label_without_item(form_code: &str, key: &str) -> String {
+    if let Some(label) = official_physical_label(form_code, key) {
+        return label.to_string();
+    }
+    heuristic_physical_label(key)
+}
+
+fn official_physical_label(form_code: &str, key: &str) -> Option<&'static str> {
+    let stem = key.rsplit(':').next().unwrap_or(key);
+    match form_code {
+        "0619E" => match stem {
+            "txtMonth" | "txtYear" => Some("For the Month of (MM/YYYY)"),
+            "txtDueMonth" | "txtDueDay" | "txtDueYear" => Some("Due Date (MM/DD/YYYY)"),
+            "optAmend" | "Y" | "N" if key.contains("optAmend") => Some("Amended Form?"),
+            "optWithheld" if key.contains("optWithheld") => Some("Any Taxes Withheld?"),
+            "txtAtc" => Some("ATC"),
+            "txtTaxTypeCode" => Some("Tax Type Code"),
+            "txtTIN1" | "txtTIN2" | "txtTIN3" | "txtBranchCode" => {
+                Some("Taxpayer Identification Number (TIN)")
+            }
+            "txtRDOCode" => Some("RDO Code"),
+            "txtTaxpayerName" => Some("Withholding Agent’s Name"),
+            "txtLineBus" => Some("Registered activity / line of business"),
+            "txtAddress" => Some("Registered Address"),
+            "txtZipCode" => Some("ZIP Code"),
+            "txtTelNum" => Some("Contact Number"),
+            "optCategory" if key.contains("optCategory") => Some("Category of Withholding Agent"),
+            "txtEmail" => Some("Email Address"),
+            "txtTax14" => Some("Amount of Remittance"),
+            "txtTax15" => Some("Less: Amount Remitted from Previously Filed Form, if amended"),
+            "txtTax16" => Some("Net Amount of Remittance (Item 14 Less Item 15)"),
+            "txtTax17A" => Some("Surcharge"),
+            "txtTax17B" => Some("Interest"),
+            "txtTax17C" => Some("Compromise"),
+            "txtTax17D" => Some("Total Penalties (Sum of Items 17A to 17C)"),
+            "txtTax18" => Some("Total Amount of Remittance (Sum of Items 16 and 17D)"),
+            "txtAgency19" | "txtNumber19" | "txtDate19" | "txtAmount19" => {
+                Some("Cash/Bank Debit Memo")
+            }
+            "txtAgency20" | "txtNumber20" | "txtDate20" | "txtAmount20" => Some("Check"),
+            "txtAgency21" | "txtNumber21" | "txtDate21" | "txtAmount21" => Some("Tax Debit Memo"),
+            "txtParticular22" | "txtAgency22" | "txtNumber22" | "txtDate22" | "txtAmount22" => {
+                Some("Others (specify below)")
+            }
+            _ => None,
+        },
+        "1601EQ" => match stem {
+            "txtYear" => Some("For the Year"),
+            "1" | "2" | "3" | "4" if key.contains("optQuarter") => Some("Quarter"),
+            "Y" | "N" if key.contains("optAmend") => Some("Amended Return?"),
+            "Y" | "N" if key.contains("optWithheld") => Some("Any Taxes Withheld?"),
+            "txtNoSheets" => Some("No. of Sheet/s Attached"),
+            "txtTIN1" | "txtTIN2" | "txtTIN3" | "txtBranchCode" => {
+                Some("Taxpayer Identification Number (TIN)")
+            }
+            "txtRDOCode" => Some("RDO Code"),
+            "txtTaxpayerName" => Some("Withholding Agent’s Name"),
+            "txtLineBus" => Some("Registered activity / line of business"),
+            "txtAddress" => Some("Registered Address"),
+            "txtZipCode" => Some("ZIP Code"),
+            "txtTelNum" => Some("Contact Number"),
+            "P" | "G" if key.contains("optCategory") => Some("Category of Withholding Agent"),
+            "txtEmail" => Some("Email Address"),
+            "txtTotalOtherTax" => Some("Total taxes withheld for expanded withholding entries"),
+            "txtTax19" => Some("Total Taxes Withheld for the Quarter"),
+            "txtTax20" => Some("Less: Remittances Made – 1st Month of the Quarter"),
+            "txtTax21" => Some("Less: Remittances Made – 2nd Month of the Quarter"),
+            "txtTax22" => Some("Tax Remitted in Return Previously Filed, if amended"),
+            "txtTax23" => Some("Over-remittance from Previous Quarter of the same taxable year"),
+            "txtTax24" => Some("Other Payments Made"),
+            "txtTax25" => Some("Total Remittances Made"),
+            "txtTax26" => Some("Tax Still Due/(Over-remittance)"),
+            "txtTax27" => Some("Surcharge"),
+            "txtTax28" => Some("Interest"),
+            "txtTax29" => Some("Compromise"),
+            "txtTax30" => Some("Total Penalties"),
+            "txtTax31" => Some("TOTAL AMOUNT STILL DUE/(Over-remittance)"),
+            "ifRefund" => Some("Over-remittance option: To be Refunded"),
+            "ifIssueCert" => Some("Over-remittance option: Tax Credit Certificate"),
+            "ifCarriedOver" => Some("Over-remittance option: To be Carried Over"),
+            _ if stem.starts_with("txtAtcCd") => Some("ATC Code"),
+            _ if stem.starts_with("txtTaxBase") => Some("Tax Base"),
+            _ if stem.starts_with("txtTaxRate") => Some("Tax Rate"),
+            _ if stem.starts_with("txtTaxbeWithHeld") => Some("Tax Required to be Withheld"),
+            _ if stem.contains("Agency32")
+                || stem.contains("Number32")
+                || stem.contains("Date32")
+                || stem.contains("Amount32") =>
+            {
+                Some("Cash/Bank Debit Memo")
+            }
+            _ if stem.contains("Agency33")
+                || stem.contains("Number33")
+                || stem.contains("Date33")
+                || stem.contains("Amount33") =>
+            {
+                Some("Check")
+            }
+            _ if stem.contains("Agency34")
+                || stem.contains("Number34")
+                || stem.contains("Date34")
+                || stem.contains("Amount34") =>
+            {
+                Some("Tax Debit Memo")
+            }
+            _ if stem.contains("Agency35")
+                || stem.contains("Number35")
+                || stem.contains("Date35")
+                || stem.contains("Amount35")
+                || stem.contains("Particular35") =>
+            {
+                Some("Others (specify below)")
+            }
+            _ => None,
+        },
+        "1702Q" => match stem {
+            "rbForClndrFscl_1" | "rbForClndrFscl_2" => Some("For: Calendar / Fiscal"),
+            "rbYrEndMonth" | "txtYrEndYear" => Some("Year Ended (MM/20YY)"),
+            "rbQuarter_1" | "rbQuarter_2" | "rbQuarter_3" => Some("Quarter"),
+            "rbAmendedRtn_1" | "rbAmendedRtn_2" => Some("Amended Return?"),
+            "txtATC_1" | "rbATC_1" | "cbATC_2" | "rbATC_2" => Some("Alphanumeric Tax Code (ATC)"),
+            "txtTIN1" | "txtTIN2" | "txtTIN3" | "txtBranchCode" => {
+                Some("Taxpayer Identification Number (TIN)")
+            }
+            "txtRDOCode" => Some("RDO Code"),
+            "txtTaxpayerName1" => Some("Registered Name"),
+            "txtAddress" => Some("Registered Address"),
+            "txtZipCode" => Some("ZIP Code"),
+            "txtTelNum" => Some("Contact Number"),
+            "txtEmail" => Some("Email Address"),
+            "rbMthdOfDdctns_1" | "rbMthdOfDdctns_2" => Some("Method of Deductions"),
+            "rbTxRlf_1" | "rbTxRlf_2" | "txtTxRlfSpcfy" => {
+                Some("Special Law/International Tax Treaty?")
+            }
+            "txtTax14" => Some("Income Tax Due – Regular/Normal Rate"),
+            "txtTax15" => Some("Less: Share of Other Agencies"),
+            "txtTax16" => Some("Balance/Income Tax Still Due – Regular/Normal Rate"),
+            "txtTax17" => Some("Add: Income Tax Due – Special Rate"),
+            "txtTax18" => Some("Aggregate Income Tax Due"),
+            "txtTax19" => Some("Less: Total Tax Credits/Payments"),
+            "txtTax20" => Some("Net Tax Payable / (Overpayment)"),
+            "txtTax21" => Some("Surcharge"),
+            "txtTax22" => Some("Interest"),
+            "txtTax23" => Some("Compromise"),
+            "txtTax24" => Some("Total Penalties"),
+            "txtTax25" => Some("TOTAL AMOUNT PAYABLE / (Overpayment)"),
+            "txtSheets" => Some("Number of attached sheets"),
+            _ => None,
+        },
+        "2000" => match stem {
+            "txtMonth" | "txtYear" => Some("For the month of (MM/YYYY)"),
+            "AmendedRtn_1" | "AmendedRtn_2" => Some("Amended Return?"),
+            "txtSheets" => Some("Number of Sheet/s Attached"),
+            "txtTIN1" | "txtTIN2" | "txtTIN3" | "txtBranchCode" => {
+                Some("Taxpayer Identification Number (TIN)")
+            }
+            "txtRDOCode" => Some("RDO Code"),
+            "txtTaxpayerName" => Some("Taxpayer’s Name"),
+            "txtAddress" => Some("Registered Address"),
+            "txtZipCode" => Some("ZIP Code"),
+            "txtTelNum" => Some("Contact Number"),
+            "txtEmail" => Some("Email Address"),
+            "optParty_1" | "optParty_2" | "optParty_3" => Some("Other Party to the transaction"),
+            "txtOtherName" => Some("Other Party Name"),
+            "txtOtherTIN" => Some("Other Party TIN"),
+            "optMode_1" | "optMode_2" | "optMode_3" => Some("Mode of Affixture"),
+            "txtTax14" => Some("Tax Due for the Month"),
+            "txtTax15A" => Some("Less: Tax Paid in Return Previously Filed, if amended"),
+            "txtTax15B" => Some("Payment thru Constructive Affixture"),
+            "txtTax15C" => Some("Advance Payment during the month"),
+            "txtTax15D" => Some("Total Payments"),
+            "txtTax16" => Some("Net Tax Payable/(Overpayment)/(Balance to be carried over)"),
+            "txtTax17A" => Some("Surcharge"),
+            "txtTax17B" => Some("Interest"),
+            "txtTax17C" => Some("Compromise"),
+            "txtTax17D" => Some("Total Penalties"),
+            "txtTax18" => Some("Total Amount Payable/(Overpayment)/(Balance to be carried over)"),
+            "txtTax19" => Some("Total Amount of Documentary Stamps Sold for the Month"),
+            _ => None,
+        },
+        "2550Q" => match stem {
+            "calendarNo1" | "fiscalNo1" => Some("For: Calendar / Fiscal"),
+            "selectedMonthNo2" | "txtYearNo2" => Some("Year Ended (MM/YYYY)"),
+            "OptQuarter1" | "OptQuarter2" | "OptQuarter3" | "OptQuarter4" => Some("Quarter"),
+            "RtnPeriodFromNo4" | "RtnPeriodToNo4" => Some("Return Period (MM/DD/YYYY)"),
+            "amendedReturnYesNo5" | "amendedReturnNo5" => Some("Amended Return?"),
+            "OptShortPrd1" | "OptShortPrd2" => Some("Short Period Return?"),
+            "txtTIN1" | "txtTIN2" | "txtTIN3" | "branchCode" => {
+                Some("Taxpayer Identification Number (TIN)")
+            }
+            "txtRDOCode" => Some("RDO Code"),
+            "taxpayerName" => Some("Taxpayer’s Name"),
+            "taxpayerAddress" => Some("Registered Address"),
+            "taxpayerZip" => Some("ZIP Code"),
+            "taxpayerContactNumber" => Some("Contact Number"),
+            "taxpayerEmailAddress" => Some("Email Address"),
+            "taxPayerClassification1"
+            | "taxPayerClassification2"
+            | "taxPayerClassification3"
+            | "taxPayerClassification4" => Some("Taxpayer Classification"),
+            "internationalTreatyYn" | "specialRateYn" | "specifyInternationalTreaty" => {
+                Some("Special Law or International Tax Treaty?")
+            }
+            "excessInputTax" => Some("Net VAT Payable/(Excess Input Tax)"),
+            "creditableVat" => Some("Creditable VAT Withheld"),
+            "advVatPayment" => Some("Advance VAT Payments"),
+            "vatPaidReturn" => Some("VAT paid in return previously filed, if amended"),
+            "addSpecifyNo19" | "otherCreditsNo19" => Some("Other Credits/Payment (Specify)"),
+            "totalTaxCredits" => Some("Total Tax Credits/Payment"),
+            "excessCredits" => Some("Tax Still Payable/(Excess Credits)"),
+            "surcharge" => Some("Surcharge"),
+            "interest" => Some("Interest"),
+            "compromise" => Some("Compromise"),
+            "penalties" => Some("Total Penalties"),
+            "totalPayable" => Some("TOTAL AMOUNT PAYABLE/(Excess Credits)"),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn heuristic_physical_label(key: &str) -> String {
     let stem = key.rsplit(':').next().unwrap_or(key);
     let mut label = stem
         .trim_start_matches("txt")

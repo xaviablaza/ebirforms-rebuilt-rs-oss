@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "trunk serve --host 127.0.0.1 --port 1420",
+    "dev": "trunk serve --address 127.0.0.1 --port 1420",
     "build": "trunk build",
     "check": "trunk build"
   },
