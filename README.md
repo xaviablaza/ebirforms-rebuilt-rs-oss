@@ -85,3 +85,13 @@ cargo run -p ebirforms-cli -- receipt-poll --receipt-dir /tmp/ebirforms-receipts
 The default persistent stores are `.ebirforms/submissions.json` for latest-state submission audit records and `.ebirforms/jobs.sqlite` for the queue; `.ebirforms/` is gitignored. Use `--records <path>` and `--db <path>` for test runs.
 
 Live submission is gated behind `--live --confirm` and `BIR_SFTP_*` environment variables. The implementation writes a durable submission record before attempting network transport. Missing credentials fail safely with a `Failed` record; uncertain SFTP failures are recorded as `Uncertain` so later automatic retries with the same idempotency key are blocked for manual review.
+
+For BIR's current 1601C SFTP endpoint, the most faithful Linux path is the WinSCP backend under Wine:
+
+```dotenv
+BIR_SFTP_BACKEND=winscp
+BIR_WINSCP_EXE=/path/to/WinSCP.exe
+BIR_WINE_CMD=wine
+```
+
+This backend mirrors the official helper more closely than OpenSSH: WinSCP SFTP-over-SSH, binary transfer, safe SFTP v3 negotiation, and no remote `mkdir` attempt because BIR pre-creates `/1601Cv2018` and may reject `mkdir` even when upload is allowed. Credentials remain in a chmod-600 temporary WinSCP script, not argv. The default backend remains `openssh` unless `BIR_SFTP_BACKEND=winscp` is set.
