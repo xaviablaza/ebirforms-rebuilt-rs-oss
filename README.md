@@ -2,6 +2,11 @@
 
 Local Rust implementation for reproducing the eBIRForms submission payload pipeline discovered from the Windows app investigation.
 
+## License
+
+This workspace is licensed under the Functional Source License, Version 1.1,
+ALv2 Future License (`FSL-1.1-ALv2`). See `LICENSE.md`.
+
 ## Current scope
 
 Implemented programmatic-submission MVP slices from `docs/architecture/optimized-programmatic-submission-plan.md`:
@@ -103,6 +108,6 @@ BIR_WINSCP_EXE=/path/to/WinSCP.exe
 BIR_WINE_CMD=wine
 ```
 
-Do not vendor or redistribute WinSCP binaries in this repository. WinSCP is GPL-licensed, while this repository may be shipped under non-GPL terms; bundling WinSCP would require GPL redistribution compliance and is not appropriate for the public repo. The fallback only invokes a separately installed copy supplied by the operator. Credentials remain in a chmod-600 temporary WinSCP script, not argv.
+Do not vendor or redistribute WinSCP binaries in this repository. WinSCP is GPL-licensed, while this workspace is licensed under `FSL-1.1-ALv2` with an Apache-2.0 future license; bundling WinSCP would require GPL redistribution compliance and is not appropriate for this repository. The fallback only invokes a separately installed copy supplied by the operator. Credentials remain in a chmod-600 temporary WinSCP script, not argv.
 
 The OpenSSH backend remains available with `BIR_SFTP_BACKEND=openssh`, but it is not the default. For OpenSSH password auth, the implementation forces `BatchMode=no`; otherwise `sftp -b` will not prompt and `sshpass` cannot supply the password.
