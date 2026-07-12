@@ -30,7 +30,7 @@ jobs:
       tag: ${{ steps.bump.outputs.tag }}
     steps:
       - name: Check out main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -41,7 +41,7 @@ jobs:
           toolchain: 1.88.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -153,13 +153,9 @@ jobs:
             platform: linux-x86_64
             cli_binary: target/release/ebirforms-cli
             cli_asset: ebirforms-cli-linux-x86_64
-          - os: windows-latest
-            platform: windows-x86_64
-            cli_binary: target/release/ebirforms-cli.exe
-            cli_asset: ebirforms-cli-windows-x86_64.exe
     steps:
       - name: Check out release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.prepare.outputs.tag }}
 
@@ -182,7 +178,7 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -191,7 +187,7 @@ jobs:
             apps/desktop/frontend/package-lock.json
 
       - name: Set up mise for desktop helper scripts
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@v3
         with:
           install: false
           cache: true
@@ -244,7 +240,7 @@ jobs:
           find dist -type f -print0 | sort -z | xargs -0 sha256sum >"dist/SHA256SUMS-${{ matrix.platform }}.txt"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: release-${{ matrix.platform }}
           path: dist/**
@@ -256,7 +252,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: release-artifacts
           merge-multiple: true
@@ -271,7 +267,7 @@ jobs:
         run: |
           set -euo pipefail
           body="Release $TAG"
-          body+=$'\n\nArtifacts include Windows and Linux CLI binaries plus Windows and Linux desktop app bundles. SHA-256 checksum files are attached.'
+          body+=$'\n\nArtifacts include the Linux CLI binary plus Linux desktop app bundles. Windows builds are temporarily disabled. SHA-256 checksum files are attached.'
           if [ -n "${NOTES:-}" ]; then
             body+=$'\n\n'
             body+="$NOTES"
