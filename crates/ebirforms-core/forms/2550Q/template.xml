@@ -1,161 +1,88 @@
-<?xml version='1.0'?>
-<div>frm2550qv2024:calendarNo1={{frm2550qv2024:calendarNo1}}frm2550qv2024:calendarNo1=</div>
-<div>frm2550qv2024:fiscalNo1={{frm2550qv2024:fiscalNo1}}frm2550qv2024:fiscalNo1=</div>
-<div>frm2550qv2024:selectedMonthNo2={{frm2550qv2024:selectedMonthNo2}}frm2550qv2024:selectedMonthNo2=</div>
-<div>frm2550qv2024:txtYearNo2={{frm2550qv2024:txtYearNo2}}frm2550qv2024:txtYearNo2=</div>
-<div>frm2550qv2024:OptQuarter1={{frm2550qv2024:OptQuarter1}}frm2550qv2024:OptQuarter1=</div>
-<div>frm2550qv2024:OptQuarter2={{frm2550qv2024:OptQuarter2}}frm2550qv2024:OptQuarter2=</div>
-<div>frm2550qv2024:OptQuarter3={{frm2550qv2024:OptQuarter3}}frm2550qv2024:OptQuarter3=</div>
-<div>frm2550qv2024:OptQuarter4={{frm2550qv2024:OptQuarter4}}frm2550qv2024:OptQuarter4=</div>
-<div>frm2550qv2024:RtnPeriodFromNo4={{frm2550qv2024:RtnPeriodFromNo4}}frm2550qv2024:RtnPeriodFromNo4=</div>
-<div>frm2550qv2024:RtnPeriodToNo4={{frm2550qv2024:RtnPeriodToNo4}}frm2550qv2024:RtnPeriodToNo4=</div>
-<div>frm2550qv2024:amendedReturnYesNo5={{frm2550qv2024:amendedReturnYesNo5}}frm2550qv2024:amendedReturnYesNo5=</div>
-<div>frm2550qv2024:amendedReturnNo5={{frm2550qv2024:amendedReturnNo5}}frm2550qv2024:amendedReturnNo5=</div>
-<div>frm2550qv2024:OptShortPrd1={{frm2550qv2024:OptShortPrd1}}frm2550qv2024:OptShortPrd1=</div>
-<div>frm2550qv2024:OptShortPrd2={{frm2550qv2024:OptShortPrd2}}frm2550qv2024:OptShortPrd2=</div>
-<div>frm2550qv2024:txtTIN1={{frm2550qv2024:txtTIN1}}frm2550qv2024:txtTIN1=</div>
-<div>frm2550qv2024:txtTIN2={{frm2550qv2024:txtTIN2}}frm2550qv2024:txtTIN2=</div>
-<div>frm2550qv2024:txtTIN3={{frm2550qv2024:txtTIN3}}frm2550qv2024:txtTIN3=</div>
-<div>frm2550qv2024:branchCode={{frm2550qv2024:branchCode}}frm2550qv2024:branchCode=</div>
-<div>frm2550qv2024:txtRDOCode={{frm2550qv2024:txtRDOCode}}frm2550qv2024:txtRDOCode=</div>
-<div>frm2550qv2024:taxpayerName={{frm2550qv2024:taxpayerName}}frm2550qv2024:taxpayerName=</div>
-<div>frm2550qv2024:taxpayerAddress={{frm2550qv2024:taxpayerAddress}}frm2550qv2024:taxpayerAddress=</div>
-<div>frm2550qv2024:taxpayerZip={{frm2550qv2024:taxpayerZip}}frm2550qv2024:taxpayerZip=</div>
-<div>frm2550qv2024:taxpayerContactNumber={{frm2550qv2024:taxpayerContactNumber}}frm2550qv2024:taxpayerContactNumber=</div>
-<div>frm2550qv2024:taxpayerEmailAddress={{frm2550qv2024:taxpayerEmailAddress}}frm2550qv2024:taxpayerEmailAddress=</div>
-<div>frm2550qv2024:taxPayerClassification1={{frm2550qv2024:taxPayerClassification1}}frm2550qv2024:taxPayerClassification1=</div>
-<div>frm2550qv2024:taxPayerClassification2={{frm2550qv2024:taxPayerClassification2}}frm2550qv2024:taxPayerClassification2=</div>
-<div>frm2550qv2024:taxPayerClassification3={{frm2550qv2024:taxPayerClassification3}}frm2550qv2024:taxPayerClassification3=</div>
-<div>frm2550qv2024:taxPayerClassification4={{frm2550qv2024:taxPayerClassification4}}frm2550qv2024:taxPayerClassification4=</div>
-<div>frm2550qv2024:internationalTreatyYn={{frm2550qv2024:internationalTreatyYn}}frm2550qv2024:internationalTreatyYn=</div>
-<div>frm2550qv2024:specialRateYn={{frm2550qv2024:specialRateYn}}frm2550qv2024:specialRateYn=</div>
-<div>frm2550qv2024:specifyInternationalTreaty={{frm2550qv2024:specifyInternationalTreaty}}frm2550qv2024:specifyInternationalTreaty=</div>
-<div>frm2550qv2024:excessInputTax={{frm2550qv2024:excessInputTax}}frm2550qv2024:excessInputTax=</div>
-<div>frm2550qv2024:creditableVat={{frm2550qv2024:creditableVat}}frm2550qv2024:creditableVat=</div>
-<div>frm2550qv2024:advVatPayment={{frm2550qv2024:advVatPayment}}frm2550qv2024:advVatPayment=</div>
-<div>frm2550qv2024:vatPaidReturn={{frm2550qv2024:vatPaidReturn}}frm2550qv2024:vatPaidReturn=</div>
-<div>frm2550qv2024:addSpecifyNo19={{frm2550qv2024:addSpecifyNo19}}frm2550qv2024:addSpecifyNo19=</div>
-<div>frm2550qv2024:otherCreditsNo19={{frm2550qv2024:otherCreditsNo19}}frm2550qv2024:otherCreditsNo19=</div>
-<div>frm2550qv2024:totalTaxCredits={{frm2550qv2024:totalTaxCredits}}frm2550qv2024:totalTaxCredits=</div>
-<div>frm2550qv2024:excessCredits={{frm2550qv2024:excessCredits}}frm2550qv2024:excessCredits=</div>
-<div>frm2550qv2024:surcharge={{frm2550qv2024:surcharge}}frm2550qv2024:surcharge=</div>
-<div>frm2550qv2024:interest={{frm2550qv2024:interest}}frm2550qv2024:interest=</div>
-<div>frm2550qv2024:compromise={{frm2550qv2024:compromise}}frm2550qv2024:compromise=</div>
-<div>frm2550qv2024:penalties={{frm2550qv2024:penalties}}frm2550qv2024:penalties=</div>
-<div>frm2550qv2024:totalPayable={{frm2550qv2024:totalPayable}}frm2550qv2024:totalPayable=</div>
-<div>frm2550qv2024:txtPg2TIN1={{frm2550qv2024:txtPg2TIN1}}frm2550qv2024:txtPg2TIN1=</div>
-<div>frm2550qv2024:txtPg2TIN2={{frm2550qv2024:txtPg2TIN2}}frm2550qv2024:txtPg2TIN2=</div>
-<div>frm2550qv2024:txtPg2TIN3={{frm2550qv2024:txtPg2TIN3}}frm2550qv2024:txtPg2TIN3=</div>
-<div>frm2550qv2024:txtPg2BranchCode={{frm2550qv2024:txtPg2BranchCode}}frm2550qv2024:txtPg2BranchCode=</div>
-<div>frm2550qv2024:Pg2TaxPayer={{frm2550qv2024:Pg2TaxPayer}}frm2550qv2024:Pg2TaxPayer=</div>
-<div>frm2550qv2024:vatableSales={{frm2550qv2024:vatableSales}}frm2550qv2024:vatableSales=</div>
-<div>frm2550qv2024:outputVatSales={{frm2550qv2024:outputVatSales}}frm2550qv2024:outputVatSales=</div>
-<div>frm2550qv2024:zeroRatedSales={{frm2550qv2024:zeroRatedSales}}frm2550qv2024:zeroRatedSales=</div>
-<div>frm2550qv2024:exemptSales={{frm2550qv2024:exemptSales}}frm2550qv2024:exemptSales=</div>
-<div>frm2550qv2024:totalSales={{frm2550qv2024:totalSales}}frm2550qv2024:totalSales=</div>
-<div>frm2550qv2024:outputTaxDue={{frm2550qv2024:outputTaxDue}}frm2550qv2024:outputTaxDue=</div>
-<div>frm2550qv2024:lessOutputVat={{frm2550qv2024:lessOutputVat}}frm2550qv2024:lessOutputVat=</div>
-<div>frm2550qv2024:addOutputVat={{frm2550qv2024:addOutputVat}}frm2550qv2024:addOutputVat=</div>
-<div>frm2550qv2024:totalAdjOutput={{frm2550qv2024:totalAdjOutput}}frm2550qv2024:totalAdjOutput=</div>
-<div>frm2550qv2024:inputTaxCarried={{frm2550qv2024:inputTaxCarried}}frm2550qv2024:inputTaxCarried=</div>
-<div>frm2550qv2024:inputTaxDeferred={{frm2550qv2024:inputTaxDeferred}}frm2550qv2024:inputTaxDeferred=</div>
-<div>frm2550qv2024:transitionalInputTax={{frm2550qv2024:transitionalInputTax}}frm2550qv2024:transitionalInputTax=</div>
-<div>frm2550qv2024:presumptiveInputTax={{frm2550qv2024:presumptiveInputTax}}frm2550qv2024:presumptiveInputTax=</div>
-<div>frm2550qv2024:addSpecifyNo42={{frm2550qv2024:addSpecifyNo42}}frm2550qv2024:addSpecifyNo42=</div>
-<div>frm2550qv2024:otherSpecify42={{frm2550qv2024:otherSpecify42}}frm2550qv2024:otherSpecify42=</div>
-<div>frm2550qv2024:total43={{frm2550qv2024:total43}}frm2550qv2024:total43=</div>
-<div>frm2550qv2024:domesticPurchase={{frm2550qv2024:domesticPurchase}}frm2550qv2024:domesticPurchase=</div>
-<div>frm2550qv2024:domesticInputTax={{frm2550qv2024:domesticInputTax}}frm2550qv2024:domesticInputTax=</div>
-<div>frm2550qv2024:servicesPurchase={{frm2550qv2024:servicesPurchase}}frm2550qv2024:servicesPurchase=</div>
-<div>frm2550qv2024:serviceInputTax={{frm2550qv2024:serviceInputTax}}frm2550qv2024:serviceInputTax=</div>
-<div>frm2550qv2024:importPurchase={{frm2550qv2024:importPurchase}}frm2550qv2024:importPurchase=</div>
-<div>frm2550qv2024:importInputTax={{frm2550qv2024:importInputTax}}frm2550qv2024:importInputTax=</div>
-<div>frm2550qv2024:addSpecifyNo47={{frm2550qv2024:addSpecifyNo47}}frm2550qv2024:addSpecifyNo47=</div>
-<div>frm2550qv2024:otherSpecify47={{frm2550qv2024:otherSpecify47}}frm2550qv2024:otherSpecify47=</div>
-<div>otherSpecify47B={{otherSpecify47B}}otherSpecify47B=</div>
-<div>frm2550qv2024:domesticPurchaseNoTax={{frm2550qv2024:domesticPurchaseNoTax}}frm2550qv2024:domesticPurchaseNoTax=</div>
-<div>frm2550qv2024:vatExemptImports={{frm2550qv2024:vatExemptImports}}frm2550qv2024:vatExemptImports=</div>
-<div>frm2550qv2024:totalCurPurchase={{frm2550qv2024:totalCurPurchase}}frm2550qv2024:totalCurPurchase=</div>
-<div>frm2550qv2024:totalCurInputTax={{frm2550qv2024:totalCurInputTax}}frm2550qv2024:totalCurInputTax=</div>
-<div>frm2550qv2024:totalAvailInputTax={{frm2550qv2024:totalAvailInputTax}}frm2550qv2024:totalAvailInputTax=</div>
-<div>frm2550qv2024:importCapitalInputTax={{frm2550qv2024:importCapitalInputTax}}frm2550qv2024:importCapitalInputTax=</div>
-<div>frm2550qv2024:inputTaxAttr={{frm2550qv2024:inputTaxAttr}}frm2550qv2024:inputTaxAttr=</div>
-<div>frm2550qv2024:vatRefund={{frm2550qv2024:vatRefund}}frm2550qv2024:vatRefund=</div>
-<div>frm2550qv2024:inputVatUnpaid={{frm2550qv2024:inputVatUnpaid}}frm2550qv2024:inputVatUnpaid=</div>
-<div>frm2550qv2024:addSpecifyNo56={{frm2550qv2024:addSpecifyNo56}}frm2550qv2024:addSpecifyNo56=</div>
-<div>frm2550qv2024:otherSpecify56={{frm2550qv2024:otherSpecify56}}frm2550qv2024:otherSpecify56=</div>
-<div>frm2550qv2024:totalDeductions={{frm2550qv2024:totalDeductions}}frm2550qv2024:totalDeductions=</div>
-<div>frm2550qv2024:addInputVat={{frm2550qv2024:addInputVat}}frm2550qv2024:addInputVat=</div>
-<div>frm2550qv2024:adjDeductions={{frm2550qv2024:adjDeductions}}frm2550qv2024:adjDeductions=</div>
-<div>frm2550qv2024:totalAllowInputTax={{frm2550qv2024:totalAllowInputTax}}frm2550qv2024:totalAllowInputTax=</div>
-<div>frm2550qv2024:netVatPayable={{frm2550qv2024:netVatPayable}}frm2550qv2024:netVatPayable=</div>
-<div>txtDatePurchase10={{txtDatePurchase10}}txtDatePurchase10=</div>
-<div>txtSourceCode10={{txtSourceCode10}}txtSourceCode10=</div>
-<div>txtDescription10={{txtDescription10}}txtDescription10=</div>
-<div>txtAmountPurchase10={{txtAmountPurchase10}}txtAmountPurchase10=</div>
-<div>txtInputTax10={{txtInputTax10}}txtInputTax10=</div>
-<div>txtEstimatedLife10={{txtEstimatedLife10}}txtEstimatedLife10=</div>
-<div>txtRecognizedLife10={{txtRecognizedLife10}}txtRecognizedLife10=</div>
-<div>txtAllowedInputTax10={{txtAllowedInputTax10}}txtAllowedInputTax10=</div>
-<div>txtBalanceInputTax10={{txtBalanceInputTax10}}txtBalanceInputTax10=</div>
-<div>txtDatePurchase11={{txtDatePurchase11}}txtDatePurchase11=</div>
-<div>txtSourceCode11={{txtSourceCode11}}txtSourceCode11=</div>
-<div>txtDescription11={{txtDescription11}}txtDescription11=</div>
-<div>txtAmountPurchase11={{txtAmountPurchase11}}txtAmountPurchase11=</div>
-<div>txtInputTax11={{txtInputTax11}}txtInputTax11=</div>
-<div>txtEstimatedLife11={{txtEstimatedLife11}}txtEstimatedLife11=</div>
-<div>txtRecognizedLife11={{txtRecognizedLife11}}txtRecognizedLife11=</div>
-<div>txtAllowedInputTax11={{txtAllowedInputTax11}}txtAllowedInputTax11=</div>
-<div>txtBalanceInputTax11={{txtBalanceInputTax11}}txtBalanceInputTax11=</div>
-<div>sched1TotalBalPrev={{sched1TotalBalPrev}}sched1TotalBalPrev=</div>
-<div>sched1TotalBalNext={{sched1TotalBalNext}}sched1TotalBalNext=</div>
-<div>frm2550qv2024:sched2InputTaxDirect={{frm2550qv2024:sched2InputTaxDirect}}frm2550qv2024:sched2InputTaxDirect=</div>
-<div>frm2550qv2024:sched2VatExemptSale={{frm2550qv2024:sched2VatExemptSale}}frm2550qv2024:sched2VatExemptSale=</div>
-<div>frm2550qv2024:sched2AmountInputTax={{frm2550qv2024:sched2AmountInputTax}}frm2550qv2024:sched2AmountInputTax=</div>
-<div>frm2550qv2024:sched2TotalSales={{frm2550qv2024:sched2TotalSales}}frm2550qv2024:sched2TotalSales=</div>
-<div>frm2550qv2024:sched2TotalRatable={{frm2550qv2024:sched2TotalRatable}}frm2550qv2024:sched2TotalRatable=</div>
-<div>frm2550qv2024:sched2TotalAttr={{frm2550qv2024:sched2TotalAttr}}frm2550qv2024:sched2TotalAttr=</div>
-<div>txtDateCovered30={{txtDateCovered30}}txtDateCovered30=</div>
-<div>txtDateCovered3To0={{txtDateCovered3To0}}txtDateCovered3To0=</div>
-<div>txtNameWithHoldingAgent30={{txtNameWithHoldingAgent30}}txtNameWithHoldingAgent30=</div>
-<div>txtIncomePayment30={{txtIncomePayment30}}txtIncomePayment30=</div>
-<div>txtTotalTaxWithHeld30={{txtTotalTaxWithHeld30}}txtTotalTaxWithHeld30=</div>
-<div>txtDateCovered31={{txtDateCovered31}}txtDateCovered31=</div>
-<div>txtDateCovered3To1={{txtDateCovered3To1}}txtDateCovered3To1=</div>
-<div>txtNameWithHoldingAgent31={{txtNameWithHoldingAgent31}}txtNameWithHoldingAgent31=</div>
-<div>txtIncomePayment31={{txtIncomePayment31}}txtIncomePayment31=</div>
-<div>txtTotalTaxWithHeld31={{txtTotalTaxWithHeld31}}txtTotalTaxWithHeld31=</div>
-<div>sched3TotalIncome={{sched3TotalIncome}}sched3TotalIncome=</div>
-<div>sched3TotalTax={{sched3TotalTax}}sched3TotalTax=</div>
-<div>txtDate40={{txtDate40}}txtDate40=</div>
-<div>txtDate4To0={{txtDate4To0}}txtDate4To0=</div>
-<div>txtNameOfMiller40={{txtNameOfMiller40}}txtNameOfMiller40=</div>
-<div>txtNameOfTaxpayer40={{txtNameOfTaxpayer40}}txtNameOfTaxpayer40=</div>
-<div>txtOfficialReceiptNumber40={{txtOfficialReceiptNumber40}}txtOfficialReceiptNumber40=</div>
-<div>txtAmountPaid40={{txtAmountPaid40}}txtAmountPaid40=</div>
-<div>txtDate41={{txtDate41}}txtDate41=</div>
-<div>txtDate4To1={{txtDate4To1}}txtDate4To1=</div>
-<div>txtNameOfMiller41={{txtNameOfMiller41}}txtNameOfMiller41=</div>
-<div>txtNameOfTaxpayer41={{txtNameOfTaxpayer41}}txtNameOfTaxpayer41=</div>
-<div>txtOfficialReceiptNumber41={{txtOfficialReceiptNumber41}}txtOfficialReceiptNumber41=</div>
-<div>txtAmountPaid41={{txtAmountPaid41}}txtAmountPaid41=</div>
-<div>sched4AmountPaid={{sched4AmountPaid}}sched4AmountPaid=</div>
-<div>frm2550qv2024:txtCurrentPage={{frm2550qv2024:txtCurrentPage}}frm2550qv2024:txtCurrentPage=</div>
-<div>frm2550qv2024:txtMaxPage={{frm2550qv2024:txtMaxPage}}frm2550qv2024:txtMaxPage=</div>
-<div>resultOtherCreditsNo19={{resultOtherCreditsNo19}}resultOtherCreditsNo19=</div>
-<div>resultOtherCreditsNo42={{resultOtherCreditsNo42}}resultOtherCreditsNo42=</div>
-<div>resultOtherCreditsNo47={{resultOtherCreditsNo47}}resultOtherCreditsNo47=</div>
-<div>resultOtherCreditsNo56={{resultOtherCreditsNo56}}resultOtherCreditsNo56=</div>
-<div>txtTotalAmountOfBalanceofInputTaxFromPrevious={{txtTotalAmountOfBalanceofInputTaxFromPrevious}}txtTotalAmountOfBalanceofInputTaxFromPrevious=</div>
-<div>txtTotalAmountOfBalanceofInputTaxToBeCarried={{txtTotalAmountOfBalanceofInputTaxToBeCarried}}txtTotalAmountOfBalanceofInputTaxToBeCarried=</div>
-<div>txtTotalAmountofIncomePayment={{txtTotalAmountofIncomePayment}}txtTotalAmountofIncomePayment=</div>
-<div>txtTotalAmoungOfTaxWithHeld={{txtTotalAmoungOfTaxWithHeld}}txtTotalAmoungOfTaxWithHeld=</div>
-<div>txtAmountPaidSched4={{txtAmountPaidSched4}}txtAmountPaidSched4=</div>
-<div>txtFinalFlag={{txtFinalFlag}}txtFinalFlag=</div>
-<div>txtEnroll={{txtEnroll}}txtEnroll=</div>
-<div>ebirOnlineConfirmUsername={{ebirOnlineConfirmUsername}}ebirOnlineConfirmUsername=</div>
-<div>ebirOnlineUsername={{ebirOnlineUsername}}ebirOnlineUsername=</div>
-<div>ebirOnlineSecret={{ebirOnlineSecret}}ebirOnlineSecret=</div>
-<div>txtEmail={{txtEmail}}txtEmail=</div>
-<div>driveSelectTPExport={{driveSelectTPExport}}driveSelectTPExport=</div>
-<div>dateFiled={{dateFiled}}dateFiled=</div>
+<?xml version='1.0'?>	
+            <div>frm2550q:optCalendar={{optCalendar}}frm2550q:optCalendar=</div>	
+            <div>frm2550q:optFiscal={{optFiscal}}frm2550q:optFiscal=</div>	
+            <div>frm2550q:txtYearEnded={{txtYearEnded}}frm2550q:txtYearEnded=</div>	
+            <div>frm2550q:optQuarter1={{optQuarter1}}frm2550q:optQuarter1=</div>	
+            <div>frm2550q:optQuarter2={{optQuarter2}}frm2550q:optQuarter2=</div>	
+            <div>frm2550q:optQuarter3={{optQuarter3}}frm2550q:optQuarter3=</div>	
+            <div>frm2550q:optQuarter4={{optQuarter4}}frm2550q:optQuarter4=</div>	
+            <div>frm2550q:txtReturnPeriodFrom={{txtReturnPeriodFrom}}frm2550q:txtReturnPeriodFrom=</div>	
+            <div>frm2550q:txtReturnPeriodTo={{txtReturnPeriodTo}}frm2550q:txtReturnPeriodTo=</div>	
+            <div>frm2550q:AmendedRtn_1={{AmendedRtn_1}}frm2550q:AmendedRtn_1=</div>	
+            <div>frm2550q:AmendedRtn_2={{AmendedRtn_2}}frm2550q:AmendedRtn_2=</div>	
+            <div>frm2550q:ShortPeriod_1={{ShortPeriod_1}}frm2550q:ShortPeriod_1=</div>	
+            <div>frm2550q:ShortPeriod_2={{ShortPeriod_2}}frm2550q:ShortPeriod_2=</div>	
+            <div>frm2550q:txtTIN1={{txtTIN1}}frm2550q:txtTIN1=</div>	
+            <div>frm2550q:txtTIN2={{txtTIN2}}frm2550q:txtTIN2=</div>	
+            <div>frm2550q:txtTIN3={{txtTIN3}}frm2550q:txtTIN3=</div>	
+            <div>frm2550q:txtBranchCode={{txtBranchCode}}frm2550q:txtBranchCode=</div>	
+            <div>frm2550q:txtRDOCode={{txtRDOCode}}frm2550q:txtRDOCode=</div>	
+            <div>frm2550q:txtTaxpayerName={{txtTaxpayerName}}frm2550q:txtTaxpayerName=</div>	
+            <div>frm2550q:txtAddress={{txtAddress}}frm2550q:txtAddress=</div>	
+            <div>frm2550q:txtZipCode={{txtZipCode}}frm2550q:txtZipCode=</div>	
+            <div>frm2550q:txtTelNum={{txtTelNum}}frm2550q:txtTelNum=</div>	
+            <div>frm2550q:txtEmail={{txtEmail}}frm2550q:txtEmail=</div>	
+            <div>frm2550q:optClassMicro={{optClassMicro}}frm2550q:optClassMicro=</div>	
+            <div>frm2550q:optClassSmall={{optClassSmall}}frm2550q:optClassSmall=</div>	
+            <div>frm2550q:optClassMedium={{optClassMedium}}frm2550q:optClassMedium=</div>	
+            <div>frm2550q:optClassLarge={{optClassLarge}}frm2550q:optClassLarge=</div>	
+            <div>frm2550q:SpecialTax_1={{SpecialTax_1}}frm2550q:SpecialTax_1=</div>	
+            <div>frm2550q:SpecialTax_2={{SpecialTax_2}}frm2550q:SpecialTax_2=</div>	
+            <div>frm2550q:txtSpecialTaxDetails={{txtSpecialTaxDetails}}frm2550q:txtSpecialTaxDetails=</div>	
+            <div>frm2550q:txtTax15={{txtTax15}}frm2550q:txtTax15=</div>	
+            <div>frm2550q:txtTax16={{txtTax16}}frm2550q:txtTax16=</div>	
+            <div>frm2550q:txtTax17={{txtTax17}}frm2550q:txtTax17=</div>	
+            <div>frm2550q:txtTax18={{txtTax18}}frm2550q:txtTax18=</div>	
+            <div>frm2550q:txtOtherCredits19={{txtOtherCredits19}}frm2550q:txtOtherCredits19=</div>	
+            <div>frm2550q:txtTax19={{txtTax19}}frm2550q:txtTax19=</div>	
+            <div>frm2550q:txtTax20={{txtTax20}}frm2550q:txtTax20=</div>	
+            <div>frm2550q:txtTax21={{txtTax21}}frm2550q:txtTax21=</div>	
+            <div>frm2550q:txtTax22={{txtTax22}}frm2550q:txtTax22=</div>	
+            <div>frm2550q:txtTax23={{txtTax23}}frm2550q:txtTax23=</div>	
+            <div>frm2550q:txtTax24={{txtTax24}}frm2550q:txtTax24=</div>	
+            <div>frm2550q:txtTax25={{txtTax25}}frm2550q:txtTax25=</div>	
+            <div>frm2550q:txtTax26={{txtTax26}}frm2550q:txtTax26=</div>	
+            <div>frm2550q:txtAmount27={{txtAmount27}}frm2550q:txtAmount27=</div>	
+            <div>frm2550q:txtAmount28={{txtAmount28}}frm2550q:txtAmount28=</div>	
+            <div>frm2550q:txtAmount29={{txtAmount29}}frm2550q:txtAmount29=</div>	
+            <div>frm2550q:txtParticular30={{txtParticular30}}frm2550q:txtParticular30=</div>	
+            <div>frm2550q:txtAmount30={{txtAmount30}}frm2550q:txtAmount30=</div>	
+            <div>frm2550q:txtSales31A={{txtSales31A}}frm2550q:txtSales31A=</div>	
+            <div>frm2550q:txtTax31B={{txtTax31B}}frm2550q:txtTax31B=</div>	
+            <div>frm2550q:txtSales32A={{txtSales32A}}frm2550q:txtSales32A=</div>	
+            <div>frm2550q:txtSales33A={{txtSales33A}}frm2550q:txtSales33A=</div>	
+            <div>frm2550q:txtSales34A={{txtSales34A}}frm2550q:txtSales34A=</div>	
+            <div>frm2550q:txtTax34B={{txtTax34B}}frm2550q:txtTax34B=</div>	
+            <div>frm2550q:txtTax35B={{txtTax35B}}frm2550q:txtTax35B=</div>	
+            <div>frm2550q:txtTax36B={{txtTax36B}}frm2550q:txtTax36B=</div>	
+            <div>frm2550q:txtTax37B={{txtTax37B}}frm2550q:txtTax37B=</div>	
+            <div>frm2550q:txtTax38B={{txtTax38B}}frm2550q:txtTax38B=</div>	
+            <div>frm2550q:txtTax39B={{txtTax39B}}frm2550q:txtTax39B=</div>	
+            <div>frm2550q:txtTax40B={{txtTax40B}}frm2550q:txtTax40B=</div>	
+            <div>frm2550q:txtTax41B={{txtTax41B}}frm2550q:txtTax41B=</div>	
+            <div>frm2550q:txtTax42B={{txtTax42B}}frm2550q:txtTax42B=</div>	
+            <div>frm2550q:txtTax43B={{txtTax43B}}frm2550q:txtTax43B=</div>	
+            <div>frm2550q:txtPurchases44A={{txtPurchases44A}}frm2550q:txtPurchases44A=</div>	
+            <div>frm2550q:txtTax44B={{txtTax44B}}frm2550q:txtTax44B=</div>	
+            <div>frm2550q:txtPurchases45A={{txtPurchases45A}}frm2550q:txtPurchases45A=</div>	
+            <div>frm2550q:txtTax45B={{txtTax45B}}frm2550q:txtTax45B=</div>	
+            <div>frm2550q:txtPurchases46A={{txtPurchases46A}}frm2550q:txtPurchases46A=</div>	
+            <div>frm2550q:txtTax46B={{txtTax46B}}frm2550q:txtTax46B=</div>	
+            <div>frm2550q:txtPurchases47A={{txtPurchases47A}}frm2550q:txtPurchases47A=</div>	
+            <div>frm2550q:txtTax47B={{txtTax47B}}frm2550q:txtTax47B=</div>	
+            <div>frm2550q:txtPurchases48A={{txtPurchases48A}}frm2550q:txtPurchases48A=</div>	
+            <div>frm2550q:txtPurchases49A={{txtPurchases49A}}frm2550q:txtPurchases49A=</div>	
+            <div>frm2550q:txtPurchases50A={{txtPurchases50A}}frm2550q:txtPurchases50A=</div>	
+            <div>frm2550q:txtTax50B={{txtTax50B}}frm2550q:txtTax50B=</div>	
+            <div>frm2550q:txtTax51B={{txtTax51B}}frm2550q:txtTax51B=</div>	
+            <div>frm2550q:txtTax52B={{txtTax52B}}frm2550q:txtTax52B=</div>	
+            <div>frm2550q:txtTax53B={{txtTax53B}}frm2550q:txtTax53B=</div>	
+            <div>frm2550q:txtTax54B={{txtTax54B}}frm2550q:txtTax54B=</div>	
+            <div>frm2550q:txtTax55B={{txtTax55B}}frm2550q:txtTax55B=</div>	
+            <div>frm2550q:txtTax56B={{txtTax56B}}frm2550q:txtTax56B=</div>	
+            <div>frm2550q:txtTax57B={{txtTax57B}}frm2550q:txtTax57B=</div>	
+            <div>frm2550q:txtTax58B={{txtTax58B}}frm2550q:txtTax58B=</div>	
+            <div>frm2550q:txtTax59B={{txtTax59B}}frm2550q:txtTax59B=</div>	
+            <div>frm2550q:txtTax60B={{txtTax60B}}frm2550q:txtTax60B=</div>	
+            <div>frm2550q:txtTax61B={{txtTax61B}}frm2550q:txtTax61B=</div>	
+            All Rights Reserved BIR synthetic v2024

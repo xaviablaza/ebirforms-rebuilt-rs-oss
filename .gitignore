@@ -12,3 +12,5 @@ apps/**/node_modules/
 apps/**/dist/
 apps/**/target/
 apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/binaries/himalaya-*
+apps/desktop/src-tauri/resources/himalaya*

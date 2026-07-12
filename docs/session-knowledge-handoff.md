@@ -1,3 +1,3 @@
 # Session Knowledge Handoff
 
-This OSS distribution intentionally omits proprietary reverse-engineering notes, private fixtures, live endpoint details, and taxpayer data. See the private repository copy for internal compatibility research.
+This OSS distribution intentionally omits official BIR package materials, extracted application assets, non-public compatibility notes, private fixtures, live endpoint details, credentials, and taxpayer data. Public work should remain independently authored and synthetic; see `PROVENANCE.md`.

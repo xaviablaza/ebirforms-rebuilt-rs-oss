@@ -163,20 +163,42 @@ impl JobStore {
     }
 
     pub fn next_runnable(&self) -> Result<Option<SubmissionJob>, JobError> {
+        self.next_runnable_for_mode(None)
+    }
+
+    pub fn next_runnable_for_mode(
+        &self,
+        mode: Option<JobMode>,
+    ) -> Result<Option<SubmissionJob>, JobError> {
         let now = unix_now();
         self.with_connection(|conn| {
-            conn.query_row(
-                "SELECT id, form_code, input_json, mode, status, attempts, max_attempts,
-                        next_attempt_unix_seconds, created_unix_seconds, updated_unix_seconds,
-                        submission_idempotency_key, last_error
-                 FROM submission_jobs
-                 WHERE status = ?1 AND next_attempt_unix_seconds <= ?2
-                 ORDER BY id LIMIT 1",
-                params![status_to_str(&SubmissionStatus::Queued), now],
-                row_to_job,
-            )
-            .optional()
-            .map_err(JobError::from)
+            if let Some(mode) = mode {
+                conn.query_row(
+                    "SELECT id, form_code, input_json, mode, status, attempts, max_attempts,
+                            next_attempt_unix_seconds, created_unix_seconds, updated_unix_seconds,
+                            submission_idempotency_key, last_error
+                     FROM submission_jobs
+                     WHERE status = ?1 AND next_attempt_unix_seconds <= ?2 AND mode = ?3
+                     ORDER BY id LIMIT 1",
+                    params![status_to_str(&SubmissionStatus::Queued), now, mode.as_str()],
+                    row_to_job,
+                )
+                .optional()
+                .map_err(JobError::from)
+            } else {
+                conn.query_row(
+                    "SELECT id, form_code, input_json, mode, status, attempts, max_attempts,
+                            next_attempt_unix_seconds, created_unix_seconds, updated_unix_seconds,
+                            submission_idempotency_key, last_error
+                     FROM submission_jobs
+                     WHERE status = ?1 AND next_attempt_unix_seconds <= ?2
+                     ORDER BY id LIMIT 1",
+                    params![status_to_str(&SubmissionStatus::Queued), now],
+                    row_to_job,
+                )
+                .optional()
+                .map_err(JobError::from)
+            }
         })
     }
 
@@ -246,6 +268,27 @@ pub fn run_next_job<T: SubmissionTransport>(
     let Some(job) = job_store.next_runnable()? else {
         return Ok(None);
     };
+    run_job(job_store, submission_store, transport, job)
+}
+
+pub fn run_next_job_for_mode<T: SubmissionTransport>(
+    job_store: &JobStore,
+    submission_store: &SubmissionStore,
+    transport: &mut T,
+    mode: JobMode,
+) -> Result<Option<SubmissionJob>, JobError> {
+    let Some(job) = job_store.next_runnable_for_mode(Some(mode))? else {
+        return Ok(None);
+    };
+    run_job(job_store, submission_store, transport, job)
+}
+
+fn run_job<T: SubmissionTransport>(
+    job_store: &JobStore,
+    submission_store: &SubmissionStore,
+    transport: &mut T,
+    job: SubmissionJob,
+) -> Result<Option<SubmissionJob>, JobError> {
     let attempts = job.attempts + 1;
     let running = job_store.update_job(
         job.id,
@@ -339,7 +382,7 @@ pub fn run_due_jobs_dry_run(
     let mut completed = Vec::new();
     for _ in 0..limit {
         let mut transport = DryRunTransport::new();
-        match run_next_job(job_store, submission_store, &mut transport)? {
+        match run_next_job_for_mode(job_store, submission_store, &mut transport, JobMode::DryRun)? {
             Some(job) => completed.push(job),
             None => break,
         }
@@ -355,7 +398,7 @@ pub fn run_due_jobs_live(
     let mut completed = Vec::new();
     for _ in 0..limit {
         let mut transport = SftpTransport::from_env();
-        match run_next_job(job_store, submission_store, &mut transport)? {
+        match run_next_job_for_mode(job_store, submission_store, &mut transport, JobMode::Live)? {
             Some(job) => completed.push(job),
             None => break,
         }

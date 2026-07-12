@@ -1,6 +1,6 @@
 # Desktop Tax Form Flow Demo Script
 
-Use this talk track for the upgraded multi-form desktop demo. The app is still a safe dry-run proof path: choose a BIR form, review synthetic application data, validate/render plaintext XML, encrypt/package, queue dry-run delivery, and reconcile a simulated BIR receipt.
+Use this talk track for the upgraded multi-form desktop demo. The app defaults to a safe dry-run proof path: choose a BIR form, review synthetic application data, validate/render plaintext XML, encrypt/package, queue dry-run delivery, and reconcile a simulated or mailbox-detected BIR receipt. Live BIR submission is available only from Settings after an explicit confirmation dialog.
 
 ## Setup before the call
 
@@ -36,7 +36,7 @@ Show:
 
 Say:
 
-> “The dashboard is now only the Tax Form Library. It will not let an operator create a tax form until a taxpayer profile has been saved. Once a profile exists, selecting a form opens that form’s single-column Tax Form Flow. The library supports multiple form families backed by XML templates captured from the original eBIRForms shape.”
+> “The dashboard is now only the Tax Form Library. It will not let an operator create a tax form until a taxpayer profile has been saved. Once a profile exists, selecting a form opens that form’s single-column Tax Form Flow. The library supports multiple form families backed by independently authored synthetic XML templates and redistributable mappings.”
 
 Supported demo forms:
 
@@ -92,9 +92,9 @@ Show:
 
 Say:
 
-> “Like the original eBIRForms pattern, validation locks the form. Edit reopens it for changes, and validating again regenerates the plaintext XML and encrypted payload.”
+> “Validation locks the form after generating the synthetic filing payload. Edit reopens it for changes, and validating again regenerates the plaintext XML and encrypted payload.”
 
-## 6. Submit Final Copy is gated by validation and confirmation
+## 6. Submit Final Copy is gated by validation, confirmation, and Settings mode
 
 Show:
 
@@ -102,12 +102,13 @@ Show:
 2. Point to the `Final copy confirmation` box.
 3. Before ticking it, point to `Submit Final Copy`; it is disabled.
 4. Tick `I confirm the whole form is validated, locked, and ready to submit as the final copy.`
-5. Click `Submit Final Copy`.
+5. Click `Submit Final Copy` while Settings remains on `Dry run only`.
 6. Show that the app queues and runs the dry-run delivery, then displays a waiting-for-receipt state.
+7. Optional production-path proof: open `Settings`, click `Live submit to BIR`, and show the confirmation dialog. Cancel it unless the demo has real `FILING_SFTP_*` production credentials and filing approval.
 
 Say:
 
-> “Submit Final Copy is no longer a dead button, but it is gated. The operator must first validate the whole form, review the package details, and explicitly confirm the locked final copy. Only then does the button enable. Clicking it queues the job, runs the dry-run delivery, and leaves the submission waiting for the BIR receipt confirmation.”
+> “Submit Final Copy is no longer a dead button, but it is gated. The operator must validate the whole form, review package details, explicitly confirm the locked final copy, and keep or change the Settings submission mode. The default is dry run. Switching to Live submit to BIR requires a confirmation dialog and configured production SFTP credentials.”
 
 ## 7. Receipt reconciliation completes the filing loop
 
@@ -116,25 +117,27 @@ Show:
 1. Click `Submit Final Copy` after validation and final-copy confirmation.
 2. Show the `Jobs` cards under `Submission Activity`.
 3. Show `Submissions / receipt matching` in its waiting-for-receipt state.
-4. Click `Simulate received BIR receipt`.
+4. Click `Simulate received BIR receipt` for the offline proof path, or click `Check receipt mailbox (Himalaya)` when Himalaya is installed/configured against the production receipt mailbox.
 5. Confirm the submission record changes to `Confirmed`.
 
 Say:
 
-> “Package, jobs, submissions, and receipts are no longer separate navigation destinations. They are part of the tax form flow. Submit Final Copy creates an idempotent dry-run submission and waits for the BIR receipt; the simulated receipt is then matched back to the local submission record by filename.”
+> “Package, jobs, submissions, and receipts are no longer separate navigation destinations. They are part of the tax form flow. Submit Final Copy creates an idempotent submission record and waits for the BIR receipt; the receipt can be simulated for demos or pulled from the receipt mailbox through Himalaya, then matched back to the local submission record by filename, form, and period.”
 
 ## 8. Settings regression check
 
 Show:
 
 1. Click `Settings` in the sidebar.
-2. Toggle system/dark/light theme.
-3. Optionally set a 4-digit PIN and lock/unlock the app.
+2. Confirm `Dry run only` is selected by default.
+3. Click `Live submit to BIR` and show the confirmation dialog; cancel unless real filing is approved.
+4. Toggle system/dark/light theme.
+5. Optionally set a 4-digit PIN and lock/unlock the app.
 
 Say:
 
-> “Settings is back in the navigation. Theme preference and the simple lock screen remain available while the filing workflow stays focused on Dashboard, Profiles, and Settings.”
+> “Settings is back in the navigation. Submission mode defaults to Dry run only; live BIR submission requires an explicit confirmation dialog and production filing credentials. Theme preference and the simple lock screen remain available while the filing workflow stays focused on Dashboard, Profiles, and Settings.”
 
 ## Closing line
 
-> “The result is a safer compliance automation loop: the operator chooses the tax form, validates and locks the XML payload, the app encrypts and queues it, and receipt matching confirms the exact submitted artifact without exposing live final-copy controls.”
+> “The result is a safer compliance automation loop: the operator chooses the tax form, validates and locks the XML payload, the app encrypts and queues it in dry-run or explicitly-confirmed live mode, and receipt matching confirms the exact submitted artifact from either a simulated receipt or the production mailbox.”

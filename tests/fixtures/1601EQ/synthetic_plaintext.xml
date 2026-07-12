@@ -1,196 +1,61 @@
-<?xml version='1.0'?>
-<div>frm1601EQ:txtYear=2026frm1601EQ:txtYear=</div>
-<div>frm1601EQ:optQuarter:1=truefrm1601EQ:optQuarter:1=</div>
-<div>frm1601EQ:optQuarter:2=falsefrm1601EQ:optQuarter:2=</div>
-<div>frm1601EQ:optQuarter:3=falsefrm1601EQ:optQuarter:3=</div>
-<div>frm1601EQ:optQuarter:4=falsefrm1601EQ:optQuarter:4=</div>
-<div>frm1601EQ:optAmend:Y=falsefrm1601EQ:optAmend:Y=</div>
-<div>frm1601EQ:optAmend:N=truefrm1601EQ:optAmend:N=</div>
-<div>frm1601EQ:optWithheld:Y=truefrm1601EQ:optWithheld:Y=</div>
-<div>frm1601EQ:optWithheld:N=falsefrm1601EQ:optWithheld:N=</div>
-<div>frm1601EQ:txtNoSheets=0frm1601EQ:txtNoSheets=</div>
-<div>frm1601EQ:txtTIN1=123frm1601EQ:txtTIN1=</div>
-<div>frm1601EQ:txtTIN2=456frm1601EQ:txtTIN2=</div>
-<div>frm1601EQ:txtTIN3=789frm1601EQ:txtTIN3=</div>
-<div>frm1601EQ:txtBranchCode=000frm1601EQ:txtBranchCode=</div>
-<div>frm1601EQ:txtRDOCode=044frm1601EQ:txtRDOCode=</div>
-<div>frm1601EQ:txtTaxpayerName=SYNTHETIC%20TAXPAYER%20INC.frm1601EQ:txtTaxpayerName=</div>
-<div>frm1601EQ:txtLineBus=undefinedfrm1601EQ:txtLineBus=</div>
-<div>frm1601EQ:txtAddress=SYNTHETIC%20ADDRESS%2C%20TAGUIG%20CITY%20NCRfrm1601EQ:txtAddress=</div>
-<div>frm1601EQ:txtZipCode=0000frm1601EQ:txtZipCode=</div>
-<div>frm1601EQ:txtTelNum=0000000frm1601EQ:txtTelNum=</div>
-<div>frm1601EQ:optCategory:P=truefrm1601EQ:optCategory:P=</div>
-<div>frm1601EQ:optCategory:G=falsefrm1601EQ:optCategory:G=</div>
-<div>txtEmail=AUTHORIZED@EXAMPLE.TESTtxtEmail=</div>
-<div>frm1601EQ:txtAtcCd1=WC100frm1601EQ:txtAtcCd1=</div>
-<div>frm1601EQ:txtTaxBase1=31,188.00frm1601EQ:txtTaxBase1=</div>
-<div>frm1601EQ:txtTaxRate1=5.0frm1601EQ:txtTaxRate1=</div>
-<div>frm1601EQ:txtTaxbeWithHeld1=1,559.40frm1601EQ:txtTaxbeWithHeld1=</div>
-<div>frm1601EQ:txtAtcCd2=frm1601EQ:txtAtcCd2=</div>
-<div>frm1601EQ:txtTaxBase2=frm1601EQ:txtTaxBase2=</div>
-<div>frm1601EQ:txtTaxRate2=frm1601EQ:txtTaxRate2=</div>
-<div>frm1601EQ:txtTaxbeWithHeld2=0.00frm1601EQ:txtTaxbeWithHeld2=</div>
-<div>frm1601EQ:txtAtcCd3=frm1601EQ:txtAtcCd3=</div>
-<div>frm1601EQ:txtTaxBase3=frm1601EQ:txtTaxBase3=</div>
-<div>frm1601EQ:txtTaxRate3=frm1601EQ:txtTaxRate3=</div>
-<div>frm1601EQ:txtTaxbeWithHeld3=0.00frm1601EQ:txtTaxbeWithHeld3=</div>
-<div>frm1601EQ:txtAtcCd4=frm1601EQ:txtAtcCd4=</div>
-<div>frm1601EQ:txtTaxBase4=frm1601EQ:txtTaxBase4=</div>
-<div>frm1601EQ:txtTaxRate4=frm1601EQ:txtTaxRate4=</div>
-<div>frm1601EQ:txtTaxbeWithHeld4=0.00frm1601EQ:txtTaxbeWithHeld4=</div>
-<div>frm1601EQ:txtAtcCd5=frm1601EQ:txtAtcCd5=</div>
-<div>frm1601EQ:txtTaxBase5=frm1601EQ:txtTaxBase5=</div>
-<div>frm1601EQ:txtTaxRate5=frm1601EQ:txtTaxRate5=</div>
-<div>frm1601EQ:txtTaxbeWithHeld5=0.00frm1601EQ:txtTaxbeWithHeld5=</div>
-<div>frm1601EQ:txtAtcCd6=frm1601EQ:txtAtcCd6=</div>
-<div>frm1601EQ:txtTaxBase6=frm1601EQ:txtTaxBase6=</div>
-<div>frm1601EQ:txtTaxRate6=frm1601EQ:txtTaxRate6=</div>
-<div>frm1601EQ:txtTaxbeWithHeld6=0.00frm1601EQ:txtTaxbeWithHeld6=</div>
-<div>frm1601EQ:txtTotalOtherTax=0.00frm1601EQ:txtTotalOtherTax=</div>
-<div>frm1601EQ:txtTax19=1,559.40frm1601EQ:txtTax19=</div>
-<div>frm1601EQ:txtTax20=0.00frm1601EQ:txtTax20=</div>
-<div>frm1601EQ:txtTax21=1,559.40frm1601EQ:txtTax21=</div>
-<div>frm1601EQ:txtTax22=0.00frm1601EQ:txtTax22=</div>
-<div>frm1601EQ:txtTax23=0.00frm1601EQ:txtTax23=</div>
-<div>frm1601EQ:txtTax24=1,559.40frm1601EQ:txtTax24=</div>
-<div>frm1601EQ:txtTax25=0.00frm1601EQ:txtTax25=</div>
-<div>frm1601EQ:txtTax26=0.00frm1601EQ:txtTax26=</div>
-<div>frm1601EQ:txtTax27=0.00frm1601EQ:txtTax27=</div>
-<div>frm1601EQ:txtTax28=0.00frm1601EQ:txtTax28=</div>
-<div>frm1601EQ:txtTax29=0.00frm1601EQ:txtTax29=</div>
-<div>frm1601EQ:txtTax30=0.00frm1601EQ:txtTax30=</div>
-<div>frm1601EQ:ifRefund=falsefrm1601EQ:ifRefund=</div>
-<div>frm1601EQ:ifIssueCert=falsefrm1601EQ:ifIssueCert=</div>
-<div>frm1601EQ:ifCarriedOver=falsefrm1601EQ:ifCarriedOver=</div>
-<div>txtTaxAgentNo=txtTaxAgentNo=</div>
-<div>txtDateIssue=txtDateIssue=</div>
-<div>txtDateExpiry=txtDateExpiry=</div>
-<div>frm1601EQ:txtAgency33=frm1601EQ:txtAgency33=</div>
-<div>frm1601EQ:txtNumber33=frm1601EQ:txtNumber33=</div>
-<div>frm1601EQ:txtDate33=frm1601EQ:txtDate33=</div>
-<div>frm1601EQ:txtAmount33=frm1601EQ:txtAmount33=</div>
-<div>frm1601EQ:txtAgency34=frm1601EQ:txtAgency34=</div>
-<div>frm1601EQ:txtNumber34=frm1601EQ:txtNumber34=</div>
-<div>frm1601EQ:txtDate34=frm1601EQ:txtDate34=</div>
-<div>frm1601EQ:txtAmount34=frm1601EQ:txtAmount34=</div>
-<div>frm1601EQ:txtAgency35=frm1601EQ:txtAgency35=</div>
-<div>frm1601EQ:txtNumber35=frm1601EQ:txtNumber35=</div>
-<div>frm1601EQ:txtDate35=frm1601EQ:txtDate35=</div>
-<div>frm1601EQ:txtAmount35=frm1601EQ:txtAmount35=</div>
-<div>frm1601EQ:txtParticular36=frm1601EQ:txtParticular36=</div>
-<div>frm1601EQ:txtAgency36=frm1601EQ:txtAgency36=</div>
-<div>frm1601EQ:txtNumber36=frm1601EQ:txtNumber36=</div>
-<div>frm1601EQ:txtDate36=frm1601EQ:txtDate36=</div>
-<div>frm1601EQ:txtAmount36=frm1601EQ:txtAmount36=</div>
-<div>AtcCode1=falseAtcCode1=</div>
-<div>AtcCode2=falseAtcCode2=</div>
-<div>AtcCode3=falseAtcCode3=</div>
-<div>AtcCode4=falseAtcCode4=</div>
-<div>AtcCode5=falseAtcCode5=</div>
-<div>AtcCode6=falseAtcCode6=</div>
-<div>AtcCode7=falseAtcCode7=</div>
-<div>AtcCode8=falseAtcCode8=</div>
-<div>AtcCode9=falseAtcCode9=</div>
-<div>AtcCode10=falseAtcCode10=</div>
-<div>AtcCode11=falseAtcCode11=</div>
-<div>AtcCode12=falseAtcCode12=</div>
-<div>AtcCode13=falseAtcCode13=</div>
-<div>AtcCode14=falseAtcCode14=</div>
-<div>AtcCode15=falseAtcCode15=</div>
-<div>AtcCode16=falseAtcCode16=</div>
-<div>AtcCode17=falseAtcCode17=</div>
-<div>AtcCode18=falseAtcCode18=</div>
-<div>AtcCode19=falseAtcCode19=</div>
-<div>AtcCode20=falseAtcCode20=</div>
-<div>AtcCode21=falseAtcCode21=</div>
-<div>AtcCode22=falseAtcCode22=</div>
-<div>AtcCode23=falseAtcCode23=</div>
-<div>AtcCode24=falseAtcCode24=</div>
-<div>AtcCode25=falseAtcCode25=</div>
-<div>AtcCode26=falseAtcCode26=</div>
-<div>AtcCode27=falseAtcCode27=</div>
-<div>AtcCode28=falseAtcCode28=</div>
-<div>AtcCode29=falseAtcCode29=</div>
-<div>AtcCode30=falseAtcCode30=</div>
-<div>AtcCode31=falseAtcCode31=</div>
-<div>AtcCode32=falseAtcCode32=</div>
-<div>AtcCode33=falseAtcCode33=</div>
-<div>AtcCode34=falseAtcCode34=</div>
-<div>AtcCode35=falseAtcCode35=</div>
-<div>AtcCode36=falseAtcCode36=</div>
-<div>AtcCode37=falseAtcCode37=</div>
-<div>AtcCode38=falseAtcCode38=</div>
-<div>AtcCode39=falseAtcCode39=</div>
-<div>AtcCode40=falseAtcCode40=</div>
-<div>AtcCode41=falseAtcCode41=</div>
-<div>AtcCode42=falseAtcCode42=</div>
-<div>AtcCode43=falseAtcCode43=</div>
-<div>AtcCode44=falseAtcCode44=</div>
-<div>AtcCode45=falseAtcCode45=</div>
-<div>AtcCode46=falseAtcCode46=</div>
-<div>AtcCode47=falseAtcCode47=</div>
-<div>AtcCode48=falseAtcCode48=</div>
-<div>AtcCode49=falseAtcCode49=</div>
-<div>AtcCode50=falseAtcCode50=</div>
-<div>AtcCode51=falseAtcCode51=</div>
-<div>AtcCode52=falseAtcCode52=</div>
-<div>AtcCode53=falseAtcCode53=</div>
-<div>AtcCode54=falseAtcCode54=</div>
-<div>AtcCode55=falseAtcCode55=</div>
-<div>AtcCode56=falseAtcCode56=</div>
-<div>AtcCode57=falseAtcCode57=</div>
-<div>AtcCode58=falseAtcCode58=</div>
-<div>AtcCode59=falseAtcCode59=</div>
-<div>AtcCode60=falseAtcCode60=</div>
-<div>AtcCode61=falseAtcCode61=</div>
-<div>AtcCode62=falseAtcCode62=</div>
-<div>AtcCode63=falseAtcCode63=</div>
-<div>AtcCode64=falseAtcCode64=</div>
-<div>AtcCode65=falseAtcCode65=</div>
-<div>AtcCode66=falseAtcCode66=</div>
-<div>AtcCode67=falseAtcCode67=</div>
-<div>AtcCode68=trueAtcCode68=</div>
-<div>AtcCode69=falseAtcCode69=</div>
-<div>AtcCode70=falseAtcCode70=</div>
-<div>AtcCode71=falseAtcCode71=</div>
-<div>AtcCode72=falseAtcCode72=</div>
-<div>AtcCode73=falseAtcCode73=</div>
-<div>AtcCode74=falseAtcCode74=</div>
-<div>AtcCode75=falseAtcCode75=</div>
-<div>AtcCode76=falseAtcCode76=</div>
-<div>AtcCode77=falseAtcCode77=</div>
-<div>AtcCode78=falseAtcCode78=</div>
-<div>AtcCode79=falseAtcCode79=</div>
-<div>AtcCode80=falseAtcCode80=</div>
-<div>AtcCode81=falseAtcCode81=</div>
-<div>AtcCode82=falseAtcCode82=</div>
-<div>AtcCode83=falseAtcCode83=</div>
-<div>AtcCode84=falseAtcCode84=</div>
-<div>AtcCode85=falseAtcCode85=</div>
-<div>AtcCode86=falseAtcCode86=</div>
-<div>AtcCode87=falseAtcCode87=</div>
-<div>AtcCode88=falseAtcCode88=</div>
-<div>AtcCode89=falseAtcCode89=</div>
-<div>AtcCode90=falseAtcCode90=</div>
-<div>AtcCode91=falseAtcCode91=</div>
-<div>AtcCode92=falseAtcCode92=</div>
-<div>AtcCode93=falseAtcCode93=</div>
-<div>AtcCode94=falseAtcCode94=</div>
-<div>AtcCode95=falseAtcCode95=</div>
-<div>AtcCode96=falseAtcCode96=</div>
-<div>AtcCode97=falseAtcCode97=</div>
-<div>AtcCode98=falseAtcCode98=</div>
-<div>AtcCode99=falseAtcCode99=</div>
-<div>AtcCode100=falseAtcCode100=</div>
-<div>AtcCode101=falseAtcCode101=</div>
-<div>AtcCode102=falseAtcCode102=</div>
-<div>AtcCode103=falseAtcCode103=</div>
-<div>AtcCode104=falseAtcCode104=</div>
-<div>AtcCode105=falseAtcCode105=</div>
-<div>hPartIITableSize=7hPartIITableSize=</div>
-<div>txtFinalFlag=1txtFinalFlag=</div>
-<div>txtEnroll=YtxtEnroll=</div>
-<div>ebirOnlineConfirmUsername=ebirOnlineConfirmUsername=</div>
-<div>ebirOnlineUsername=ebirOnlineUsername=</div>
-<div>ebirOnlineSecret=ebirOnlineSecret=</div>
-<div>driveSelectTPExport=driveSelectTPExport=</div>
+<?xml version='1.0'?>	
+            <div>frm1601eq:txtYear=2026frm1601eq:txtYear=</div>	
+            <div>frm1601eq:optQuarter1=truefrm1601eq:optQuarter1=</div>	
+            <div>frm1601eq:optQuarter2=falsefrm1601eq:optQuarter2=</div>	
+            <div>frm1601eq:optQuarter3=falsefrm1601eq:optQuarter3=</div>	
+            <div>frm1601eq:optQuarter4=falsefrm1601eq:optQuarter4=</div>	
+            <div>frm1601eq:AmendedRtn_1=truefrm1601eq:AmendedRtn_1=</div>	
+            <div>frm1601eq:AmendedRtn_2=falsefrm1601eq:AmendedRtn_2=</div>	
+            <div>frm1601eq:TaxWithheld_1=truefrm1601eq:TaxWithheld_1=</div>	
+            <div>frm1601eq:TaxWithheld_2=falsefrm1601eq:TaxWithheld_2=</div>	
+            <div>frm1601eq:txtSheets=frm1601eq:txtSheets=</div>	
+            <div>frm1601eq:txtTIN1=123frm1601eq:txtTIN1=</div>	
+            <div>frm1601eq:txtTIN2=456frm1601eq:txtTIN2=</div>	
+            <div>frm1601eq:txtTIN3=789frm1601eq:txtTIN3=</div>	
+            <div>frm1601eq:txtBranchCode=00000frm1601eq:txtBranchCode=</div>	
+            <div>frm1601eq:txtRDOCode=044frm1601eq:txtRDOCode=</div>	
+            <div>frm1601eq:txtTaxpayerName=AUTHORIZED TEST TAXPAYERfrm1601eq:txtTaxpayerName=</div>	
+            <div>frm1601eq:txtAddress=REDACTED TEST ADDRESSfrm1601eq:txtAddress=</div>	
+            <div>frm1601eq:txtZipCode=0000frm1601eq:txtZipCode=</div>	
+            <div>frm1601eq:txtTelNum=frm1601eq:txtTelNum=</div>	
+            <div>frm1601eq:CatAgent_P=truefrm1601eq:CatAgent_P=</div>	
+            <div>frm1601eq:CatAgent_G=falsefrm1601eq:CatAgent_G=</div>	
+            <div>frm1601eq:txtEmail=authorized@example.testfrm1601eq:txtEmail=</div>	
+            <div>frm1601eq:txtATC13=WC160frm1601eq:txtATC13=</div>	
+            <div>frm1601eq:txtTaxBase13=0.00frm1601eq:txtTaxBase13=</div>	
+            <div>frm1601eq:txtTaxRate13=0.00frm1601eq:txtTaxRate13=</div>	
+            <div>frm1601eq:txtTax13=0.00frm1601eq:txtTax13=</div>	
+            <div>frm1601eq:txtATC14=WC160frm1601eq:txtATC14=</div>	
+            <div>frm1601eq:txtTaxBase14=0.00frm1601eq:txtTaxBase14=</div>	
+            <div>frm1601eq:txtTaxRate14=0.00frm1601eq:txtTaxRate14=</div>	
+            <div>frm1601eq:txtTax14=0.00frm1601eq:txtTax14=</div>	
+            <div>frm1601eq:txtATC15=WC160frm1601eq:txtATC15=</div>	
+            <div>frm1601eq:txtTax15=0.00frm1601eq:txtTax15=</div>	
+            <div>frm1601eq:txtATC16=WC160frm1601eq:txtATC16=</div>	
+            <div>frm1601eq:txtTax16=0.00frm1601eq:txtTax16=</div>	
+            <div>frm1601eq:txtATC17=WC160frm1601eq:txtATC17=</div>	
+            <div>frm1601eq:txtTax17=0.00frm1601eq:txtTax17=</div>	
+            <div>frm1601eq:txtATC18=WC160frm1601eq:txtATC18=</div>	
+            <div>frm1601eq:txtTax18=0.00frm1601eq:txtTax18=</div>	
+            <div>frm1601eq:txtTax19=0.00frm1601eq:txtTax19=</div>	
+            <div>frm1601eq:txtTax20=truefrm1601eq:txtTax20=</div>	
+            <div>frm1601eq:txtTax21=06/30/2026frm1601eq:txtTax21=</div>	
+            <div>frm1601eq:txtTax22=0.00frm1601eq:txtTax22=</div>	
+            <div>frm1601eq:txtTax23=0.00frm1601eq:txtTax23=</div>	
+            <div>frm1601eq:txtTax24=0.00frm1601eq:txtTax24=</div>	
+            <div>frm1601eq:txtTax25=0.00frm1601eq:txtTax25=</div>	
+            <div>frm1601eq:txtTax26=0.00frm1601eq:txtTax26=</div>	
+            <div>frm1601eq:txtTax27=0.00frm1601eq:txtTax27=</div>	
+            <div>frm1601eq:txtTax28=0.00frm1601eq:txtTax28=</div>	
+            <div>frm1601eq:txtTax29=0.00frm1601eq:txtTax29=</div>	
+            <div>frm1601eq:txtTax30=0.00frm1601eq:txtTax30=</div>	
+            <div>frm1601eq:txtTax31=0.00frm1601eq:txtTax31=</div>	
+            <div>frm1601eq:optOverRemitRefund=truefrm1601eq:optOverRemitRefund=</div>	
+            <div>frm1601eq:optOverRemitTcc=truefrm1601eq:optOverRemitTcc=</div>	
+            <div>frm1601eq:optOverRemitCarryOver=falsefrm1601eq:optOverRemitCarryOver=</div>	
+            <div>frm1601eq:txtAmount32=0.00frm1601eq:txtAmount32=</div>	
+            <div>frm1601eq:txtAmount33=0.00frm1601eq:txtAmount33=</div>	
+            <div>frm1601eq:txtAmount34=0.00frm1601eq:txtAmount34=</div>	
+            <div>frm1601eq:txtParticular35=frm1601eq:txtParticular35=</div>	
+            <div>frm1601eq:txtAmount35=0.00frm1601eq:txtAmount35=</div>	
+            All Rights Reserved BIR synthetic v2019

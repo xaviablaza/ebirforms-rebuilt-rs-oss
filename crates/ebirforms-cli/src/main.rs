@@ -1,10 +1,10 @@
 use ebirforms_core::{
     build_submission_package, decrypt_payload, encrypt_payload, parse_and_apply_receipt,
-    poll_receipt_directory, run_due_jobs_dry_run, run_due_jobs_live, sha256_hex, submit_with_store,
-    AppStateStore, DryRunTransport, JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
-    TaxpayerProfile, Theme,
+    poll_receipt_directory, poll_receipts_himalaya, run_due_jobs_dry_run, run_due_jobs_live,
+    sha256_hex, submit_with_store, AppStateStore, DryRunTransport, HimalayaReceiptPollOptions,
+    JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode, TaxpayerProfile, Theme,
 };
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::env;
 use std::fs;
@@ -17,9 +17,10 @@ fn usage(program: &str) {
     eprintln!("Usage:");
     eprintln!("  {program} encrypt <plaintext.xml> <encrypted.xml>");
     eprintln!("  {program} decrypt <encrypted.xml> <plaintext.xml>");
+    eprintln!("  {program} import-xml --input <synthetic_or_authorized_plaintext.xml> --out <input.json> [--email <email>] [--profile-id <id>]");
     eprintln!("  {program} render --form 1601C --input <input.json> --out <plaintext.xml>");
     eprintln!("  {program} package --form 1601C --input <input.json> --out <upload.xml> [--manifest <manifest.json>]");
-    eprintln!("  {program} diff-fixture --form 1601C --input <input.json> --fixture <synthetic_encrypted.xml>");
+    eprintln!("  {program} diff-fixture --form 1601C --input <input.json> --fixture <synthetic_or_authorized_encrypted.xml>");
     eprintln!("  {program} submit --form 1601C --input <input.json> --dry-run [--records <submissions.json>]");
     eprintln!("  {program} submit --form 1601C --input <input.json> --live --confirm [--records <submissions.json>]");
     eprintln!("  {program} queue --form 1601C --input <input.json> --dry-run [--db <jobs.sqlite>] [--max-attempts <n>]");
@@ -29,6 +30,7 @@ fn usage(program: &str) {
     eprintln!("  {program} jobs [--db <jobs.sqlite>]");
     eprintln!("  {program} receipt-match --receipt <receipt.txt> [--records <submissions.json>]");
     eprintln!("  {program} receipt-poll --receipt-dir <dir> [--records <submissions.json>]");
+    eprintln!("  {program} receipt-poll --himalaya [--himalaya-bin <path>] [--account <name>] [--folder INBOX] [--limit <n>] [--records <submissions.json>]");
     eprintln!("  {program} profiles [--state <app-state.json>]");
     eprintln!("  {program} profile-create --profile-id <id> --tin <tin> --email <email> --name <taxpayer> [--rdo <code>] [--address <addr>] [--zip <zip>] [--state <app-state.json>]");
     eprintln!("  {program} settings --theme <light|dark|system> [--state <app-state.json>]");
@@ -46,6 +48,10 @@ struct Args {
     fixture: Option<PathBuf>,
     receipt: Option<PathBuf>,
     receipt_dir: Option<PathBuf>,
+    himalaya: bool,
+    himalaya_bin: Option<String>,
+    account: Option<String>,
+    folder: Option<String>,
     records: Option<PathBuf>,
     db: Option<PathBuf>,
     state: Option<PathBuf>,
@@ -76,6 +82,7 @@ fn main() -> ExitCode {
 
     let result = match command {
         "encrypt" | "decrypt" => run_transform(command, &argv[2..]),
+        "import-xml" => run_import_xml(parse_flags(&argv[2..])),
         "render" => run_render(parse_flags(&argv[2..])),
         "package" => run_package(parse_flags(&argv[2..])),
         "diff-fixture" => run_diff_fixture(parse_flags(&argv[2..])),
@@ -148,6 +155,23 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                 parsed.receipt_dir = Some(PathBuf::from(
                     args.get(i).ok_or("--receipt-dir requires a value")?,
                 ));
+            }
+            "--himalaya" => parsed.himalaya = true,
+            "--himalaya-bin" => {
+                i += 1;
+                parsed.himalaya_bin = Some(
+                    args.get(i)
+                        .ok_or("--himalaya-bin requires a value")?
+                        .clone(),
+                );
+            }
+            "--account" => {
+                i += 1;
+                parsed.account = Some(args.get(i).ok_or("--account requires a value")?.clone());
+            }
+            "--folder" => {
+                i += 1;
+                parsed.folder = Some(args.get(i).ok_or("--folder requires a value")?.clone());
             }
             "--records" => {
                 i += 1;
@@ -264,6 +288,118 @@ fn run_render(args: Result<Args, String>) -> Result<(), String> {
     write_bytes(out, plaintext.as_bytes())?;
     println!("wrote {} bytes to {}", plaintext.len(), out.display());
     Ok(())
+}
+
+fn run_import_xml(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let input_path = args.input.as_deref().ok_or("import-xml requires --input")?;
+    let out = args.out.as_deref().ok_or("import-xml requires --out")?;
+    let xml = fs::read_to_string(input_path)
+        .map_err(|err| format!("failed to read {}: {err}", input_path.display()))?;
+    let fields = extract_form_div_fields(&xml);
+    if fields.is_empty() {
+        return Err("no eBIRForms <div>field=valuefield=</div> values found".to_string());
+    }
+
+    let tin1 = required_field(&fields, "txtTIN1")?;
+    let tin2 = required_field(&fields, "txtTIN2")?;
+    let tin3 = required_field(&fields, "txtTIN3")?;
+    let branch = required_field(&fields, "txtBranchCode")?;
+    let month: u64 = required_field(&fields, "txtMonth")?
+        .parse()
+        .map_err(|_| "txtMonth must be numeric".to_string())?;
+    let year: u64 = required_field(&fields, "txtYear")?
+        .parse()
+        .map_err(|_| "txtYear must be numeric".to_string())?;
+    let email = args
+        .email
+        .clone()
+        .or_else(|| email_from_filename(input_path))
+        .ok_or("import-xml requires --email unless filename contains #email#")?;
+    let amendment_number = amendment_number_from_filename(input_path).unwrap_or_else(|| {
+        if fields
+            .get("AmendedRtn_1")
+            .map(|v| v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false)
+        {
+            1
+        } else {
+            0
+        }
+    });
+
+    let input = json!({
+        "profile": {
+            "tin": format!("{tin1}-{tin2}-{tin3}-{branch}"),
+            "email": email,
+            "profile_id": args.profile_id.unwrap_or_else(|| "imported-official-1601c".to_string())
+        },
+        "return": {
+            "period": { "month": month, "year": year },
+            "is_amended": amendment_number > 0,
+            "amendment_number": amendment_number
+        },
+        "fields": fields
+    });
+    let bytes = serde_json::to_vec_pretty(&input).map_err(|err| err.to_string())?;
+    write_bytes(out, &bytes)?;
+    println!(
+        "imported {} fields from {} to {}",
+        input["fields"].as_object().map(|f| f.len()).unwrap_or(0),
+        input_path.display(),
+        out.display()
+    );
+    Ok(())
+}
+
+fn extract_form_div_fields(xml: &str) -> BTreeMap<String, String> {
+    let mut fields = BTreeMap::new();
+    let mut rest = xml;
+    while let Some(start) = rest.find("<div>") {
+        rest = &rest[start + 5..];
+        let Some(end) = rest.find("</div>") else {
+            break;
+        };
+        let body = &rest[..end];
+        rest = &rest[end + 6..];
+        let Some((raw_key, raw_value)) = body.split_once('=') else {
+            continue;
+        };
+        let short_key = raw_key.strip_prefix("frm1601c:").unwrap_or(raw_key);
+        let trailer = format!("{raw_key}=");
+        let value = raw_value.strip_suffix(&trailer).unwrap_or(raw_value);
+        fields.insert(short_key.to_string(), value.to_string());
+    }
+    fields
+}
+
+fn required_field(fields: &BTreeMap<String, String>, key: &'static str) -> Result<String, String> {
+    fields
+        .get(key)
+        .cloned()
+        .ok_or_else(|| format!("missing field {key}"))
+}
+
+fn email_from_filename(path: &Path) -> Option<String> {
+    let filename = path.file_name()?.to_string_lossy();
+    let mut parts = filename.split('#');
+    let _before = parts.next()?;
+    let email = parts.next()?;
+    if email.is_empty() {
+        None
+    } else {
+        Some(email.to_string())
+    }
+}
+
+fn amendment_number_from_filename(path: &Path) -> Option<u64> {
+    let filename = path.file_name()?.to_string_lossy();
+    let stem = filename.split('#').next().unwrap_or(&filename);
+    let v_index = stem.rfind('V')?;
+    stem[v_index + 1..]
+        .trim_end_matches(".xml")
+        .parse::<u64>()
+        .ok()
 }
 
 fn run_package(args: Result<Args, String>) -> Result<(), String> {
@@ -480,11 +616,28 @@ fn run_receipt_match(args: Result<Args, String>) -> Result<(), String> {
 
 fn run_receipt_poll(args: Result<Args, String>) -> Result<(), String> {
     let args = args?;
+    let store = SubmissionStore::new(submission_records_path(&args));
+    if args.himalaya {
+        let mut options = HimalayaReceiptPollOptions::default();
+        options.account = args
+            .account
+            .clone()
+            .filter(|value| !value.trim().is_empty());
+        options.folder = args
+            .folder
+            .clone()
+            .filter(|value| !value.trim().is_empty())
+            .or(options.folder);
+        options.limit = args.limit.unwrap_or(options.limit);
+        options.binary = args.himalaya_bin.clone();
+        let report = poll_receipts_himalaya(&store, options).map_err(|err| err.to_string())?;
+        return print_json(report);
+    }
+
     let receipt_dir = args
         .receipt_dir
         .as_deref()
-        .ok_or("receipt-poll requires --receipt-dir")?;
-    let store = SubmissionStore::new(submission_records_path(&args));
+        .ok_or("receipt-poll requires --receipt-dir or --himalaya")?;
     let report = poll_receipt_directory(&store, receipt_dir).map_err(|err| err.to_string())?;
     print_json(report)
 }

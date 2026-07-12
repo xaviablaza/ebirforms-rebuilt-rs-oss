@@ -1,6 +1,6 @@
 # Programmatic Submission Build Evaluation (OSS Sanitized)
 
-This evaluates the OSS-clean build against the sanitized plan. The build uses synthetic fixtures only and does not include proprietary compatibility artifacts, production endpoints, or private taxpayer submissions.
+This evaluates the OSS-clean build against the sanitized plan. The build uses synthetic fixtures only and does not include official BIR package materials, extracted application assets, non-public compatibility artifacts, production endpoints, credentials, or private taxpayer submissions.
 
 ## Implemented
 
@@ -15,6 +15,6 @@ This evaluates the OSS-clean build against the sanitized plan. The build uses sy
 ## Known limits
 
 - Only synthetic 1601C assets are included.
-- This OSS repo does not include official/plain private XML captures.
+- This OSS repo does not include private XML captures or official BIR package-derived artifacts.
 - This OSS repo does not include production endpoint details or credentials.
-- Additional forms require independently redistributable templates and mappings.
+- Additional forms require independently authored, redistributable templates and mappings.

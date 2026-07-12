@@ -1,5 +1,5 @@
 [tools]
-rust = "1.75.0"
+rust = "1.88.0"
 node = "22"
 
 [tasks.test]
@@ -7,8 +7,8 @@ description = "Run the Rust test suite"
 run = "cargo test"
 
 [tasks.build]
-description = "Build the eBIRForms CLI release binary"
-run = "cargo build --release -p ebirforms-cli"
+description = "Build the PH Tax Forms CLI release binary"
+run = "cargo build --release -p ebirforms-cli && scripts/package-cli-himalaya.sh"
 
 [tasks.clean]
 description = "Remove Cargo build outputs"
@@ -31,7 +31,7 @@ description = "Check the Leptos frontend and Tauri desktop backend"
 run = [
   "mise x node@22 -- npm --prefix apps/desktop/frontend install",
   "mise x rust@1.88.0 node@22 -- sh -lc 'cd apps/desktop/frontend && ../scripts/ensure-trunk.sh build'",
-  "mise x rust@1.88.0 node@22 -- cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml",
+  "mise x rust@1.88.0 node@22 -- sh -lc 'cd apps/desktop && scripts/ensure-himalaya.sh && cargo check --manifest-path src-tauri/Cargo.toml'",
 ]
 
 [tasks.desktop-build]

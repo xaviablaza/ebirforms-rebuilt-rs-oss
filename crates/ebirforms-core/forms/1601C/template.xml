@@ -1,77 +1,80 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<synthetic-form code="1601C" fixture="oss">
-  <notice>This synthetic fixture is for OSS tests only and is not an production tax form.</notice>
-  <field name="txtMonth">{{txtMonth}}</field>
-  <field name="txtYear">{{txtYear}}</field>
-  <field name="AmendedRtn_1">{{AmendedRtn_1}}</field>
-  <field name="AmendedRtn_2">{{AmendedRtn_2}}</field>
-  <field name="TaxWithheld_1">{{TaxWithheld_1}}</field>
-  <field name="TaxWithheld_2">{{TaxWithheld_2}}</field>
-  <field name="txtSheets">{{txtSheets}}</field>
-  <field name="txtATC">{{txtATC}}</field>
-  <field name="txtTIN1">{{txtTIN1}}</field>
-  <field name="txtTIN2">{{txtTIN2}}</field>
-  <field name="txtTIN3">{{txtTIN3}}</field>
-  <field name="txtBranchCode">{{txtBranchCode}}</field>
-  <field name="txtRDOCode">{{txtRDOCode}}</field>
-  <field name="txtTaxpayerName">{{txtTaxpayerName}}</field>
-  <field name="txtAddress">{{txtAddress}}</field>
-  <field name="txtAddress2">{{txtAddress2}}</field>
-  <field name="txtZipCode">{{txtZipCode}}</field>
-  <field name="txtTelNum">{{txtTelNum}}</field>
-  <field name="CatAgent_P">{{CatAgent_P}}</field>
-  <field name="CatAgent_G">{{CatAgent_G}}</field>
-  <field name="SpecialTax_1">{{SpecialTax_1}}</field>
-  <field name="SpecialTax_2">{{SpecialTax_2}}</field>
-  <field name="selTreaty">{{selTreaty}}</field>
-  <field name="txtTax14">{{txtTax14}}</field>
-  <field name="txtTax15">{{txtTax15}}</field>
-  <field name="txtTax16">{{txtTax16}}</field>
-  <field name="txtTax17">{{txtTax17}}</field>
-  <field name="txtTax18">{{txtTax18}}</field>
-  <field name="txtTax19">{{txtTax19}}</field>
-  <field name="txt20Other">{{txt20Other}}</field>
-  <field name="txtTax20">{{txtTax20}}</field>
-  <field name="txtTax21">{{txtTax21}}</field>
-  <field name="txtTax22">{{txtTax22}}</field>
-  <field name="txtTax23">{{txtTax23}}</field>
-  <field name="txtTax24">{{txtTax24}}</field>
-  <field name="txtTax25">{{txtTax25}}</field>
-  <field name="txtTax26">{{txtTax26}}</field>
-  <field name="txtTax27">{{txtTax27}}</field>
-  <field name="txtTax28">{{txtTax28}}</field>
-  <field name="txt29Other">{{txt29Other}}</field>
-  <field name="txtTax29">{{txtTax29}}</field>
-  <field name="txtTax30">{{txtTax30}}</field>
-  <field name="txtTax31">{{txtTax31}}</field>
-  <field name="txtTax32">{{txtTax32}}</field>
-  <field name="txtTax33">{{txtTax33}}</field>
-  <field name="txtTax34">{{txtTax34}}</field>
-  <field name="txtTax35">{{txtTax35}}</field>
-  <field name="txtTax36">{{txtTax36}}</field>
-  <field name="txtAgency37">{{txtAgency37}}</field>
-  <field name="txtNumber37">{{txtNumber37}}</field>
-  <field name="txtDate37">{{txtDate37}}</field>
-  <field name="txtAmount37">{{txtAmount37}}</field>
-  <field name="txtAgency38">{{txtAgency38}}</field>
-  <field name="txtNumber38">{{txtNumber38}}</field>
-  <field name="txtDate38">{{txtDate38}}</field>
-  <field name="txtAmount38">{{txtAmount38}}</field>
-  <field name="txtNumber39">{{txtNumber39}}</field>
-  <field name="txtDate39">{{txtDate39}}</field>
-  <field name="txtAmount39">{{txtAmount39}}</field>
-  <field name="txtParticular40">{{txtParticular40}}</field>
-  <field name="txtAgency40">{{txtAgency40}}</field>
-  <field name="txtNumber40">{{txtNumber40}}</field>
-  <field name="txtDate40">{{txtDate40}}</field>
-  <field name="txtAmount40">{{txtAmount40}}</field>
-  <field name="txtPg2TIN1">{{txtPg2TIN1}}</field>
-  <field name="txtPg2TIN2">{{txtPg2TIN2}}</field>
-  <field name="txtPg2TIN3">{{txtPg2TIN3}}</field>
-  <field name="txtPg2BranchCode">{{txtPg2BranchCode}}</field>
-  <field name="txtPg2TaxpayerName">{{txtPg2TaxpayerName}}</field>
-  <field name="sched1:txtTotal1">{{sched1:txtTotal1}}</field>
-  <field name="txtCurrentPage">{{txtCurrentPage}}</field>
-  <field name="txtMaxPage">{{txtMaxPage}}</field>
-  <field name="txtLineBus">{{txtLineBus}}</field>
-</synthetic-form>
+<?xml version='1.0'?>	
+            <div>frm1601c:txtMonth={{txtMonth}}frm1601c:txtMonth=</div>	
+            <div>frm1601c:txtYear={{txtYear}}frm1601c:txtYear=</div>	
+            <div>frm1601c:AmendedRtn_1={{AmendedRtn_1}}frm1601c:AmendedRtn_1=</div>	
+            <div>frm1601c:AmendedRtn_2={{AmendedRtn_2}}frm1601c:AmendedRtn_2=</div>	
+            <div>frm1601c:TaxWithheld_1={{TaxWithheld_1}}frm1601c:TaxWithheld_1=</div>	
+            <div>frm1601c:TaxWithheld_2={{TaxWithheld_2}}frm1601c:TaxWithheld_2=</div>	
+            <div>frm1601c:txtSheets={{txtSheets}}frm1601c:txtSheets=</div>	
+            <div>frm1601c:txtATC={{txtATC}}frm1601c:txtATC=</div>	
+            <div>frm1601c:txtTIN1={{txtTIN1}}frm1601c:txtTIN1=</div>	
+            <div>frm1601c:txtTIN2={{txtTIN2}}frm1601c:txtTIN2=</div>	
+            <div>frm1601c:txtTIN3={{txtTIN3}}frm1601c:txtTIN3=</div>	
+            <div>frm1601c:txtBranchCode={{txtBranchCode}}frm1601c:txtBranchCode=</div>	
+            <div>frm1601c:txtRDOCode={{txtRDOCode}}frm1601c:txtRDOCode=</div>	
+            <div>frm1601c:txtTaxpayerName={{txtTaxpayerName}}frm1601c:txtTaxpayerName=</div>	
+            <div>frm1601c:txtAddress={{txtAddress}}frm1601c:txtAddress=</div>	
+            <div>frm1601c:txtAddress2={{txtAddress2}}frm1601c:txtAddress2=</div>	
+            <div>frm1601c:txtZipCode={{txtZipCode}}frm1601c:txtZipCode=</div>	
+            <div>frm1601c:txtTelNum={{txtTelNum}}frm1601c:txtTelNum=</div>	
+            <div>frm1601c:CatAgent_P={{CatAgent_P}}frm1601c:CatAgent_P=</div>	
+            <div>frm1601c:CatAgent_G={{CatAgent_G}}frm1601c:CatAgent_G=</div>	
+            <div>txtEmail={{txtEmail}}txtEmail=</div>	
+            <div>frm1601c:SpecialTax_1={{SpecialTax_1}}frm1601c:SpecialTax_1=</div>	
+            <div>frm1601c:SpecialTax_2={{SpecialTax_2}}frm1601c:SpecialTax_2=</div>	
+            <div>frm1601c:selTreaty={{selTreaty}}frm1601c:selTreaty=</div>	
+            <div>frm1601c:txtTax14={{txtTax14}}frm1601c:txtTax14=</div>	
+            <div>frm1601c:txtTax15={{txtTax15}}frm1601c:txtTax15=</div>	
+            <div>frm1601c:txtTax16={{txtTax16}}frm1601c:txtTax16=</div>	
+            <div>frm1601c:txtTax17={{txtTax17}}frm1601c:txtTax17=</div>	
+            <div>frm1601c:txtTax18={{txtTax18}}frm1601c:txtTax18=</div>	
+            <div>frm1601c:txtTax19={{txtTax19}}frm1601c:txtTax19=</div>	
+            <div>frm1601c:txt20Other={{txt20Other}}frm1601c:txt20Other=</div>	
+            <div>frm1601c:txtTax20={{txtTax20}}frm1601c:txtTax20=</div>	
+            <div>frm1601c:txtTax21={{txtTax21}}frm1601c:txtTax21=</div>	
+            <div>frm1601c:txtTax22={{txtTax22}}frm1601c:txtTax22=</div>	
+            <div>frm1601c:txtTax23={{txtTax23}}frm1601c:txtTax23=</div>	
+            <div>frm1601c:txtTax24={{txtTax24}}frm1601c:txtTax24=</div>	
+            <div>frm1601c:txtTax25={{txtTax25}}frm1601c:txtTax25=</div>	
+            <div>frm1601c:txtTax26={{txtTax26}}frm1601c:txtTax26=</div>	
+            <div>frm1601c:txtTax27={{txtTax27}}frm1601c:txtTax27=</div>	
+            <div>frm1601c:txtTax28={{txtTax28}}frm1601c:txtTax28=</div>	
+            <div>frm1601c:txt29Other={{txt29Other}}frm1601c:txt29Other=</div>	
+            <div>frm1601c:txtTax29={{txtTax29}}frm1601c:txtTax29=</div>	
+            <div>frm1601c:txtTax30={{txtTax30}}frm1601c:txtTax30=</div>	
+            <div>frm1601c:txtTax31={{txtTax31}}frm1601c:txtTax31=</div>	
+            <div>frm1601c:txtTax32={{txtTax32}}frm1601c:txtTax32=</div>	
+            <div>frm1601c:txtTax33={{txtTax33}}frm1601c:txtTax33=</div>	
+            <div>frm1601c:txtTax34={{txtTax34}}frm1601c:txtTax34=</div>	
+            <div>frm1601c:txtTax35={{txtTax35}}frm1601c:txtTax35=</div>	
+            <div>frm1601c:txtTax36={{txtTax36}}frm1601c:txtTax36=</div>	
+            <div>txtTaxAgentNo={{txtTaxAgentNo}}txtTaxAgentNo=</div>	
+            <div>txtDateIssue={{txtDateIssue}}txtDateIssue=</div>	
+            <div>txtDateExpiry={{txtDateExpiry}}txtDateExpiry=</div>	
+            <div>frm1601c:txtAgency37={{txtAgency37}}frm1601c:txtAgency37=</div>	
+            <div>frm1601c:txtNumber37={{txtNumber37}}frm1601c:txtNumber37=</div>	
+            <div>frm1601c:txtDate37={{txtDate37}}frm1601c:txtDate37=</div>	
+            <div>frm1601c:txtAmount37={{txtAmount37}}frm1601c:txtAmount37=</div>	
+            <div>frm1601c:txtAgency38={{txtAgency38}}frm1601c:txtAgency38=</div>	
+            <div>frm1601c:txtNumber38={{txtNumber38}}frm1601c:txtNumber38=</div>	
+            <div>frm1601c:txtDate38={{txtDate38}}frm1601c:txtDate38=</div>	
+            <div>frm1601c:txtAmount38={{txtAmount38}}frm1601c:txtAmount38=</div>	
+            <div>frm1601c:txtNumber39={{txtNumber39}}frm1601c:txtNumber39=</div>	
+            <div>frm1601c:txtDate39={{txtDate39}}frm1601c:txtDate39=</div>	
+            <div>frm1601c:txtAmount39={{txtAmount39}}frm1601c:txtAmount39=</div>	
+            <div>frm1601c:txtParticular40={{txtParticular40}}frm1601c:txtParticular40=</div>	
+            <div>frm1601c:txtAgency40={{txtAgency40}}frm1601c:txtAgency40=</div>	
+            <div>frm1601c:txtNumber40={{txtNumber40}}frm1601c:txtNumber40=</div>	
+            <div>frm1601c:txtDate40={{txtDate40}}frm1601c:txtDate40=</div>	
+            <div>frm1601c:txtAmount40={{txtAmount40}}frm1601c:txtAmount40=</div>	
+            <div>frm1601c:txtPg2TIN1={{txtPg2TIN1}}frm1601c:txtPg2TIN1=</div>	
+            <div>frm1601c:txtPg2TIN2={{txtPg2TIN2}}frm1601c:txtPg2TIN2=</div>	
+            <div>frm1601c:txtPg2TIN3={{txtPg2TIN3}}frm1601c:txtPg2TIN3=</div>	
+            <div>frm1601c:txtPg2BranchCode={{txtPg2BranchCode}}frm1601c:txtPg2BranchCode=</div>	
+            <div>frm1601c:txtPg2TaxpayerName={{txtPg2TaxpayerName}}frm1601c:txtPg2TaxpayerName=</div>	
+            <div>frm1601c:sched1:txtTotal1={{sched1:txtTotal1}}frm1601c:sched1:txtTotal1=</div>	
+            <div>frm1601c:txtCurrentPage={{txtCurrentPage}}frm1601c:txtCurrentPage=</div>	
+            <div>frm1601c:txtMaxPage={{txtMaxPage}}frm1601c:txtMaxPage=</div>	
+            <div>frm1601c:txtLineBus={{txtLineBus}}frm1601c:txtLineBus=</div>	
+            	
+            All Rights Reserved BIR 2012.0

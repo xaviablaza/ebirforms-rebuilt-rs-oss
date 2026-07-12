@@ -1,6 +1,13 @@
-# eBIRForms Rebuilt Rust Workspace (OSS Sanitized)
+# PH Tax Forms Rust Workspace (Unofficial OSS Prototype)
 
-Rust workspace for a safe-by-default, data-driven form rendering, packaging, queueing, and receipt-matching prototype. This OSS distribution uses synthetic fixtures only. It is not affiliated with, endorsed by, or certified by the Philippine Bureau of Internal Revenue (BIR).
+Rust workspace for a safe-by-default, data-driven form rendering, packaging, queueing, and receipt-matching prototype for Philippine tax-form workflows. This OSS distribution uses synthetic fixtures only. It is independent and unofficial: it is not affiliated with, endorsed by, sponsored by, or certified by the Philippine Bureau of Internal Revenue (BIR). It does not include, modify, redistribute, or depend on the BIR Offline eBIRForms Package. See `PROVENANCE.md`.
+
+## Beta Testers (Enterprise Edition)
+
+I am looking for business owners and developers who work with finance workflows to test the enterprise beta and share feedback. If you have an existing accounting team or accounting system that needs integration with this software, let me know below:
+
+👉 Register as a beta tester:
+https://docs.google.com/forms/d/e/1FAIpQLSfpW6UcHDEr0l6k3PRkaF0yC28NXxjDRhZglPxHvqVxUkekAg/viewform?usp=dialog
 
 ## License
 
@@ -14,14 +21,14 @@ Licensed under the Functional Source License, Version 1.1, ALv2 Future License (
 - `ebirforms-core::submission`: safe-by-default dry-run/live-gated submission records.
 - `ebirforms-core::job`: SQLite submission job queue.
 - `ebirforms-core::profile`: local profile/settings/PIN app state.
-- `ebirforms-core::receipt`: synthetic receipt parsing/matching and local directory polling.
+- `ebirforms-core::receipt`: synthetic receipt parsing/matching plus local directory and packaged Himalaya mailbox polling.
 - `ebirforms-cli`: command-line access to the above.
 
-Synthetic fixtures are included for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`. Additional forms require clean-room, redistributable templates/mappings.
+Synthetic fixtures are included for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`. Additional forms require independently authored, redistributable templates/mappings and should be validated against public requirements or authorized operator data.
 
 ## Build with mise
 
-This repo includes `mise.toml` to pin Rust `1.75.0` and expose common build tasks.
+This repo includes `mise.toml` to pin Rust `1.88.0` and expose common build tasks.
 
 On macOS with mise already installed, paste this into Terminal:
 
@@ -33,13 +40,13 @@ mise trust && mise install && mise run build
 ./target/release/ebirforms-cli --help
 ```
 
-The macOS binary will be at `./target/release/ebirforms-cli`.
+The macOS binary will be at `./target/release/ebirforms-cli`. The build task also places a packaged `himalaya` sidecar next to the CLI at `./target/release/himalaya`, so receipt polling can run without a separate Himalaya install.
 
 ## Desktop app
 
-A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard`, `Profiles`, and `Settings`. The dashboard contains only the Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; it requires a saved active taxpayer profile before opening a form. Package, queue/job, submission, and receipt actions are embedded in the selected form’s single-column Tax Form Flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run and automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain.
+A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard`, `Profiles`, and `Settings`. The dashboard contains only the Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; it requires a saved active taxpayer profile before opening a form. Package, queue/job, submission, and receipt actions are embedded in the selected form’s single-column Tax Form Flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run, automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain, and package Himalaya as a desktop resource/sidecar for production receipt mailbox polling.
 
-![eBIRForms Desktop dashboard running on Linux](docs/assets/desktop-linux-dashboard.png)
+![PH Tax Forms Desktop prototype dashboard running on Linux](docs/assets/desktop-linux-dashboard.png)
 
 On macOS with mise already installed, paste this into Terminal to build the desktop app:
 
@@ -78,12 +85,12 @@ A fuller presenter talk track lives in [`docs/desktop-tax-form-flow-demo-script.
 9. Click `Edit` to reopen the form if changes are needed, then `Validate` again.
 10. Point out that `Print` remains disabled, while `Submit Final Copy` is gated by validation plus the `Final copy confirmation` checkbox.
 11. Tick final-copy confirmation, then click `Submit Final Copy`; show that it queues and runs the dry-run job and enters a waiting-for-receipt state.
-12. Click `Simulate received BIR receipt`; show the submission record changes to `Confirmed`.
+12. Click `Check receipt mailbox (Himalaya)` to poll the packaged production mailbox bridge, or click `Simulate received BIR receipt`; show the submission record changes to `Confirmed`.
 
 Typical macOS bundle output path after a successful Tauri build:
 
 ```bash
-apps/desktop/src-tauri/target/release/bundle/macos/eBIRForms Desktop.app
+apps/desktop/src-tauri/target/release/bundle/macos/PH Tax Forms Desktop (Unofficial).app
 ```
 
 SHA-256 commands:
@@ -93,11 +100,11 @@ SHA-256 commands:
 shasum -a 256 ./target/release/ebirforms-cli
 
 # macOS app bundle archive, after zipping it for distribution
-zip -r ebirforms-desktop-macos.zip "apps/desktop/src-tauri/target/release/bundle/macos/eBIRForms Desktop.app"
-shasum -a 256 ebirforms-desktop-macos.zip
+zip -r ph-tax-forms-desktop-macos.zip "apps/desktop/src-tauri/target/release/bundle/macos/PH Tax Forms Desktop (Unofficial).app"
+shasum -a 256 ph-tax-forms-desktop-macos.zip
 ```
 
-Linux desktop builds require WebKitGTK/GTK development packages. Desktop tasks use Rust 1.88.0 via mise for Tauri v2, while the core/CLI crate still declares Rust 1.75 compatibility. macOS builds should be run on macOS with Xcode Command Line Tools installed.
+Linux desktop builds require WebKitGTK/GTK development packages. Desktop and CLI tasks use Rust 1.88.0 via mise. macOS builds should be run on macOS with Xcode Command Line Tools installed.
 
 Windows desktop build requirements:
 
@@ -141,6 +148,22 @@ cargo run -p ebirforms-cli -- receipt-match --receipt tests/fixtures/1601C/recei
 
 Default local state paths are under `.ebirforms/`, which is gitignored.
 
+## Production filing configuration
+
+Live filing is designed for authorized operators only: production packages may be built with private, operator-supplied SFTP configuration at build time, so end users do not enter SFTP settings. The public source tree intentionally has no production endpoint or username defaults. The app still defaults to `Dry run only`; switching to `Live submit to BIR` requires the Settings confirmation.
+
+Build-time variables for a distributor/CI packaging job:
+
+```bash
+BIR_PRODUCTION_SFTP_HOST='<provided-by-authorized-operator>' \
+BIR_PRODUCTION_SFTP_PORT='<provided-by-authorized-operator>' \
+BIR_PRODUCTION_SFTP_USERNAME='<provided-by-authorized-operator>' \
+BIR_PRODUCTION_SFTP_PASSWORD='<provided-outside-this-repository>' \
+mise run desktop-build
+```
+
+Runtime `FILING_SFTP_*` variables still override the build-time values for controlled internal tests. Do not commit production hosts, usernames, passwords, private keys, or endpoint research to this repository.
+
 ## Public-source hygiene
 
-This repository intentionally excludes private fixtures, production credentials, endpoint research, and taxpayer data. See `SECURITY.md` and `DISCLAIMER.md`.
+This repository intentionally excludes private fixtures, production credentials, endpoint research, taxpayer data, official eBIRForms installers/binaries/assets, and extracted BIR package materials. See `PROVENANCE.md`, `SECURITY.md`, and `DISCLAIMER.md`.

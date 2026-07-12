@@ -1,101 +1,49 @@
-<?xml version='1.0'?>
-<div>frm2000:txtMonth={{frm2000:txtMonth}}frm2000:txtMonth=</div>
-<div>frm2000:txtYear={{frm2000:txtYear}}frm2000:txtYear=</div>
-<div>frm2000:AmendedRtn_1={{frm2000:AmendedRtn_1}}frm2000:AmendedRtn_1=</div>
-<div>frm2000:AmendedRtn_2={{frm2000:AmendedRtn_2}}frm2000:AmendedRtn_2=</div>
-<div>frm2000:txtSheets={{frm2000:txtSheets}}frm2000:txtSheets=</div>
-<div>frm2000:txtTIN1={{frm2000:txtTIN1}}frm2000:txtTIN1=</div>
-<div>frm2000:txtTIN2={{frm2000:txtTIN2}}frm2000:txtTIN2=</div>
-<div>frm2000:txtTIN3={{frm2000:txtTIN3}}frm2000:txtTIN3=</div>
-<div>frm2000:txtBranchCode={{frm2000:txtBranchCode}}frm2000:txtBranchCode=</div>
-<div>frm2000:txtRDOCode={{frm2000:txtRDOCode}}frm2000:txtRDOCode=</div>
-<div>frm2000:txtTaxpayerName={{frm2000:txtTaxpayerName}}frm2000:txtTaxpayerName=</div>
-<div>frm2000:txtAddress={{frm2000:txtAddress}}frm2000:txtAddress=</div>
-<div>frm2000:txtZipCode={{frm2000:txtZipCode}}frm2000:txtZipCode=</div>
-<div>frm2000:txtTelNum={{frm2000:txtTelNum}}frm2000:txtTelNum=</div>
-<div>txtEmail={{txtEmail}}txtEmail=</div>
-<div>frm2000:optParty_1={{frm2000:optParty_1}}frm2000:optParty_1=</div>
-<div>frm2000:optParty_2={{frm2000:optParty_2}}frm2000:optParty_2=</div>
-<div>frm2000:optParty_3={{frm2000:optParty_3}}frm2000:optParty_3=</div>
-<div>frm2000:txtOtherName={{frm2000:txtOtherName}}frm2000:txtOtherName=</div>
-<div>frm2000:txtOtherTIN={{frm2000:txtOtherTIN}}frm2000:txtOtherTIN=</div>
-<div>frm2000:optMode_1={{frm2000:optMode_1}}frm2000:optMode_1=</div>
-<div>frm2000:optMode_2={{frm2000:optMode_2}}frm2000:optMode_2=</div>
-<div>frm2000:optMode_3={{frm2000:optMode_3}}frm2000:optMode_3=</div>
-<div>frm2000:txtTax14={{frm2000:txtTax14}}frm2000:txtTax14=</div>
-<div>frm2000:txtTax15A={{frm2000:txtTax15A}}frm2000:txtTax15A=</div>
-<div>frm2000:txtTax15B={{frm2000:txtTax15B}}frm2000:txtTax15B=</div>
-<div>frm2000:txtTax15C={{frm2000:txtTax15C}}frm2000:txtTax15C=</div>
-<div>frm2000:txtTax15D={{frm2000:txtTax15D}}frm2000:txtTax15D=</div>
-<div>frm2000:txtTax16={{frm2000:txtTax16}}frm2000:txtTax16=</div>
-<div>frm2000:txtTax17A={{frm2000:txtTax17A}}frm2000:txtTax17A=</div>
-<div>frm2000:txtTax17B={{frm2000:txtTax17B}}frm2000:txtTax17B=</div>
-<div>frm2000:txtTax17C={{frm2000:txtTax17C}}frm2000:txtTax17C=</div>
-<div>frm2000:txtTax17D={{frm2000:txtTax17D}}frm2000:txtTax17D=</div>
-<div>frm2000:txtTax18={{frm2000:txtTax18}}frm2000:txtTax18=</div>
-<div>frm2000:txtTax19={{frm2000:txtTax19}}frm2000:txtTax19=</div>
-<div>txtTaxAgentNo={{txtTaxAgentNo}}txtTaxAgentNo=</div>
-<div>txtDateIssue={{txtDateIssue}}txtDateIssue=</div>
-<div>txtDateExpiry={{txtDateExpiry}}txtDateExpiry=</div>
-<div>frm2000:txtAgency20={{frm2000:txtAgency20}}frm2000:txtAgency20=</div>
-<div>frm2000:txtNumber20={{frm2000:txtNumber20}}frm2000:txtNumber20=</div>
-<div>frm2000:txtDate20={{frm2000:txtDate20}}frm2000:txtDate20=</div>
-<div>frm2000:txtAmount20={{frm2000:txtAmount20}}frm2000:txtAmount20=</div>
-<div>frm2000:txtAgency21={{frm2000:txtAgency21}}frm2000:txtAgency21=</div>
-<div>frm2000:txtNumber21={{frm2000:txtNumber21}}frm2000:txtNumber21=</div>
-<div>frm2000:txtDate21={{frm2000:txtDate21}}frm2000:txtDate21=</div>
-<div>frm2000:txtAmount21={{frm2000:txtAmount21}}frm2000:txtAmount21=</div>
-<div>frm2000:txtAgency22={{frm2000:txtAgency22}}frm2000:txtAgency22=</div>
-<div>frm2000:txtNumber22={{frm2000:txtNumber22}}frm2000:txtNumber22=</div>
-<div>frm2000:txtDate22={{frm2000:txtDate22}}frm2000:txtDate22=</div>
-<div>frm2000:txtAmount22={{frm2000:txtAmount22}}frm2000:txtAmount22=</div>
-<div>frm2000:txtParticular36={{frm2000:txtParticular36}}frm2000:txtParticular36=</div>
-<div>frm2000:txtAgency23={{frm2000:txtAgency23}}frm2000:txtAgency23=</div>
-<div>frm2000:txtNumber23={{frm2000:txtNumber23}}frm2000:txtNumber23=</div>
-<div>frm2000:txtDate23={{frm2000:txtDate23}}frm2000:txtDate23=</div>
-<div>frm2000:txtAmount23={{frm2000:txtAmount23}}frm2000:txtAmount23=</div>
-<div>frm2000:txtPg2TIN1={{frm2000:txtPg2TIN1}}frm2000:txtPg2TIN1=</div>
-<div>frm2000:txtPg2TIN2={{frm2000:txtPg2TIN2}}frm2000:txtPg2TIN2=</div>
-<div>frm2000:txtPg2TIN3={{frm2000:txtPg2TIN3}}frm2000:txtPg2TIN3=</div>
-<div>frm2000:txtPg2BranchCode={{frm2000:txtPg2BranchCode}}frm2000:txtPg2BranchCode=</div>
-<div>frm2000:txtPg2TaxpayerName={{frm2000:txtPg2TaxpayerName}}frm2000:txtPg2TaxpayerName=</div>
-<div>chkSchedule1Delete0={{chkSchedule1Delete0}}chkSchedule1Delete0=</div>
-<div>drpATCCode0={{drpATCCode0}}drpATCCode0=</div>
-<div>frm2000:sched1:txtTaxBase0={{frm2000:sched1:txtTaxBase0}}frm2000:sched1:txtTaxBase0=</div>
-<div>frm2000:sched1:txtTaxRate0={{frm2000:sched1:txtTaxRate0}}frm2000:sched1:txtTaxRate0=</div>
-<div>frm2000:sched1:txtTaxDue0={{frm2000:sched1:txtTaxDue0}}frm2000:sched1:txtTaxDue0=</div>
-<div>frm2000:sched1:txtTotalDue1={{frm2000:sched1:txtTotalDue1}}frm2000:sched1:txtTotalDue1=</div>
-<div>frm2000:sched2:txtTotalPayment1={{frm2000:sched2:txtTotalPayment1}}frm2000:sched2:txtTotalPayment1=</div>
-<div>chkSchedule3Delete0={{chkSchedule3Delete0}}chkSchedule3Delete0=</div>
-<div>frm2000:sched3:txtPaymentDate0={{frm2000:sched3:txtPaymentDate0}}frm2000:sched3:txtPaymentDate0=</div>
-<div>frm2000:sched3:txtReceipt0={{frm2000:sched3:txtReceipt0}}frm2000:sched3:txtReceipt0=</div>
-<div>frm2000:sched3:txtAmountPaid0={{frm2000:sched3:txtAmountPaid0}}frm2000:sched3:txtAmountPaid0=</div>
-<div>chkSchedule3Delete1={{chkSchedule3Delete1}}chkSchedule3Delete1=</div>
-<div>frm2000:sched3:txtPaymentDate1={{frm2000:sched3:txtPaymentDate1}}frm2000:sched3:txtPaymentDate1=</div>
-<div>frm2000:sched3:txtReceipt1={{frm2000:sched3:txtReceipt1}}frm2000:sched3:txtReceipt1=</div>
-<div>frm2000:sched3:txtAmountPaid1={{frm2000:sched3:txtAmountPaid1}}frm2000:sched3:txtAmountPaid1=</div>
-<div>chkSchedule3Delete2={{chkSchedule3Delete2}}chkSchedule3Delete2=</div>
-<div>frm2000:sched3:txtPaymentDate2={{frm2000:sched3:txtPaymentDate2}}frm2000:sched3:txtPaymentDate2=</div>
-<div>frm2000:sched3:txtReceipt2={{frm2000:sched3:txtReceipt2}}frm2000:sched3:txtReceipt2=</div>
-<div>frm2000:sched3:txtAmountPaid2={{frm2000:sched3:txtAmountPaid2}}frm2000:sched3:txtAmountPaid2=</div>
-<div>frm2000:sched3:txtTotalPayment1={{frm2000:sched3:txtTotalPayment1}}frm2000:sched3:txtTotalPayment1=</div>
-<div>frm2000:sched4:txtTotalRemittance1={{frm2000:sched4:txtTotalRemittance1}}frm2000:sched4:txtTotalRemittance1=</div>
-<div>frm2000:txtCurrentPage={{frm2000:txtCurrentPage}}frm2000:txtCurrentPage=</div>
-<div>frm2000:txtMaxPage={{frm2000:txtMaxPage}}frm2000:txtMaxPage=</div>
-<div>frm2000:modLabel={{frm2000:modLabel}}frm2000:modLabel=</div>
-<div>ds106modYes={{ds106modYes}}ds106modYes=</div>
-<div>ds106modNo={{ds106modNo}}ds106modNo=</div>
-<div>frm2000:numOfDays={{frm2000:numOfDays}}frm2000:numOfDays=</div>
-<div>frm2000:modLabel={{frm2000:modLabel}}frm2000:modLabel=</div>
-<div>ds130modYes={{ds130modYes}}ds130modYes=</div>
-<div>ds130modNo={{ds130modNo}}ds130modNo=</div>
-<div>frm2000:numOfMonths={{frm2000:numOfMonths}}frm2000:numOfMonths=</div>
-<div>frm2000:modLabel={{frm2000:modLabel}}frm2000:modLabel=</div>
-<div>ds131modYes={{ds131modYes}}ds131modYes=</div>
-<div>ds131modNo={{ds131modNo}}ds131modNo=</div>
-<div>frm2000:numOfMonths131={{frm2000:numOfMonths131}}frm2000:numOfMonths131=</div>
-<div>frm2000:modLabel={{frm2000:modLabel}}frm2000:modLabel=</div>
-<div>ds132modYes={{ds132modYes}}ds132modYes=</div>
-<div>ds132modNo={{ds132modNo}}ds132modNo=</div>
-<div>frm2000:numOfMonths132={{frm2000:numOfMonths132}}frm2000:numOfMonths132=</div>
-<div>frm2000:txtLineBus={{frm2000:txtLineBus}}frm2000:txtLineBus=</div>
+<?xml version='1.0'?>	
+            <div>frm2000:txtMonthDate={{txtMonthDate}}frm2000:txtMonthDate=</div>	
+            <div>frm2000:AmendedRtn_1={{AmendedRtn_1}}frm2000:AmendedRtn_1=</div>	
+            <div>frm2000:AmendedRtn_2={{AmendedRtn_2}}frm2000:AmendedRtn_2=</div>	
+            <div>frm2000:txtSheets={{txtSheets}}frm2000:txtSheets=</div>	
+            <div>frm2000:txtTIN1={{txtTIN1}}frm2000:txtTIN1=</div>	
+            <div>frm2000:txtTIN2={{txtTIN2}}frm2000:txtTIN2=</div>	
+            <div>frm2000:txtTIN3={{txtTIN3}}frm2000:txtTIN3=</div>	
+            <div>frm2000:txtBranchCode={{txtBranchCode}}frm2000:txtBranchCode=</div>	
+            <div>frm2000:txtRDOCode={{txtRDOCode}}frm2000:txtRDOCode=</div>	
+            <div>frm2000:txtTaxpayerName={{txtTaxpayerName}}frm2000:txtTaxpayerName=</div>	
+            <div>frm2000:txtAddress={{txtAddress}}frm2000:txtAddress=</div>	
+            <div>frm2000:txtZipCode={{txtZipCode}}frm2000:txtZipCode=</div>	
+            <div>frm2000:txtTelNum={{txtTelNum}}frm2000:txtTelNum=</div>	
+            <div>frm2000:txtEmail={{txtEmail}}frm2000:txtEmail=</div>	
+            <div>frm2000:optCreditor={{optCreditor}}frm2000:optCreditor=</div>	
+            <div>frm2000:optDebtor={{optDebtor}}frm2000:optDebtor=</div>	
+            <div>frm2000:optOtherPartyNone={{optOtherPartyNone}}frm2000:optOtherPartyNone=</div>	
+            <div>frm2000:txtOtherPartyName={{txtOtherPartyName}}frm2000:txtOtherPartyName=</div>	
+            <div>frm2000:txtOtherPartyTin={{txtOtherPartyTin}}frm2000:txtOtherPartyTin=</div>	
+            <div>frm2000:optEdstSystem={{optEdstSystem}}frm2000:optEdstSystem=</div>	
+            <div>frm2000:optConstructiveAffixture={{optConstructiveAffixture}}frm2000:optConstructiveAffixture=</div>	
+            <div>frm2000:optLooseStamps={{optLooseStamps}}frm2000:optLooseStamps=</div>	
+            <div>frm2000:txtTax14={{txtTax14}}frm2000:txtTax14=</div>	
+            <div>frm2000:txtTax15A={{txtTax15A}}frm2000:txtTax15A=</div>	
+            <div>frm2000:txtTax15B={{txtTax15B}}frm2000:txtTax15B=</div>	
+            <div>frm2000:txtTax15C={{txtTax15C}}frm2000:txtTax15C=</div>	
+            <div>frm2000:txtTax15D={{txtTax15D}}frm2000:txtTax15D=</div>	
+            <div>frm2000:txtTax16={{txtTax16}}frm2000:txtTax16=</div>	
+            <div>frm2000:txtTax17A={{txtTax17A}}frm2000:txtTax17A=</div>	
+            <div>frm2000:txtTax17B={{txtTax17B}}frm2000:txtTax17B=</div>	
+            <div>frm2000:txtTax17C={{txtTax17C}}frm2000:txtTax17C=</div>	
+            <div>frm2000:txtTax17D={{txtTax17D}}frm2000:txtTax17D=</div>	
+            <div>frm2000:txtTax18={{txtTax18}}frm2000:txtTax18=</div>	
+            <div>frm2000:txtTax19={{txtTax19}}frm2000:txtTax19=</div>	
+            <div>frm2000:txtAmount20={{txtAmount20}}frm2000:txtAmount20=</div>	
+            <div>frm2000:txtAmount21={{txtAmount21}}frm2000:txtAmount21=</div>	
+            <div>frm2000:txtAmount22={{txtAmount22}}frm2000:txtAmount22=</div>	
+            <div>frm2000:txtParticular23={{txtParticular23}}frm2000:txtParticular23=</div>	
+            <div>frm2000:txtAmount23={{txtAmount23}}frm2000:txtAmount23=</div>	
+            <div>frm2000:sched1:txtATC1={{sched1:txtATC1}}frm2000:sched1:txtATC1=</div>	
+            <div>frm2000:sched1:txtTaxBase1={{sched1:txtTaxBase1}}frm2000:sched1:txtTaxBase1=</div>	
+            <div>frm2000:sched1:txtTaxRate1={{sched1:txtTaxRate1}}frm2000:sched1:txtTaxRate1=</div>	
+            <div>frm2000:sched1:txtTaxDue1={{sched1:txtTaxDue1}}frm2000:sched1:txtTaxDue1=</div>	
+            <div>frm2000:sched1:txtTotalTaxDue={{sched1:txtTotalTaxDue}}frm2000:sched1:txtTotalTaxDue=</div>	
+            <div>frm2000:sched2:txtTotalPayments={{sched2:txtTotalPayments}}frm2000:sched2:txtTotalPayments=</div>	
+            <div>frm2000:sched3:txtTotalAdvancePayments={{sched3:txtTotalAdvancePayments}}frm2000:sched3:txtTotalAdvancePayments=</div>	
+            <div>frm2000:sched4:txtTotalRemittance={{sched4:txtTotalRemittance}}frm2000:sched4:txtTotalRemittance=</div>	
+            All Rights Reserved BIR synthetic v2018

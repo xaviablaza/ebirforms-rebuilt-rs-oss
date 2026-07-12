@@ -71,3 +71,7 @@
 "txtCurrentPage" = "fields.txtCurrentPage"
 "txtMaxPage" = "fields.txtMaxPage"
 "txtLineBus" = "fields.txtLineBus"
+"txtEmail" = "fields.txtEmail"
+"txtTaxAgentNo" = "fields.txtTaxAgentNo"
+"txtDateIssue" = "fields.txtDateIssue"
+"txtDateExpiry" = "fields.txtDateExpiry"
