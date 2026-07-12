@@ -1,6 +1,9 @@
 name: Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       notes:
@@ -139,12 +142,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     environment: production
     env:
-      BIR_PRODUCTION_SFTP_HOST: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_HOST || vars.BIR_SFTP_HOST || secrets.BIR_PRODUCTION_SFTP_HOST || secrets.BIR_SFTP_HOST) || '' }}
-      BIR_PRODUCTION_SFTP_PORT: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_PORT || vars.BIR_SFTP_PORT || secrets.BIR_PRODUCTION_SFTP_PORT || secrets.BIR_SFTP_PORT) || '' }}
-      BIR_PRODUCTION_SFTP_USERNAME: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_USERNAME || vars.BIR_SFTP_USERNAME || secrets.BIR_PRODUCTION_SFTP_USERNAME || secrets.BIR_SFTP_USERNAME) || '' }}
-      BIR_PRODUCTION_SFTP_PASSWORD: ${{ inputs.embed_production_sftp_defaults && (secrets.BIR_PRODUCTION_SFTP_PASSWORD || secrets.BIR_SFTP_PASSWORD) || '' }}
-      BIR_PRODUCTION_SFTP_PRIVATE_KEY: ${{ inputs.embed_production_sftp_defaults && (secrets.BIR_PRODUCTION_SFTP_PRIVATE_KEY || secrets.BIR_SFTP_PRIVATE_KEY) || '' }}
-      BIR_PRODUCTION_SFTP_KNOWN_HOSTS: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_KNOWN_HOSTS || vars.BIR_SFTP_KNOWN_HOSTS || secrets.BIR_PRODUCTION_SFTP_KNOWN_HOSTS || secrets.BIR_SFTP_KNOWN_HOSTS) || '' }}
+      BIR_PRODUCTION_SFTP_HOST: ${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) && (vars.BIR_PRODUCTION_SFTP_HOST || vars.BIR_SFTP_HOST || secrets.BIR_PRODUCTION_SFTP_HOST || secrets.BIR_SFTP_HOST) || '' }}
+      BIR_PRODUCTION_SFTP_PORT: ${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) && (vars.BIR_PRODUCTION_SFTP_PORT || vars.BIR_SFTP_PORT || secrets.BIR_PRODUCTION_SFTP_PORT || secrets.BIR_SFTP_PORT) || '' }}
+      BIR_PRODUCTION_SFTP_USERNAME: ${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) && (vars.BIR_PRODUCTION_SFTP_USERNAME || vars.BIR_SFTP_USERNAME || secrets.BIR_PRODUCTION_SFTP_USERNAME || secrets.BIR_SFTP_USERNAME) || '' }}
+      BIR_PRODUCTION_SFTP_PASSWORD: ${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) && (secrets.BIR_PRODUCTION_SFTP_PASSWORD || secrets.BIR_SFTP_PASSWORD) || '' }}
+      BIR_PRODUCTION_SFTP_PRIVATE_KEY: ${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) && (secrets.BIR_PRODUCTION_SFTP_PRIVATE_KEY || secrets.BIR_SFTP_PRIVATE_KEY) || '' }}
+      BIR_PRODUCTION_SFTP_KNOWN_HOSTS: ${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) && (vars.BIR_PRODUCTION_SFTP_KNOWN_HOSTS || vars.BIR_SFTP_KNOWN_HOSTS || secrets.BIR_PRODUCTION_SFTP_KNOWN_HOSTS || secrets.BIR_SFTP_KNOWN_HOSTS) || '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -272,7 +275,7 @@ jobs:
             body+=$'\n\n'
             body+="$NOTES"
           fi
-          if [ "${{ inputs.embed_production_sftp_defaults }}" = "true" ]; then
+          if [ "${{ (github.event_name == 'push' || inputs.embed_production_sftp_defaults) }}" = "true" ]; then
             body+=$'\n\nProduction BIR SFTP defaults were embedded at build time from the GitHub production environment.'
           fi
 
