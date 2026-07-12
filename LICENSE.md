@@ -6,7 +6,7 @@ FSL-1.1-ALv2
 
 ## Notice
 
-Copyright 2026 Navegante
+Copyright 2026 Xavier Luis Ablaza
 
 ## Terms and Conditions
 

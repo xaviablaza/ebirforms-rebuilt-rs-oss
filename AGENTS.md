@@ -1,5 +1,10 @@
 # AGENTS.md
 
+## Project ownership
+
+- Maintainer: Xavier Luis Ablaza.
+- License/copyright owner: Xavier Luis Ablaza.
+
 ## eBIRForms transport strategy
 
 - Default to the native Rust SFTP transport for BIR live uploads. Leave `BIR_SFTP_BACKEND` unset or set `BIR_SFTP_BACKEND=native`.
