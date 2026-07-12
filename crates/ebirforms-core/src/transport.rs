@@ -1,9 +1,11 @@
 use crate::package::SubmissionPackage;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
+use std::io::Write;
+use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, thiserror::Error)]
 pub enum TransportError {
@@ -103,6 +105,7 @@ pub struct SftpConfig {
 pub enum SftpBackend {
     OpenSsh,
     WinScp,
+    NativeSsh2,
 }
 
 impl SftpBackend {
@@ -113,6 +116,7 @@ impl SftpBackend {
             .as_str()
         {
             "winscp" | "winscp-wine" | "wine-winscp" => Self::WinScp,
+            "native" | "rust" | "ssh2" | "native-ssh2" => Self::NativeSsh2,
             _ => Self::OpenSsh,
         }
     }
@@ -189,6 +193,7 @@ impl SubmissionTransport for SftpTransport {
         match config.backend {
             SftpBackend::OpenSsh => submit_with_openssh(config, package)?,
             SftpBackend::WinScp => submit_with_winscp(config, package)?,
+            SftpBackend::NativeSsh2 => submit_with_native_ssh2(config, package)?,
         }
 
         Ok(TransportReceipt {
@@ -240,6 +245,15 @@ fn submit_with_openssh(
     if config.accept_unknown_host {
         command.arg("-o").arg("StrictHostKeyChecking=accept-new");
     }
+    if config.password.is_some() {
+        // OpenSSH's sftp batch mode otherwise behaves like BatchMode=yes and
+        // will not prompt, so sshpass never gets to supply the password.
+        command
+            .arg("-o")
+            .arg("BatchMode=no")
+            .arg("-o")
+            .arg("NumberOfPasswordPrompts=1");
+    }
     command.arg(remote_target);
     command.stdin(std::process::Stdio::piped());
     command.stdout(std::process::Stdio::piped());
@@ -249,7 +263,6 @@ fn submit_with_openssh(
         .spawn()
         .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
     if let Some(mut stdin) = child.stdin.take() {
-        use std::io::Write;
         writeln!(
             stdin,
             "put {} {}",
@@ -341,6 +354,50 @@ fn submit_with_winscp(
     Ok(())
 }
 
+fn submit_with_native_ssh2(
+    config: &SftpConfig,
+    package: &SubmissionPackage,
+) -> Result<(), TransportError> {
+    let password = config
+        .password
+        .as_ref()
+        .ok_or(TransportError::MissingLiveConfig)?;
+    let tcp = TcpStream::connect((config.host.as_str(), config.port))
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    let _ = tcp.set_read_timeout(Some(Duration::from_secs(30)));
+    let _ = tcp.set_write_timeout(Some(Duration::from_secs(30)));
+
+    let mut session =
+        ssh2::Session::new().map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    session.set_tcp_stream(tcp);
+    session.set_timeout(30_000);
+    session
+        .handshake()
+        .map_err(|err| TransportError::UncertainUpload(redact_transport_error(&err.to_string())))?;
+    session
+        .userauth_password(&config.username, password)
+        .map_err(|err| TransportError::UncertainUpload(redact_transport_error(&err.to_string())))?;
+    if !session.authenticated() {
+        return Err(TransportError::UncertainUpload(
+            "native ssh2 authentication failed".to_string(),
+        ));
+    }
+
+    let sftp = session
+        .sftp()
+        .map_err(|err| TransportError::UncertainUpload(redact_transport_error(&err.to_string())))?;
+    let mut remote = sftp
+        .create(Path::new(&package.manifest.remote_path))
+        .map_err(|err| TransportError::UncertainUpload(redact_transport_error(&err.to_string())))?;
+    remote
+        .write_all(&package.payload)
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    remote
+        .close()
+        .map_err(|err| TransportError::UncertainUpload(redact_transport_error(&err.to_string())))?;
+    Ok(())
+}
+
 fn stage_payload(package: &SubmissionPackage) -> Result<PathBuf, TransportError> {
     let staged_path = std::env::temp_dir().join(format!("ebirforms-{}", package.manifest.filename));
     std::fs::write(&staged_path, &package.payload)
@@ -377,9 +434,10 @@ fn winscp_escape(value: &str) -> String {
 
 pub fn idempotency_key(package: &SubmissionPackage) -> String {
     format!(
-        "{}:{}:{}",
+        "{}:{}:{}:{}",
         package.manifest.form_code,
         package.manifest.period_mm_yyyy,
+        package.manifest.remote_path,
         package.manifest.payload_sha256
     )
 }
