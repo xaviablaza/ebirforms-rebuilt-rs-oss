@@ -1,8 +1,10 @@
 use crate::package::SubmissionPackage;
 use serde::{Deserialize, Serialize};
+use ssh2::Session;
 use std::collections::BTreeSet;
+use std::io::Write;
+use std::net::TcpStream;
 use std::path::PathBuf;
-use std::process::Command;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TransportError {
@@ -90,12 +92,16 @@ pub struct SftpConfig {
 
 impl SftpConfig {
     pub fn from_env() -> Option<Self> {
+        Self::from_runtime_env().or_else(Self::from_build_time_defaults)
+    }
+
+    fn from_runtime_env() -> Option<Self> {
         let host = std::env::var("FILING_SFTP_HOST").ok()?;
         let username = std::env::var("FILING_SFTP_USERNAME").ok()?;
         let port = std::env::var("FILING_SFTP_PORT")
             .ok()
             .and_then(|value| value.parse().ok())
-            .unwrap_or(22);
+            .unwrap_or(23);
         let password = std::env::var("FILING_SFTP_PASSWORD").ok();
         let private_key = std::env::var("FILING_SFTP_PRIVATE_KEY")
             .ok()
@@ -110,6 +116,26 @@ impl SftpConfig {
             password,
             private_key,
             known_hosts,
+        })
+    }
+
+    fn from_build_time_defaults() -> Option<Self> {
+        let host = option_env!("BIR_PRODUCTION_SFTP_HOST")?;
+        let username = option_env!("BIR_PRODUCTION_SFTP_USERNAME")?;
+        let password = option_env!("BIR_PRODUCTION_SFTP_PASSWORD");
+        let private_key = option_env!("BIR_PRODUCTION_SFTP_PRIVATE_KEY").map(PathBuf::from);
+        if password.is_none() && private_key.is_none() {
+            return None;
+        }
+        Some(Self {
+            host: host.to_string(),
+            port: option_env!("BIR_PRODUCTION_SFTP_PORT")
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(23),
+            username: username.to_string(),
+            password: password.map(ToOwned::to_owned),
+            private_key,
+            known_hosts: option_env!("BIR_PRODUCTION_SFTP_KNOWN_HOSTS").map(PathBuf::from),
         })
     }
 }
@@ -149,62 +175,7 @@ impl SubmissionTransport for SftpTransport {
             .config
             .as_ref()
             .ok_or(TransportError::MissingLiveConfig)?;
-        let staged_path =
-            std::env::temp_dir().join(format!("ebirforms-{}", package.manifest.filename));
-        std::fs::write(&staged_path, &package.payload)
-            .map_err(|err| TransportError::Staging(err.to_string()))?;
-
-        // Use the system sftp client so secrets never enter Cargo dependencies or logs.
-        // Batch mode keeps this non-interactive; password auth should be supplied by an
-        // external ssh-agent/askpass wrapper or future credential module, not printed here.
-        let remote_target = format!(
-            "{}@{}:{}",
-            config.username, config.host, package.manifest.remote_directory
-        );
-        let mut command = Command::new("sftp");
-        command
-            .arg("-P")
-            .arg(config.port.to_string())
-            .arg("-b")
-            .arg("-");
-        if let Some(key) = &config.private_key {
-            command.arg("-i").arg(key);
-        }
-        if let Some(known_hosts) = &config.known_hosts {
-            command
-                .arg("-o")
-                .arg(format!("UserKnownHostsFile={}", known_hosts.display()));
-        }
-        command.arg(remote_target);
-        command.stdin(std::process::Stdio::piped());
-        command.stdout(std::process::Stdio::piped());
-        command.stderr(std::process::Stdio::piped());
-
-        let mut child = command
-            .spawn()
-            .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
-        if let Some(mut stdin) = child.stdin.take() {
-            use std::io::Write;
-            writeln!(
-                stdin,
-                "put {} {}",
-                staged_path.display(),
-                package.manifest.filename
-            )
-            .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
-        }
-        let output = child
-            .wait_with_output()
-            .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
-
-        let _ = std::fs::remove_file(&staged_path);
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(TransportError::UncertainUpload(redact_transport_error(
-                &stderr,
-            )));
-        }
+        upload_via_ssh2(config, package)?;
 
         Ok(TransportReceipt {
             dry_run: false,
@@ -218,6 +189,53 @@ impl SubmissionTransport for SftpTransport {
     }
 }
 
+fn upload_via_ssh2(config: &SftpConfig, package: &SubmissionPackage) -> Result<(), TransportError> {
+    let tcp = TcpStream::connect((config.host.as_str(), config.port))
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    let mut session =
+        Session::new().map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    session.set_tcp_stream(tcp);
+    session
+        .handshake()
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+
+    if let Some(password) = &config.password {
+        session
+            .userauth_password(&config.username, password)
+            .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    } else if let Some(private_key) = &config.private_key {
+        session
+            .userauth_pubkey_file(&config.username, None, private_key, None)
+            .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    } else {
+        return Err(TransportError::MissingLiveConfig);
+    }
+
+    if !session.authenticated() {
+        return Err(TransportError::UncertainUpload(
+            "SFTP authentication failed".to_string(),
+        ));
+    }
+
+    let sftp = session
+        .sftp()
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    let remote_path = format!(
+        "{}{}",
+        package.manifest.remote_directory, package.manifest.filename
+    );
+    let mut remote_file = sftp
+        .create(std::path::Path::new(&remote_path))
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    remote_file
+        .write_all(&package.payload)
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    remote_file
+        .flush()
+        .map_err(|err| TransportError::UncertainUpload(err.to_string()))?;
+    Ok(())
+}
+
 pub fn idempotency_key(package: &SubmissionPackage) -> String {
     format!(
         "{}:{}:{}",
@@ -225,16 +243,6 @@ pub fn idempotency_key(package: &SubmissionPackage) -> String {
         package.manifest.period_mm_yyyy,
         package.manifest.payload_sha256
     )
-}
-
-fn redact_transport_error(stderr: &str) -> String {
-    stderr
-        .lines()
-        .take(3)
-        .map(str::trim)
-        .filter(|line| !line.is_empty())
-        .collect::<Vec<_>>()
-        .join(" | ")
 }
 
 #[cfg(test)]

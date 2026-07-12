@@ -18,6 +18,8 @@ pub enum ProfileError {
     InvalidPin,
     #[error("master PIN is not initialized")]
     PinNotInitialized,
+    #[error("submission mode must be dry_run or live")]
+    InvalidSubmissionMode,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -41,6 +43,8 @@ pub struct AppSettings {
     pub theme: Theme,
     #[serde(default)]
     pub master_pin: Option<PinVerifier>,
+    #[serde(default)]
+    pub submission_mode: SubmissionModePreference,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -48,6 +52,12 @@ pub enum Theme {
     Light,
     Dark,
     System,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub enum SubmissionModePreference {
+    DryRun,
+    Live,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -73,6 +83,7 @@ impl Default for AppSettings {
         Self {
             theme: Theme::System,
             master_pin: None,
+            submission_mode: SubmissionModePreference::DryRun,
         }
     }
 }
@@ -93,6 +104,22 @@ impl Theme {
             "dark" => Ok(Theme::Dark),
             "system" => Ok(Theme::System),
             _ => Err(ProfileError::InvalidTheme),
+        }
+    }
+}
+
+impl Default for SubmissionModePreference {
+    fn default() -> Self {
+        Self::DryRun
+    }
+}
+
+impl SubmissionModePreference {
+    pub fn parse(value: &str) -> Result<Self, ProfileError> {
+        match value.to_ascii_lowercase().replace('-', "_").as_str() {
+            "dry_run" | "dryrun" | "dry" => Ok(Self::DryRun),
+            "live" => Ok(Self::Live),
+            _ => Err(ProfileError::InvalidSubmissionMode),
         }
     }
 }
@@ -166,6 +193,17 @@ impl AppStateStore {
     pub fn set_theme(&self, theme: Theme) -> Result<AppSettings, ProfileError> {
         let mut state = self.load()?;
         state.settings.theme = theme;
+        let settings = state.settings.clone();
+        self.save(&state)?;
+        Ok(settings)
+    }
+
+    pub fn set_submission_mode(
+        &self,
+        mode: SubmissionModePreference,
+    ) -> Result<AppSettings, ProfileError> {
+        let mut state = self.load()?;
+        state.settings.submission_mode = mode;
         let settings = state.settings.clone();
         self.save(&state)?;
         Ok(settings)

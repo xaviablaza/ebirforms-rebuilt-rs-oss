@@ -21,6 +21,10 @@ pub struct FormMetadata {
     pub display_name: String,
     pub category: String,
     pub frequency: String,
+    #[serde(default)]
+    pub period_format: String,
+    #[serde(default)]
+    pub pdf_url: String,
     pub remote_directory: String,
     pub filename_pattern: String,
     #[serde(default)]
@@ -31,35 +35,49 @@ pub struct FormMetadata {
     pub requires_vat_registered: bool,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct FormSection {
+    pub page: u8,
+    pub part: String,
+    pub title: String,
+    #[serde(default)]
+    pub fields: Vec<FormField>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct FormField {
+    pub item: String,
+    pub label: String,
+    pub json_path: String,
+    pub xml_key: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct FormLayout {
+    #[serde(default)]
+    sections: Vec<FormSection>,
+}
+
 #[derive(Debug, Clone)]
 pub struct FormDefinition {
     pub metadata: FormMetadata,
     pub template: &'static str,
     pub mapping: BTreeMap<String, String>,
+    pub sections: Vec<FormSection>,
 }
 
 impl FormDefinition {
     pub fn builtin(form_code: &str) -> Result<Self, FormError> {
         match form_code.to_ascii_uppercase().as_str() {
-            "1601C" => Self::from_static(
-                include_str!("../forms/1601C/form.toml"),
-                include_str!("../forms/1601C/mapping.toml"),
-                include_str!("../forms/1601C/template.xml"),
-            ),
-            "2000" => Self::from_static(
-                include_str!("../forms/2000/form.toml"),
-                include_str!("../forms/2000/mapping.toml"),
-                include_str!("../forms/2000/template.xml"),
-            ),
-            "2550Q" => Self::from_static(
-                include_str!("../forms/2550Q/form.toml"),
-                include_str!("../forms/2550Q/mapping.toml"),
-                include_str!("../forms/2550Q/template.xml"),
-            ),
             "0619E" => Self::from_static(
                 include_str!("../forms/0619E/form.toml"),
                 include_str!("../forms/0619E/mapping.toml"),
                 include_str!("../forms/0619E/template.xml"),
+            ),
+            "1601C" => Self::from_static(
+                include_str!("../forms/1601C/form.toml"),
+                include_str!("../forms/1601C/mapping.toml"),
+                include_str!("../forms/1601C/template.xml"),
             ),
             "1601EQ" => Self::from_static(
                 include_str!("../forms/1601EQ/form.toml"),
@@ -70,6 +88,16 @@ impl FormDefinition {
                 include_str!("../forms/1702Q/form.toml"),
                 include_str!("../forms/1702Q/mapping.toml"),
                 include_str!("../forms/1702Q/template.xml"),
+            ),
+            "2000" => Self::from_static(
+                include_str!("../forms/2000/form.toml"),
+                include_str!("../forms/2000/mapping.toml"),
+                include_str!("../forms/2000/template.xml"),
+            ),
+            "2550Q" => Self::from_static(
+                include_str!("../forms/2550Q/form.toml"),
+                include_str!("../forms/2550Q/mapping.toml"),
+                include_str!("../forms/2550Q/template.xml"),
             ),
             other => Err(FormError::UnsupportedForm(other.to_string())),
         }
@@ -82,12 +110,15 @@ impl FormDefinition {
     ) -> Result<Self, FormError> {
         let metadata: FormMetadata = toml::from_str(metadata_toml)
             .map_err(|err| FormError::InvalidDefinition(err.to_string()))?;
+        let layout: FormLayout = toml::from_str(metadata_toml)
+            .map_err(|err| FormError::InvalidDefinition(err.to_string()))?;
         let mapping: BTreeMap<String, String> = toml::from_str(mapping_toml)
             .map_err(|err| FormError::InvalidDefinition(err.to_string()))?;
         Ok(Self {
             metadata,
             template,
             mapping,
+            sections: layout.sections,
         })
     }
 }
@@ -149,18 +180,58 @@ mod tests {
     }
 
     #[test]
-    fn renders_public_fixtures_byte_stable() {
-        for form_code in ["1601C", "2000", "2550Q", "0619E", "1601EQ", "1702Q"] {
+    fn renders_1601c_public_fixture_byte_stable() {
+        let input: Value = serde_json::from_slice(
+            &fs::read(fixture_dir("1601C").join("input.json")).expect("read public input"),
+        )
+        .expect("parse public input");
+        let rendered = render_form("1601C", &input).expect("render 1601C");
+        assert!(rendered.contains("AUTHORIZED TEST TAXPAYER"));
+        assert!(rendered.contains("frm1601c:txtMonth=06"));
+        assert!(!rendered.contains("CORPORATE.SECRETARY"));
+    }
+
+    #[test]
+    fn renders_new_pdf_mapped_forms_from_human_readable_layouts() {
+        for form_code in ["0619E", "1601EQ", "1702Q", "2000", "2550Q"] {
             let input: Value = serde_json::from_slice(
-                &fs::read(fixture_dir(form_code).join("input.json")).expect("read public input"),
+                &fs::read(fixture_dir(form_code).join("input.json")).expect("read synthetic input"),
             )
-            .expect("parse public input");
+            .expect("parse synthetic input");
             let expected =
                 fs::read_to_string(fixture_dir(form_code).join("synthetic_plaintext.xml"))
-                    .expect("read expected plaintext");
+                    .expect("read expected synthetic plaintext");
 
-            let rendered = render_form(form_code, &input).expect("render fixture");
-            assert_eq!(rendered, expected, "{form_code} fixture drifted");
+            let definition = FormDefinition::builtin(form_code).expect("load form definition");
+            assert!(
+                !definition.sections.is_empty(),
+                "{form_code} has PDF-derived sections"
+            );
+            assert!(
+                definition.metadata.pdf_url.ends_with(".pdf")
+                    || definition.metadata.pdf_url.contains(".pdf"),
+                "{form_code} records the source PDF URL"
+            );
+
+            for section in &definition.sections {
+                assert!(
+                    !section.title.trim().is_empty(),
+                    "{form_code} section title"
+                );
+                for field in &section.fields {
+                    assert!(!field.label.trim().is_empty(), "{form_code} field label");
+                    assert_eq!(
+                        definition.mapping.get(&field.xml_key),
+                        Some(&field.json_path),
+                        "{form_code} layout field {} maps JSON path to XML key {}",
+                        field.item,
+                        field.xml_key
+                    );
+                }
+            }
+
+            let rendered = render_form(form_code, &input).expect("render synthetic form");
+            assert_eq!(rendered, expected, "{form_code} JSON renders mapped XML");
         }
     }
 

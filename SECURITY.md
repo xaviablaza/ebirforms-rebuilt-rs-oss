@@ -10,8 +10,8 @@ Do not commit:
 
 - taxpayer PII or real filing payloads;
 - live credentials, tokens, keys, cookies, or app passwords;
-- private fixtures or captured production artifacts;
-- production endpoint research that is not already public documentation.
+- private fixtures, production artifacts, or official BIR package-derived materials;
+- production endpoint research that is not already public documentation;
 
 The repository keeps `.ebirforms/`, `.env*`, and `fixtures/private/` ignored.
 

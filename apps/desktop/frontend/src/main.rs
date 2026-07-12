@@ -154,6 +154,13 @@ struct SafeSubmissionRecordResponse {
     receipt_status: Option<String>,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct ReceiptPollReportResponse {
+    scanned: usize,
+    confirmed: Vec<SafeSubmissionRecordResponse>,
+    errors: Vec<String>,
+}
+
 fn main() {
     console_error_panic_hook::set_once();
     mount_to_body(App);
@@ -169,6 +176,7 @@ fn App() -> impl IntoView {
             .to_string(),
     );
     let (theme, set_theme) = create_signal("system".to_string());
+    let (submission_mode, set_submission_mode) = create_signal("dry_run".to_string());
     let (locked, set_locked) = create_signal(false);
     let (unlock_pin, set_unlock_pin) = create_signal(String::new());
     let (settings_pin, set_settings_pin) = create_signal(String::new());
@@ -248,6 +256,14 @@ fn App() -> impl IntoView {
                 {
                     set_theme.set(saved_theme.to_string());
                 }
+                if let Some(saved_mode) = snapshot
+                    .get("settings")
+                    .and_then(|settings| settings.get("submission_mode"))
+                    .and_then(|mode| mode.as_str())
+                    .and_then(normalize_submission_mode)
+                {
+                    set_submission_mode.set(saved_mode.to_string());
+                }
                 let loaded_profiles: Vec<TaxpayerProfileResponse> = serde_json::from_value(
                     snapshot
                         .get("profiles")
@@ -303,6 +319,46 @@ fn App() -> impl IntoView {
         });
     };
 
+    let set_submission_mode_preference = move |mode_name: &'static str| {
+        let Some(next_mode) = normalize_submission_mode(mode_name).map(str::to_string) else {
+            set_status.set(format!("Invalid submission mode: {mode_name}"));
+            return;
+        };
+        if next_mode == "live" {
+            let confirmed = web_sys::window()
+                .and_then(|window| window.confirm_with_message(
+                    "Switch to LIVE submission mode? Future Submit Final Copy actions will upload encrypted payloads to the BIR filing endpoint instead of dry-run only. Continue only if this filing is authorized and ready."
+                ).ok())
+                .unwrap_or(false);
+            if !confirmed {
+                set_status.set("Live submission mode was not enabled.".to_string());
+                return;
+            }
+        }
+        let previous_mode = submission_mode.get_untracked();
+        set_submission_mode.set(next_mode.clone());
+        set_status.set(format!("Saving {next_mode} submission mode…"));
+        spawn_local(async move {
+            match invoke_json("update_submission_mode", json!({"mode": next_mode})).await {
+                Ok(value) => {
+                    let saved_mode = value
+                        .get("submission_mode")
+                        .and_then(|mode| mode.as_str())
+                        .and_then(normalize_submission_mode)
+                        .unwrap_or("dry_run");
+                    set_submission_mode.set(saved_mode.to_string());
+                    set_status.set(format!("Submission mode saved: {saved_mode}"));
+                }
+                Err(msg) => {
+                    set_submission_mode.set(previous_mode);
+                    set_status.set(format!(
+                        "update_submission_mode failed; submission mode reverted: {msg}"
+                    ));
+                }
+            }
+        });
+    };
+
     let lock_now = move || {
         let pin_value = settings_pin.get_untracked();
         if pin_value.len() != 4 || !pin_value.chars().all(|ch| ch.is_ascii_digit()) {
@@ -350,8 +406,8 @@ fn App() -> impl IntoView {
         <main class=move || format!("app theme-{}", theme.get())>
             <aside class="sidebar">
                 <div>
-                    <h1>"eBIRForms"</h1>
-                    <p class="muted">"Synthetic desktop filing demo"</p>
+                    <h1>"PH Tax Forms"</h1>
+                    <p class="muted">"Unofficial synthetic filing demo"</p>
                     <nav>
                         <button on:click=move |_| set_route.set("Dashboard".to_string())>"Dashboard"</button>
                         <button on:click=move |_| set_route.set("Profiles".to_string())>"Profiles"</button>
@@ -377,8 +433,8 @@ fn App() -> impl IntoView {
                     view! { <LockScreen pin=unlock_pin set_pin=set_unlock_pin unlock_app=unlock_app /> }.into_view()
                 } else { match route.get().as_str() {
                     "Profiles" => view! { <Profiles profile=profile set_profile=set_profile profiles=profiles set_profiles=set_profiles set_active_profile_id=set_active_profile_id set_status=set_status /> }.into_view(),
-                    "Settings" => view! { <Settings theme=theme set_theme_preference=set_theme_preference pin=settings_pin set_pin=set_settings_pin lock_now=lock_now /> }.into_view(),
-                    "TaxFormFlow" => view! { <TaxFormFlow active_profile_id=active_profile_id set_route=set_route selected_form=selected_form form_input_text=form_input_text set_form_input_text=set_form_input_text saved_form_input_text=saved_form_input_text set_saved_form_input_text=set_saved_form_input_text form_locked=form_locked set_form_locked=set_form_locked plaintext_preview=plaintext_preview set_plaintext_preview=set_plaintext_preview package_preview=package_preview set_package_preview=set_package_preview jobs=jobs set_jobs=set_jobs submissions=submissions set_submissions=set_submissions receipt_text=receipt_text set_receipt_text=set_receipt_text final_copy_confirmed=final_copy_confirmed set_final_copy_confirmed=set_final_copy_confirmed waiting_for_receipt=waiting_for_receipt set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
+                    "Settings" => view! { <Settings theme=theme set_theme_preference=set_theme_preference submission_mode=submission_mode set_submission_mode_preference=set_submission_mode_preference pin=settings_pin set_pin=set_settings_pin lock_now=lock_now /> }.into_view(),
+                    "TaxFormFlow" => view! { <TaxFormFlow active_profile_id=active_profile_id set_route=set_route selected_form=selected_form form_input_text=form_input_text set_form_input_text=set_form_input_text saved_form_input_text=saved_form_input_text set_saved_form_input_text=set_saved_form_input_text form_locked=form_locked set_form_locked=set_form_locked plaintext_preview=plaintext_preview set_plaintext_preview=set_plaintext_preview package_preview=package_preview set_package_preview=set_package_preview jobs=jobs set_jobs=set_jobs submissions=submissions set_submissions=set_submissions receipt_text=receipt_text set_receipt_text=set_receipt_text submission_mode=submission_mode final_copy_confirmed=final_copy_confirmed set_final_copy_confirmed=set_final_copy_confirmed waiting_for_receipt=waiting_for_receipt set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
                     _ => view! { <Dashboard profiles=profiles active_profile_id=active_profile_id set_route=set_route selected_form=selected_form set_selected_form=set_selected_form set_form_input_text=set_form_input_text set_saved_form_input_text=set_saved_form_input_text set_form_locked=set_form_locked set_plaintext_preview=set_plaintext_preview set_package_preview=set_package_preview set_final_copy_confirmed=set_final_copy_confirmed set_waiting_for_receipt=set_waiting_for_receipt set_status=set_status /> }.into_view(),
                 }}}
             </section>
@@ -575,6 +631,7 @@ fn TaxFormFlow(
     set_submissions: WriteSignal<Vec<SafeSubmissionRecordResponse>>,
     receipt_text: ReadSignal<String>,
     set_receipt_text: WriteSignal<String>,
+    submission_mode: ReadSignal<String>,
     final_copy_confirmed: ReadSignal<bool>,
     set_final_copy_confirmed: WriteSignal<bool>,
     waiting_for_receipt: ReadSignal<bool>,
@@ -652,26 +709,28 @@ fn TaxFormFlow(
             set_status.set("Queue failed: saved form JSON is invalid.".to_string());
             return;
         };
-        set_status.set("Queueing dry-run job…".to_string());
+        let mode = submission_mode.get_untracked();
+        set_status.set(format!("Queueing {mode} job…"));
         spawn_local(async move {
             match invoke_json(
-                "queue_tax_form_dry_run",
-                json!({"formCode": form_code, "input": input_json}),
+                "queue_tax_form",
+                json!({"formCode": form_code, "input": input_json, "mode": mode}),
             )
             .await
             {
                 Ok(_) => refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await,
-                Err(msg) => set_status.set(format!("queue_tax_form_dry_run failed: {msg}")),
+                Err(msg) => set_status.set(format!("queue_tax_form failed: {msg}")),
             }
         });
     };
 
     let run_queue = move || {
-        set_status.set("Running dry-run queue…".to_string());
+        let mode = submission_mode.get_untracked();
+        set_status.set(format!("Running {mode} queue…"));
         spawn_local(async move {
-            match invoke_json("run_queue_dry_run", json!({"limit": 10})).await {
+            match invoke_json("run_queue", json!({"mode": mode, "limit": 10})).await {
                 Ok(_) => refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await,
-                Err(msg) => set_status.set(format!("run_queue_dry_run failed: {msg}")),
+                Err(msg) => set_status.set(format!("run_queue failed: {msg}")),
             }
         });
     };
@@ -707,6 +766,40 @@ fn TaxFormFlow(
         });
     };
 
+    let poll_himalaya = move || {
+        set_status.set("Checking receipt mailbox with Himalaya…".to_string());
+        spawn_local(async move {
+            match invoke_json(
+                "poll_himalaya_receipts",
+                json!({"account": null, "folder": "INBOX", "query": ["subject", "Tax Return Receipt Confirmation"], "limit": 25}),
+            )
+            .await
+            {
+                Ok(value) => match serde_json::from_value::<ReceiptPollReportResponse>(value) {
+                    Ok(report) => {
+                        refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await;
+                        if report.errors.is_empty() {
+                            set_status.set(format!(
+                                "Himalaya scanned {} receipt email(s); confirmed {} submission(s).",
+                                report.scanned,
+                                report.confirmed.len()
+                            ));
+                        } else {
+                            set_status.set(format!(
+                                "Himalaya scanned {} email(s), confirmed {}, with {} parse/error item(s).",
+                                report.scanned,
+                                report.confirmed.len(),
+                                report.errors.len()
+                            ));
+                        }
+                    }
+                    Err(err) => set_status.set(format!("Himalaya poll response parse failed: {err}")),
+                },
+                Err(msg) => set_status.set(format!("poll_himalaya_receipts failed: {msg}")),
+            }
+        });
+    };
+
     let submit_final_copy = move || {
         if active_profile_id.get_untracked().is_none() {
             set_status.set(
@@ -732,11 +825,12 @@ fn TaxFormFlow(
             set_status.set("Submit Final Copy failed: validated form JSON is invalid.".to_string());
             return;
         };
-        set_status.set("Submit Final Copy: queueing and running dry-run delivery…".to_string());
+        let mode = submission_mode.get_untracked();
+        set_status.set(format!("Submit Final Copy: queueing and running {mode} delivery…"));
         spawn_local(async move {
             match invoke_json(
-                "queue_tax_form_dry_run",
-                json!({"formCode": form_code, "input": input_json}),
+                "queue_tax_form",
+                json!({"formCode": form_code, "input": input_json, "mode": mode.clone()}),
             )
             .await
             {
@@ -746,7 +840,7 @@ fn TaxFormFlow(
                     return;
                 }
             }
-            match invoke_json("run_queue_dry_run", json!({"limit": 10})).await {
+            match invoke_json("run_queue", json!({"mode": mode, "limit": 10})).await {
                 Ok(_) => {
                     set_waiting_for_receipt.set(true);
                     refresh_jobs_and_submissions(set_jobs, set_submissions, set_status).await;
@@ -811,9 +905,10 @@ fn TaxFormFlow(
                 />
                 <PackageDetails package_preview=package_preview />
                 <div class="actions">
-                    <button on:click=move |_| queue_dry_run() disabled=move || !form_locked.get() || waiting_for_receipt.get()>"Queue dry-run"</button>
-                    <button on:click=move |_| run_queue() disabled=move || waiting_for_receipt.get()>"Run dry-run queue"</button>
+                    <button on:click=move |_| queue_dry_run() disabled=move || !form_locked.get() || waiting_for_receipt.get()>{move || if submission_mode.get() == "live" { "Queue live" } else { "Queue dry-run" }}</button>
+                    <button on:click=move |_| run_queue() disabled=move || waiting_for_receipt.get()>{move || if submission_mode.get() == "live" { "Run live queue" } else { "Run dry-run queue" }}</button>
                     <button on:click=move |_| simulate_receipt() disabled=move || package_preview.get().is_none() && submissions.get().is_empty()>"Simulate received BIR receipt"</button>
+                    <button on:click=move |_| poll_himalaya() disabled=move || submissions.get().is_empty()>"Check receipt mailbox (Himalaya)"</button>
                 </div>
             </Panel>
 
@@ -2607,20 +2702,29 @@ where
 }
 
 #[component]
-fn Settings<T, L>(
+fn Settings<T, S, L>(
     theme: ReadSignal<String>,
     set_theme_preference: T,
+    submission_mode: ReadSignal<String>,
+    set_submission_mode_preference: S,
     pin: ReadSignal<String>,
     set_pin: WriteSignal<String>,
     lock_now: L,
 ) -> impl IntoView
 where
     T: Fn(&'static str) + Copy + 'static,
+    S: Fn(&'static str) + Copy + 'static,
     L: Fn() + Copy + 'static,
 {
     view! {
         <Panel title="Settings">
-            <p>"Dry-run remains the default. Live submission is still gated by validation, final-copy confirmation, and receipt matching."</p>
+            <p>"Dry-run remains the default. Live submission is gated by validation, final-copy confirmation, a live-mode confirmation dialog, and receipt matching."</p>
+            <h3>"Submission mode"</h3>
+            <div class="theme-controls">
+                <button class=move || if submission_mode.get() == "dry_run" { "active" } else { "" } on:click=move |_| set_submission_mode_preference("dry_run")>"Dry run only"</button>
+                <button class=move || if submission_mode.get() == "live" { "active danger" } else { "danger" } on:click=move |_| set_submission_mode_preference("live")>"Live submit to BIR"</button>
+            </div>
+            <p class="muted">"Live mode uses the packaged production SFTP transport. Keep dry run selected unless the taxpayer has authorized final filing."</p>
             <h3>"Theme"</h3>
             <div class="theme-controls">
                 <button class=move || if theme.get() == "system" { "active" } else { "" } on:click=move |_| set_theme_preference("system")>"Use system theme"</button>
@@ -2686,6 +2790,14 @@ fn normalize_theme(value: &str) -> Option<&'static str> {
         "light" => Some("light"),
         "dark" => Some("dark"),
         "system" => Some("system"),
+        _ => None,
+    }
+}
+
+fn normalize_submission_mode(value: &str) -> Option<&'static str> {
+    match value.to_ascii_lowercase().replace('-', "_").as_str() {
+        "dry_run" | "dryrun" | "dry" => Some("dry_run"),
+        "live" => Some("live"),
         _ => None,
     }
 }

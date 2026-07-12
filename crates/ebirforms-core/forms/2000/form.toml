@@ -1,10 +1,287 @@
 code = "2000"
 version = "v2018"
-display_name = "Documentary Stamp Tax Declaration/Return"
-category = "documentary_stamp"
+display_name = "Monthly Documentary Stamp Tax Declaration/Return"
+category = "documentary_stamp_tax"
 frequency = "monthly"
+period_format = "MMYYYY"
+pdf_url = "https://bir-cdn.bir.gov.ph/local/pdf/2000-DST%20Jan%202018%20final.pdf"
 remote_directory = "/2000/"
-filename_pattern = "{tin}-2000v2018-{period_mmYYYY}{amendment_suffix}#{email}#.xml"
+filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}#{email}#.xml"
 requires_employees = false
 requires_expanded_withholding_agent = false
 requires_vat_registered = false
+
+[[sections]]
+page = 1
+part = "header"
+title = "Filing period and return flags"
+[[sections.fields]]
+item = "1"
+label = "For the month of (MM/DD/YYYY)"
+json_path = "fields.txtMonthDate"
+xml_key = "txtMonthDate"
+[[sections.fields]]
+item = "2"
+label = "Amended Return? - Yes"
+json_path = "fields.AmendedRtn_1"
+xml_key = "AmendedRtn_1"
+[[sections.fields]]
+item = "2"
+label = "Amended Return? - No"
+json_path = "fields.AmendedRtn_2"
+xml_key = "AmendedRtn_2"
+[[sections.fields]]
+item = "3"
+label = "Number of Sheet/s Attached"
+json_path = "fields.txtSheets"
+xml_key = "txtSheets"
+
+[[sections]]
+page = 1
+part = "part_i"
+title = "Part I – Background Information"
+[[sections.fields]]
+item = "4"
+label = "Taxpayer Identification Number (TIN) - first 3 digits"
+json_path = "fields.txtTIN1"
+xml_key = "txtTIN1"
+[[sections.fields]]
+item = "4"
+label = "Taxpayer Identification Number (TIN) - second 3 digits"
+json_path = "fields.txtTIN2"
+xml_key = "txtTIN2"
+[[sections.fields]]
+item = "4"
+label = "Taxpayer Identification Number (TIN) - third 3 digits"
+json_path = "fields.txtTIN3"
+xml_key = "txtTIN3"
+[[sections.fields]]
+item = "4"
+label = "Branch Code"
+json_path = "fields.txtBranchCode"
+xml_key = "txtBranchCode"
+[[sections.fields]]
+item = "5"
+label = "RDO Code"
+json_path = "fields.txtRDOCode"
+xml_key = "txtRDOCode"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer’s Name"
+json_path = "fields.txtTaxpayerName"
+xml_key = "txtTaxpayerName"
+[[sections.fields]]
+item = "7"
+label = "Registered Address"
+json_path = "fields.txtAddress"
+xml_key = "txtAddress"
+[[sections.fields]]
+item = "7A"
+label = "ZIP Code"
+json_path = "fields.txtZipCode"
+xml_key = "txtZipCode"
+[[sections.fields]]
+item = "8"
+label = "Contact Number"
+json_path = "fields.txtTelNum"
+xml_key = "txtTelNum"
+[[sections.fields]]
+item = "9"
+label = "Email Address"
+json_path = "fields.txtEmail"
+xml_key = "txtEmail"
+[[sections.fields]]
+item = "10"
+label = "Other Party - Creditor/Mortgagor/etc."
+json_path = "fields.optCreditor"
+xml_key = "optCreditor"
+[[sections.fields]]
+item = "10"
+label = "Other Party - Debtor/Mortgagee/etc."
+json_path = "fields.optDebtor"
+xml_key = "optDebtor"
+[[sections.fields]]
+item = "10"
+label = "Other Party - None"
+json_path = "fields.optOtherPartyNone"
+xml_key = "optOtherPartyNone"
+[[sections.fields]]
+item = "11"
+label = "Other Party Name"
+json_path = "fields.txtOtherPartyName"
+xml_key = "txtOtherPartyName"
+[[sections.fields]]
+item = "12"
+label = "Other Party TIN"
+json_path = "fields.txtOtherPartyTin"
+xml_key = "txtOtherPartyTin"
+[[sections.fields]]
+item = "13"
+label = "Mode of Affixture - eDST System"
+json_path = "fields.optEdstSystem"
+xml_key = "optEdstSystem"
+[[sections.fields]]
+item = "13"
+label = "Mode of Affixture - Constructive Affixture"
+json_path = "fields.optConstructiveAffixture"
+xml_key = "optConstructiveAffixture"
+[[sections.fields]]
+item = "13"
+label = "Mode of Affixture - Loose Stamps"
+json_path = "fields.optLooseStamps"
+xml_key = "optLooseStamps"
+
+[[sections]]
+page = 1
+part = "part_ii"
+title = "Part II – Computation of Payable"
+[[sections.fields]]
+item = "14"
+label = "Tax Due for the Month"
+json_path = "fields.txtTax14"
+xml_key = "txtTax14"
+[[sections.fields]]
+item = "15A"
+label = "Balance Carried Over from Previous Return"
+json_path = "fields.txtTax15A"
+xml_key = "txtTax15A"
+[[sections.fields]]
+item = "15B"
+label = "Payment thru Constructive Affixture"
+json_path = "fields.txtTax15B"
+xml_key = "txtTax15B"
+[[sections.fields]]
+item = "15C"
+label = "Advance Payment during the month"
+json_path = "fields.txtTax15C"
+xml_key = "txtTax15C"
+[[sections.fields]]
+item = "15D"
+label = "Total Credits/Payments"
+json_path = "fields.txtTax15D"
+xml_key = "txtTax15D"
+[[sections.fields]]
+item = "16"
+label = "Net Tax Payable/(Overpayment)/(Balance to be carried over)"
+json_path = "fields.txtTax16"
+xml_key = "txtTax16"
+[[sections.fields]]
+item = "17A"
+label = "Surcharge"
+json_path = "fields.txtTax17A"
+xml_key = "txtTax17A"
+[[sections.fields]]
+item = "17B"
+label = "Interest"
+json_path = "fields.txtTax17B"
+xml_key = "txtTax17B"
+[[sections.fields]]
+item = "17C"
+label = "Compromise"
+json_path = "fields.txtTax17C"
+xml_key = "txtTax17C"
+[[sections.fields]]
+item = "17D"
+label = "Total Penalties"
+json_path = "fields.txtTax17D"
+xml_key = "txtTax17D"
+[[sections.fields]]
+item = "18"
+label = "Total Amount Payable/(Overpayment)/(Balance to be carried over)"
+json_path = "fields.txtTax18"
+xml_key = "txtTax18"
+[[sections.fields]]
+item = "19"
+label = "Total Amount of Documentary Stamps Sold for the Month"
+json_path = "fields.txtTax19"
+xml_key = "txtTax19"
+
+[[sections]]
+page = 1
+part = "part_iii"
+title = "Part III – Details of Payment"
+[[sections.fields]]
+item = "20"
+label = "Cash/Bank Debit Memo - Amount"
+json_path = "fields.txtAmount20"
+xml_key = "txtAmount20"
+[[sections.fields]]
+item = "21"
+label = "Check - Amount"
+json_path = "fields.txtAmount21"
+xml_key = "txtAmount21"
+[[sections.fields]]
+item = "22"
+label = "Tax Debit Memo - Amount"
+json_path = "fields.txtAmount22"
+xml_key = "txtAmount22"
+[[sections.fields]]
+item = "23"
+label = "Others - Particulars"
+json_path = "fields.txtParticular23"
+xml_key = "txtParticular23"
+[[sections.fields]]
+item = "23"
+label = "Others - Amount"
+json_path = "fields.txtAmount23"
+xml_key = "txtAmount23"
+
+[[sections]]
+page = 2
+part = "schedule_1"
+title = "Schedule 1 – Summary of Computation of Taxes Due for the Month"
+[[sections.fields]]
+item = "S1-1"
+label = "ATC row 1"
+json_path = "fields.sched1_txtATC1"
+xml_key = "sched1:txtATC1"
+[[sections.fields]]
+item = "S1-1"
+label = "Tax Base row 1"
+json_path = "fields.sched1_txtTaxBase1"
+xml_key = "sched1:txtTaxBase1"
+[[sections.fields]]
+item = "S1-1"
+label = "Tax Rate row 1"
+json_path = "fields.sched1_txtTaxRate1"
+xml_key = "sched1:txtTaxRate1"
+[[sections.fields]]
+item = "S1-1"
+label = "Tax Due row 1"
+json_path = "fields.sched1_txtTaxDue1"
+xml_key = "sched1:txtTaxDue1"
+[[sections.fields]]
+item = "S1-total"
+label = "Total Tax Due"
+json_path = "fields.sched1_txtTotalTaxDue"
+xml_key = "sched1:txtTotalTaxDue"
+
+[[sections]]
+page = 2
+part = "schedule_2"
+title = "Schedule 2 – Summary of Constructive Affixture for the Month"
+[[sections.fields]]
+item = "S2-total"
+label = "Total Payments"
+json_path = "fields.sched2_txtTotalPayments"
+xml_key = "sched2:txtTotalPayments"
+
+[[sections]]
+page = 2
+part = "schedule_3"
+title = "Schedule 3 – Summary of DST Payments/Purchases for the Month"
+[[sections.fields]]
+item = "S3-total"
+label = "Total Advance Payments"
+json_path = "fields.sched3_txtTotalAdvancePayments"
+xml_key = "sched3:txtTotalAdvancePayments"
+
+[[sections]]
+page = 2
+part = "schedule_4"
+title = "Schedule 4 – Summary of Remittance from Collection on Sale of Loose Documentary Stamps"
+[[sections.fields]]
+item = "S4-total"
+label = "Total Remittance from Loose Documentary Stamps"
+json_path = "fields.sched4_txtTotalRemittance"
+xml_key = "sched4:txtTotalRemittance"

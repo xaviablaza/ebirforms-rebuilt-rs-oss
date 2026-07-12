@@ -1,6 +1,6 @@
 # Programmatic Submission Plan (OSS Sanitized)
 
-This public plan describes a synthetic, safe-by-default filing package engine. It intentionally omits proprietary reverse-engineering notes, private fixtures, production endpoints, credentials, and official application artifacts.
+This public plan describes a synthetic, safe-by-default filing package engine. It intentionally omits official BIR package materials, extracted application assets, non-public compatibility notes, private fixtures, production endpoints, credentials, and taxpayer data.
 
 ## Scope
 

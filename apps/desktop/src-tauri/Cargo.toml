@@ -3,7 +3,7 @@ name = "ebirforms-desktop"
 version = "0.1.0"
 edition = "2021"
 license = "LicenseRef-FSL-1.1-ALv2"
-rust-version = "1.75"
+rust-version = "1.88"
 
 [workspace]
 

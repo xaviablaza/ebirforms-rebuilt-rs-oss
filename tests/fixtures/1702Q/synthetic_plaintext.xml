@@ -1,114 +1,72 @@
-<?xml version='1.0'?>
-<div>frm1702q:rbForClndrFscl_1=truefrm1702q:rbForClndrFscl_1=</div>
-<div>frm1702q:rbForClndrFscl_2=falsefrm1702q:rbForClndrFscl_2=</div>
-<div>frm1702q:rbYrEndMonth=12frm1702q:rbYrEndMonth=</div>
-<div>frm1702q:txtYrEndYear=26frm1702q:txtYrEndYear=</div>
-<div>frm1702q:rbQuarter_1=truefrm1702q:rbQuarter_1=</div>
-<div>frm1702q:rbQuarter_2=falsefrm1702q:rbQuarter_2=</div>
-<div>frm1702q:rbQuarter_3=falsefrm1702q:rbQuarter_3=</div>
-<div>frm1702q:rbAmendedRtn_1=falsefrm1702q:rbAmendedRtn_1=</div>
-<div>frm1702q:rbAmendedRtn_2=truefrm1702q:rbAmendedRtn_2=</div>
-<div>frm1702q:txtATC_1=frm1702q:txtATC_1=</div>
-<div>frm1702q:rbATC_1=falsefrm1702q:rbATC_1=</div>
-<div>frm1702q:cbATC_2=IC010_20%frm1702q:cbATC_2=</div>
-<div>frm1702q:rbATC_2=truefrm1702q:rbATC_2=</div>
-<div>frm1702q:txtTIN1=123frm1702q:txtTIN1=</div>
-<div>frm1702q:txtTIN2=456frm1702q:txtTIN2=</div>
-<div>frm1702q:txtTIN3=789frm1702q:txtTIN3=</div>
-<div>frm1702q:txtBranchCode=000frm1702q:txtBranchCode=</div>
-<div>frm1702q:txtRDOCode=044frm1702q:txtRDOCode=</div>
-<div>frm1702q:txtTaxpayerName1=SYNTHETIC%20TAXPAYER%20INC.frm1702q:txtTaxpayerName1=</div>
-<div>frm1702q:txtAddress=SYNTHETIC%20ADDRESS%2C%20TAGUIG%20CITY%20NCRfrm1702q:txtAddress=</div>
-<div>frm1702q:txtZipCode=0000frm1702q:txtZipCode=</div>
-<div>frm1702q:txtTelNum=0000000frm1702q:txtTelNum=</div>
-<div>txtEmail=AUTHORIZED@EXAMPLE.TESTtxtEmail=</div>
-<div>frm1702q:rbMthdOfDdctns_1=falsefrm1702q:rbMthdOfDdctns_1=</div>
-<div>frm1702q:rbMthdOfDdctns_2=truefrm1702q:rbMthdOfDdctns_2=</div>
-<div>frm1702q:rbTxRlf_1=falsefrm1702q:rbTxRlf_1=</div>
-<div>frm1702q:rbTxRlf_2=truefrm1702q:rbTxRlf_2=</div>
-<div>frm1702q:txtTxRlfSpcfy=frm1702q:txtTxRlfSpcfy=</div>
-<div>frm1702q:txtTax14=0.00frm1702q:txtTax14=</div>
-<div>frm1702q:txtTax15=0.00frm1702q:txtTax15=</div>
-<div>frm1702q:txtTax16=0.00frm1702q:txtTax16=</div>
-<div>frm1702q:txtTax17=0.00frm1702q:txtTax17=</div>
-<div>frm1702q:txtTax18=0.00frm1702q:txtTax18=</div>
-<div>frm1702q:txtTax19=0.00frm1702q:txtTax19=</div>
-<div>frm1702q:txtTax20=0.00frm1702q:txtTax20=</div>
-<div>frm1702q:txtTax21=0.00frm1702q:txtTax21=</div>
-<div>frm1702q:txtTax22=0.00frm1702q:txtTax22=</div>
-<div>frm1702q:txtTax23=0.00frm1702q:txtTax23=</div>
-<div>frm1702q:txtTax24=0.00frm1702q:txtTax24=</div>
-<div>frm1702q:txtTax25=0.00frm1702q:txtTax25=</div>
-<div>frm1702q:txtSheets=0frm1702q:txtSheets=</div>
-<div>frm1702q:txtPg2TIN1=123frm1702q:txtPg2TIN1=</div>
-<div>frm1702q:txtPg2TIN2=456frm1702q:txtPg2TIN2=</div>
-<div>frm1702q:txtPg2TIN3=789frm1702q:txtPg2TIN3=</div>
-<div>frm1702q:txtPg2BranchCode=000frm1702q:txtPg2BranchCode=</div>
-<div>frm1702q:txtPg2TaxpayerName=SYNTHETIC TAXPAYER INC.frm1702q:txtPg2TaxpayerName=</div>
-<div>frm1702q:Sched1:txtTax1A=0.00frm1702q:Sched1:txtTax1A=</div>
-<div>frm1702q:Sched1:txtTax1B=0.00frm1702q:Sched1:txtTax1B=</div>
-<div>frm1702q:Sched1:txtTax2A=0.00frm1702q:Sched1:txtTax2A=</div>
-<div>frm1702q:Sched1:txtTax2B=0.00frm1702q:Sched1:txtTax2B=</div>
-<div>frm1702q:Sched1:txtTax3A=0.00frm1702q:Sched1:txtTax3A=</div>
-<div>frm1702q:Sched1:txtTax3B=0.00frm1702q:Sched1:txtTax3B=</div>
-<div>frm1702q:Sched1:txtTax4A=0.00frm1702q:Sched1:txtTax4A=</div>
-<div>frm1702q:Sched1:txtTax4B=0.00frm1702q:Sched1:txtTax4B=</div>
-<div>frm1702q:Sched1:txtTax5A=0.00frm1702q:Sched1:txtTax5A=</div>
-<div>frm1702q:Sched1:txtTax5B=0.00frm1702q:Sched1:txtTax5B=</div>
-<div>frm1702q:Sched1:txtTax6A=0.00frm1702q:Sched1:txtTax6A=</div>
-<div>frm1702q:Sched1:txtTax6B=0.00frm1702q:Sched1:txtTax6B=</div>
-<div>frm1702q:Sched1:txtTax7A=0.00frm1702q:Sched1:txtTax7A=</div>
-<div>frm1702q:Sched1:txtTax7B=0.00frm1702q:Sched1:txtTax7B=</div>
-<div>frm1702q:Sched1:txtTax8A=0.00frm1702q:Sched1:txtTax8A=</div>
-<div>frm1702q:Sched1:txtTax8B=0.00frm1702q:Sched1:txtTax8B=</div>
-<div>frm1702q:Sched1:txtTax9A=0.00frm1702q:Sched1:txtTax9A=</div>
-<div>frm1702q:Sched1:txtTax9B=0.00frm1702q:Sched1:txtTax9B=</div>
-<div>frm1702q:Sched1:txtTax10A=0.00frm1702q:Sched1:txtTax10A=</div>
-<div>frm1702q:Sched1:txtTax10B=0.00frm1702q:Sched1:txtTax10B=</div>
-<div>frm1702q:Sched1:txtTax11A=0.00frm1702q:Sched1:txtTax11A=</div>
-<div>frm1702q:Sched1:txtTax11B=0.00frm1702q:Sched1:txtTax11B=</div>
-<div>frm1702q:Sched1:txtTax12B=0.00frm1702q:Sched1:txtTax12B=</div>
-<div>frm1702q:Sched1:txtTax13B=0.00frm1702q:Sched1:txtTax13B=</div>
-<div>frm1702q:Sched2:txtTax1=0.00frm1702q:Sched2:txtTax1=</div>
-<div>frm1702q:Sched2:txtTax2=0.00frm1702q:Sched2:txtTax2=</div>
-<div>frm1702q:Sched2:txtTax3=0.00frm1702q:Sched2:txtTax3=</div>
-<div>frm1702q:Sched2:txtTax4=0.00frm1702q:Sched2:txtTax4=</div>
-<div>frm1702q:Sched2:txtTax5=0.00frm1702q:Sched2:txtTax5=</div>
-<div>frm1702q:Sched2:txtTax6=0.00frm1702q:Sched2:txtTax6=</div>
-<div>frm1702q:Sched2:txtTax7=0.00frm1702q:Sched2:txtTax7=</div>
-<div>frm1702q:Sched2:txtTax8=0.00frm1702q:Sched2:txtTax8=</div>
-<div>frm1702q:Sched2:txtTax9=0.00frm1702q:Sched2:txtTax9=</div>
-<div>frm1702q:Sched2:txtTax10=20.00frm1702q:Sched2:txtTax10=</div>
-<div>frm1702q:Sched2:txtTax11=0.00frm1702q:Sched2:txtTax11=</div>
-<div>frm1702q:Sched2:txtTax12=0.00frm1702q:Sched2:txtTax12=</div>
-<div>frm1702q:Sched2:txtTax13=0.00frm1702q:Sched2:txtTax13=</div>
-<div>frm1702q:Sched3:txtTax1=0.00frm1702q:Sched3:txtTax1=</div>
-<div>frm1702q:Sched3:txtTax2=0.00frm1702q:Sched3:txtTax2=</div>
-<div>frm1702q:Sched3:txtTax3=0.00frm1702q:Sched3:txtTax3=</div>
-<div>frm1702q:Sched3:txtTax4=0.00frm1702q:Sched3:txtTax4=</div>
-<div>frm1702q:Sched3:txtTax5=frm1702q:Sched3:txtTax5=</div>
-<div>frm1702q:Sched3:txtTax6=0.00frm1702q:Sched3:txtTax6=</div>
-<div>frm1702q:Sched4:txtTax1=0.00frm1702q:Sched4:txtTax1=</div>
-<div>frm1702q:Sched4:txtTax2=0.00frm1702q:Sched4:txtTax2=</div>
-<div>frm1702q:Sched4:txtTax3=0.00frm1702q:Sched4:txtTax3=</div>
-<div>frm1702q:Sched4:txtTax4=0.00frm1702q:Sched4:txtTax4=</div>
-<div>frm1702q:Sched4:txtTax5=0.00frm1702q:Sched4:txtTax5=</div>
-<div>frm1702q:Sched4:txtTax6=0.00frm1702q:Sched4:txtTax6=</div>
-<div>frm1702q:Sched4:chkOthrTxCrdts0=falsefrm1702q:Sched4:chkOthrTxCrdts0=</div>
-<div>frm1702q:Sched4:txtOthrTxCrdts0=frm1702q:Sched4:txtOthrTxCrdts0=</div>
-<div>frm1702q:Sched4:txtOthrTxCrdtAmnt0=0.00frm1702q:Sched4:txtOthrTxCrdtAmnt0=</div>
-<div>frm1702q:Sched4:chkOthrTxCrdts1=falsefrm1702q:Sched4:chkOthrTxCrdts1=</div>
-<div>frm1702q:Sched4:txtOthrTxCrdts1=frm1702q:Sched4:txtOthrTxCrdts1=</div>
-<div>frm1702q:Sched4:txtOthrTxCrdtAmnt1=0.00frm1702q:Sched4:txtOthrTxCrdtAmnt1=</div>
-<div>frm1702q:Sched4:txtTax7=0.00frm1702q:Sched4:txtTax7=</div>
-<div>frm1702q:txtCurrentPage=1frm1702q:txtCurrentPage=</div>
-<div>frm1702q:txtMaxPage=3frm1702q:txtMaxPage=</div>
-<div>resultOtherSpecify=0.00resultOtherSpecify=</div>
-<div>txtFinalFlag=1txtFinalFlag=</div>
-<div>txtEnroll=YtxtEnroll=</div>
-<div>ebirOnlineConfirmUsername=ebirOnlineConfirmUsername=</div>
-<div>ebirOnlineUsername=ebirOnlineUsername=</div>
-<div>ebirOnlineSecret=ebirOnlineSecret=</div>
-<div>frm1702q:txtLOB=BUSINESS%20SUPPORT%20SERVICE%20ACTIVITIES%2C%20N.E.C.frm1702q:txtLOB=</div>
-<div>frm1702q:txtTelNum=0000000frm1702q:txtTelNum=</div>
-<div>driveSelectTPExport=driveSelectTPExport=</div>
+<?xml version='1.0'?>	
+            <div>frm1702q:optCalendar=truefrm1702q:optCalendar=</div>	
+            <div>frm1702q:optFiscal=falsefrm1702q:optFiscal=</div>	
+            <div>frm1702q:txtYearEnded=06/30/2026frm1702q:txtYearEnded=</div>	
+            <div>frm1702q:optQuarter1=truefrm1702q:optQuarter1=</div>	
+            <div>frm1702q:optQuarter2=falsefrm1702q:optQuarter2=</div>	
+            <div>frm1702q:optQuarter3=falsefrm1702q:optQuarter3=</div>	
+            <div>frm1702q:AmendedRtn_1=truefrm1702q:AmendedRtn_1=</div>	
+            <div>frm1702q:AmendedRtn_2=falsefrm1702q:AmendedRtn_2=</div>	
+            <div>frm1702q:txtATC=WC160frm1702q:txtATC=</div>	
+            <div>frm1702q:txtTIN1=123frm1702q:txtTIN1=</div>	
+            <div>frm1702q:txtTIN2=456frm1702q:txtTIN2=</div>	
+            <div>frm1702q:txtTIN3=789frm1702q:txtTIN3=</div>	
+            <div>frm1702q:txtBranchCode=00000frm1702q:txtBranchCode=</div>	
+            <div>frm1702q:txtRDOCode=044frm1702q:txtRDOCode=</div>	
+            <div>frm1702q:txtTaxpayerName=AUTHORIZED TEST TAXPAYERfrm1702q:txtTaxpayerName=</div>	
+            <div>frm1702q:txtAddress=REDACTED TEST ADDRESSfrm1702q:txtAddress=</div>	
+            <div>frm1702q:txtZipCode=0000frm1702q:txtZipCode=</div>	
+            <div>frm1702q:txtTelNum=frm1702q:txtTelNum=</div>	
+            <div>frm1702q:txtEmail=authorized@example.testfrm1702q:txtEmail=</div>	
+            <div>frm1702q:optItemizedDeductions=truefrm1702q:optItemizedDeductions=</div>	
+            <div>frm1702q:optOptionalStandardDeduction=falsefrm1702q:optOptionalStandardDeduction=</div>	
+            <div>frm1702q:SpecialTax_1=truefrm1702q:SpecialTax_1=</div>	
+            <div>frm1702q:SpecialTax_2=falsefrm1702q:SpecialTax_2=</div>	
+            <div>frm1702q:txtSpecialTaxDetails=0.00frm1702q:txtSpecialTaxDetails=</div>	
+            <div>frm1702q:txtTax14=0.00frm1702q:txtTax14=</div>	
+            <div>frm1702q:txtTax15=frm1702q:txtTax15=</div>	
+            <div>frm1702q:txtTax16=0.00frm1702q:txtTax16=</div>	
+            <div>frm1702q:txtTax17=0.00frm1702q:txtTax17=</div>	
+            <div>frm1702q:txtTax18=0.00frm1702q:txtTax18=</div>	
+            <div>frm1702q:txtTax19=0.00frm1702q:txtTax19=</div>	
+            <div>frm1702q:txtTax20=0.00frm1702q:txtTax20=</div>	
+            <div>frm1702q:txtTax21=0.00frm1702q:txtTax21=</div>	
+            <div>frm1702q:txtTax22=0.00frm1702q:txtTax22=</div>	
+            <div>frm1702q:txtTax23=0.00frm1702q:txtTax23=</div>	
+            <div>frm1702q:txtTax24=0.00frm1702q:txtTax24=</div>	
+            <div>frm1702q:txtTax25=0.00frm1702q:txtTax25=</div>	
+            <div>frm1702q:txtSheets=frm1702q:txtSheets=</div>	
+            <div>frm1702q:txtAmount27=0.00frm1702q:txtAmount27=</div>	
+            <div>frm1702q:txtAmount28=0.00frm1702q:txtAmount28=</div>	
+            <div>frm1702q:txtAmount29=0.00frm1702q:txtAmount29=</div>	
+            <div>frm1702q:txtParticular30=frm1702q:txtParticular30=</div>	
+            <div>frm1702q:txtAmount30=0.00frm1702q:txtAmount30=</div>	
+            <div>frm1702q:sched1:txtSales1=0.00frm1702q:sched1:txtSales1=</div>	
+            <div>frm1702q:sched1:txtCost2=0.00frm1702q:sched1:txtCost2=</div>	
+            <div>frm1702q:sched1:txtGross3=0.00frm1702q:sched1:txtGross3=</div>	
+            <div>frm1702q:sched1:txtOtherIncome4=0.00frm1702q:sched1:txtOtherIncome4=</div>	
+            <div>frm1702q:sched1:txtTotalGross5=0.00frm1702q:sched1:txtTotalGross5=</div>	
+            <div>frm1702q:sched1:txtDeductions6=0.00frm1702q:sched1:txtDeductions6=</div>	
+            <div>frm1702q:sched1:txtTaxable7=0.00frm1702q:sched1:txtTaxable7=</div>	
+            <div>frm1702q:sched1:txtPrevious8=0.00frm1702q:sched1:txtPrevious8=</div>	
+            <div>frm1702q:sched1:txtTotalTaxable9=06/30/2026frm1702q:sched1:txtTotalTaxable9=</div>	
+            <div>frm1702q:sched1:txtRate10=0.00frm1702q:sched1:txtRate10=</div>	
+            <div>frm1702q:sched1:txtTaxDue11=0.00frm1702q:sched1:txtTaxDue11=</div>	
+            <div>frm1702q:sched1:txtShare12=frm1702q:sched1:txtShare12=</div>	
+            <div>frm1702q:sched1:txtNetTax13=0.00frm1702q:sched1:txtNetTax13=</div>	
+            <div>frm1702q:sched2:txtSales1=0.00frm1702q:sched2:txtSales1=</div>	
+            <div>frm1702q:sched2:txtTaxDue13=0.00frm1702q:sched2:txtTaxDue13=</div>	
+            <div>frm1702q:sched3:txtGross1=falsefrm1702q:sched3:txtGross1=</div>	
+            <div>frm1702q:sched3:txtGross2=0.00frm1702q:sched3:txtGross2=</div>	
+            <div>frm1702q:sched3:txtGross3=0.00frm1702q:sched3:txtGross3=</div>	
+            <div>frm1702q:sched3:txtTotal4=0.00frm1702q:sched3:txtTotal4=</div>	
+            <div>frm1702q:sched3:txtRate5=0.00frm1702q:sched3:txtRate5=</div>	
+            <div>frm1702q:sched3:txtMcit6=0.00frm1702q:sched3:txtMcit6=</div>	
+            <div>frm1702q:sched4:txtPriorYearCredits1=2026frm1702q:sched4:txtPriorYearCredits1=</div>	
+            <div>frm1702q:sched4:txtPreviousPayments2=0.00frm1702q:sched4:txtPreviousPayments2=</div>	
+            <div>frm1702q:sched4:txtMcitPayments3=0.00frm1702q:sched4:txtMcitPayments3=</div>	
+            <div>frm1702q:sched4:txtCwtPrevious4=0.00frm1702q:sched4:txtCwtPrevious4=</div>	
+            <div>frm1702q:sched4:txtCwtCurrent5=0.00frm1702q:sched4:txtCwtCurrent5=</div>	
+            <div>frm1702q:sched4:txtPriorReturnTax6=0.00frm1702q:sched4:txtPriorReturnTax6=</div>	
+            <div>frm1702q:sched4:txtTotal7=0.00frm1702q:sched4:txtTotal7=</div>	
+            All Rights Reserved BIR synthetic v2018

@@ -1,59 +1,43 @@
-<?xml version='1.0'?>
-<div>frm0619E:txtMonth=02frm0619E:txtMonth=</div>
-<div>frm0619E:txtYear=2026frm0619E:txtYear=</div>
-<div>frm0619E:txtDueMonth=03frm0619E:txtDueMonth=</div>
-<div>frm0619E:txtDueDay=10frm0619E:txtDueDay=</div>
-<div>frm0619E:txtDueYear=2026frm0619E:txtDueYear=</div>
-<div>frm0619E:optAmend:Y=falsefrm0619E:optAmend:Y=</div>
-<div>frm0619E:optAmend:N=truefrm0619E:optAmend:N=</div>
-<div>frm0619E:optWithheld:Y=truefrm0619E:optWithheld:Y=</div>
-<div>frm0619E:optWithheld:N=falsefrm0619E:optWithheld:N=</div>
-<div>frm0619E:txtAtc=WME10frm0619E:txtAtc=</div>
-<div>frm0619E:txtTaxTypeCode=WEfrm0619E:txtTaxTypeCode=</div>
-<div>frm0619E:txtTIN1=123frm0619E:txtTIN1=</div>
-<div>frm0619E:txtTIN2=456frm0619E:txtTIN2=</div>
-<div>frm0619E:txtTIN3=789frm0619E:txtTIN3=</div>
-<div>frm0619E:txtBranchCode=000frm0619E:txtBranchCode=</div>
-<div>frm0619E:txtRDOCode=044frm0619E:txtRDOCode=</div>
-<div>frm0619E:txtTaxpayerName=SYNTHETIC%20TAXPAYER%20INC.frm0619E:txtTaxpayerName=</div>
-<div>frm0619E:txtLineBus=undefinedfrm0619E:txtLineBus=</div>
-<div>frm0619E:txtAddress=SYNTHETIC%20ADDRESS%2C%20TAGUIG%20CITY%20NCRfrm0619E:txtAddress=</div>
-<div>frm0619E:txtZipCode=0000frm0619E:txtZipCode=</div>
-<div>frm0619E:txtTelNum=0000000frm0619E:txtTelNum=</div>
-<div>frm0619E:optCategory:P=truefrm0619E:optCategory:P=</div>
-<div>frm0619E:optCategory:G=falsefrm0619E:optCategory:G=</div>
-<div>txtEmail=AUTHORIZED@EXAMPLE.TESTtxtEmail=</div>
-<div>frm0619E:txtTax14=1,559.40frm0619E:txtTax14=</div>
-<div>frm0619E:txtTax15=0.00frm0619E:txtTax15=</div>
-<div>frm0619E:txtTax16=1,559.40frm0619E:txtTax16=</div>
-<div>frm0619E:txtTax17A=155.94frm0619E:txtTax17A=</div>
-<div>frm0619E:txtTax17B=8.46frm0619E:txtTax17B=</div>
-<div>frm0619E:txtTax17C=500.00frm0619E:txtTax17C=</div>
-<div>frm0619E:txtTax17D=664.40frm0619E:txtTax17D=</div>
-<div>frm0619E:txtTax18=2,223.80frm0619E:txtTax18=</div>
-<div>txtTaxAgentNo=txtTaxAgentNo=</div>
-<div>txtDateIssue=txtDateIssue=</div>
-<div>txtDateExpiry=txtDateExpiry=</div>
-<div>txtAgency19=txtAgency19=</div>
-<div>txtNumber19=txtNumber19=</div>
-<div>txtDate19=txtDate19=</div>
-<div>txtAmount19=txtAmount19=</div>
-<div>txtAgency20=txtAgency20=</div>
-<div>txtNumber20=txtNumber20=</div>
-<div>txtDate20=txtDate20=</div>
-<div>txtAmount20=txtAmount20=</div>
-<div>txtAgency21=txtAgency21=</div>
-<div>txtNumber21=txtNumber21=</div>
-<div>txtDate21=txtDate21=</div>
-<div>txtAmount21=txtAmount21=</div>
-<div>txtParticular22=txtParticular22=</div>
-<div>txtAgency22=txtAgency22=</div>
-<div>txtNumber22=txtNumber22=</div>
-<div>txtDate22=txtDate22=</div>
-<div>txtAmount22=txtAmount22=</div>
-<div>txtFinalFlag=1txtFinalFlag=</div>
-<div>txtEnroll=YtxtEnroll=</div>
-<div>ebirOnlineConfirmUsername=ebirOnlineConfirmUsername=</div>
-<div>ebirOnlineUsername=ebirOnlineUsername=</div>
-<div>ebirOnlineSecret=ebirOnlineSecret=</div>
-<div>driveSelectTPExport=driveSelectTPExport=</div>
+<?xml version='1.0'?>	
+            <div>frm0619e:txtMonthYear=06/30/2026frm0619e:txtMonthYear=</div>	
+            <div>frm0619e:txtDueDate=06/30/2026frm0619e:txtDueDate=</div>	
+            <div>frm0619e:AmendedRtn_1=truefrm0619e:AmendedRtn_1=</div>	
+            <div>frm0619e:AmendedRtn_2=falsefrm0619e:AmendedRtn_2=</div>	
+            <div>frm0619e:TaxWithheld_1=truefrm0619e:TaxWithheld_1=</div>	
+            <div>frm0619e:TaxWithheld_2=falsefrm0619e:TaxWithheld_2=</div>	
+            <div>frm0619e:txtATC=WC160frm0619e:txtATC=</div>	
+            <div>frm0619e:txtTaxType=WEfrm0619e:txtTaxType=</div>	
+            <div>frm0619e:txtTIN1=123frm0619e:txtTIN1=</div>	
+            <div>frm0619e:txtTIN2=456frm0619e:txtTIN2=</div>	
+            <div>frm0619e:txtTIN3=789frm0619e:txtTIN3=</div>	
+            <div>frm0619e:txtBranchCode=00000frm0619e:txtBranchCode=</div>	
+            <div>frm0619e:txtRDOCode=044frm0619e:txtRDOCode=</div>	
+            <div>frm0619e:txtTaxpayerName=AUTHORIZED TEST TAXPAYERfrm0619e:txtTaxpayerName=</div>	
+            <div>frm0619e:txtAddress=REDACTED TEST ADDRESSfrm0619e:txtAddress=</div>	
+            <div>frm0619e:txtZipCode=0000frm0619e:txtZipCode=</div>	
+            <div>frm0619e:txtTelNum=frm0619e:txtTelNum=</div>	
+            <div>frm0619e:CatAgent_P=truefrm0619e:CatAgent_P=</div>	
+            <div>frm0619e:CatAgent_G=falsefrm0619e:CatAgent_G=</div>	
+            <div>frm0619e:txtEmail=authorized@example.testfrm0619e:txtEmail=</div>	
+            <div>frm0619e:txtTax14=0.00frm0619e:txtTax14=</div>	
+            <div>frm0619e:txtTax15=0.00frm0619e:txtTax15=</div>	
+            <div>frm0619e:txtTax16=0.00frm0619e:txtTax16=</div>	
+            <div>frm0619e:txtTax17A=0.00frm0619e:txtTax17A=</div>	
+            <div>frm0619e:txtTax17B=0.00frm0619e:txtTax17B=</div>	
+            <div>frm0619e:txtTax17C=0.00frm0619e:txtTax17C=</div>	
+            <div>frm0619e:txtTax17D=0.00frm0619e:txtTax17D=</div>	
+            <div>frm0619e:txtTax18=0.00frm0619e:txtTax18=</div>	
+            <div>frm0619e:txtAgency19=frm0619e:txtAgency19=</div>	
+            <div>frm0619e:txtNumber19=frm0619e:txtNumber19=</div>	
+            <div>frm0619e:txtDate19=06/30/2026frm0619e:txtDate19=</div>	
+            <div>frm0619e:txtAmount19=0.00frm0619e:txtAmount19=</div>	
+            <div>frm0619e:txtAgency20=frm0619e:txtAgency20=</div>	
+            <div>frm0619e:txtNumber20=frm0619e:txtNumber20=</div>	
+            <div>frm0619e:txtDate20=06/30/2026frm0619e:txtDate20=</div>	
+            <div>frm0619e:txtAmount20=0.00frm0619e:txtAmount20=</div>	
+            <div>frm0619e:txtNumber21=0.00frm0619e:txtNumber21=</div>	
+            <div>frm0619e:txtDate21=06/30/2026frm0619e:txtDate21=</div>	
+            <div>frm0619e:txtAmount21=0.00frm0619e:txtAmount21=</div>	
+            <div>frm0619e:txtParticular22=frm0619e:txtParticular22=</div>	
+            <div>frm0619e:txtAmount22=0.00frm0619e:txtAmount22=</div>	
+            All Rights Reserved BIR synthetic v2018

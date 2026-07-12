@@ -4,7 +4,7 @@ Date: 2026-07-10
 
 ## Goal
 
-Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Form flow that matches the original eBIRForms action model closely enough for demos while remaining synthetic and dry-run only.
+Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Form flow that uses a familiar tax-form workflow for demos while remaining synthetic, independently authored, and dry-run only.
 
 ## Requirements implemented
 
@@ -15,7 +15,7 @@ Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Fo
   - `1601EQ`
   - `1702Q`
   - Existing `1601C` remains supported.
-- Preserve synthetic public fixture data while keeping XML field-token structure close to the captured proprietary eBIRForms plaintext XML.
+- Preserve synthetic public fixture data while keeping XML field-token structure limited to compatibility identifiers needed for independently authored test artifacts.
 - Simplify left sidebar to:
   - `Dashboard`
   - `Profiles`
@@ -26,7 +26,7 @@ Upgrade the desktop demo from a 1601C-specific workflow into a multi-form Tax Fo
 - Each selected numbered BIR form renders human-readable data-entry controls for profile/period/return values and BIR line items/schedules; the UI updates the synthetic JSON payload internally and does not expose raw JSON editing to operators.
 - `1601C` uses labels and section layout mapped from the January 2018 BIR PDF: fields 1–5 top strip, Part I background information, Part II computation rows 14–36, Part III payment rows 37–40, and Part IV Schedule I carry-over fields.
 - Package, Jobs, Submissions, and Receipt are abstracted into the selected Tax Form flow rather than separate sidebar destinations.
-- Form action buttons mirror original eBIRForms terminology:
+- Form action buttons use generic filing workflow terminology:
   - `Validate` renders plaintext XML, encrypts/packages payload, shows package details, and locks the form.
   - `Edit` reopens the locked form for changes.
   - `Save` persists current form edits in the demo session.

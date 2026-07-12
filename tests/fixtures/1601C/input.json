@@ -85,6 +85,10 @@
     "sched1:txtTotal1": "0.00",
     "txtCurrentPage": "1",
     "txtMaxPage": "2",
-    "txtLineBus": "BUSINESS%2520SUPPORT%2520SERVICE%2520ACTIVITIES%252C%2520N.E.C."
+    "txtLineBus": "BUSINESS%2520SUPPORT%2520SERVICE%2520ACTIVITIES%252C%2520N.E.C.",
+    "txtEmail": "",
+    "txtTaxAgentNo": "",
+    "txtDateIssue": "",
+    "txtDateExpiry": ""
   }
 }

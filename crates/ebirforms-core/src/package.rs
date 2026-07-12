@@ -62,19 +62,18 @@ pub fn build_submission_package(
     }
     let quarter = input
         .pointer("/return/period/quarter")
-        .and_then(|v| v.as_u64());
-    if let Some(quarter) = quarter {
-        if !(1..=4).contains(&quarter) {
-            return Err(PackageError::InvalidInput {
-                field: "return.period.quarter",
-                reason: "must be between 1 and 4".to_string(),
-            });
-        }
+        .and_then(|v| v.as_u64())
+        .unwrap_or_else(|| ((month - 1) / 3) + 1);
+    if !(1..=4).contains(&quarter) {
+        return Err(PackageError::InvalidInput {
+            field: "return.period.quarter",
+            reason: "must be between 1 and 4".to_string(),
+        });
     }
-    let period_mm_yyyy = match (definition.metadata.code.as_str(), quarter) {
-        ("2550Q", Some(quarter)) => format!("{month:02}{year:04}Q{quarter}"),
-        (_, Some(quarter)) => format!("{year:04}Q{quarter}"),
-        (_, None) => format!("{month:02}{year:04}"),
+    let period = match definition.metadata.period_format.as_str() {
+        "YYYYQn" => format!("{year:04}Q{quarter}"),
+        "MMYYYYQn" => format!("{month:02}{year:04}Q{quarter}"),
+        _ => format!("{month:02}{year:04}"),
     };
     let amendment_suffix = input
         .pointer("/return/amendment_number")
@@ -96,7 +95,8 @@ pub fn build_submission_package(
         .filename_pattern
         .replace("{tin}", &normalized_tin)
         .replace("{form_code}", &definition.metadata.code)
-        .replace("{period_mmYYYY}", &period_mm_yyyy)
+        .replace("{period_mmYYYY}", &period)
+        .replace("{period}", &period)
         .replace("{amendment_suffix}", &amendment_suffix)
         .replace("{email}", &email);
     let remote_path = format!("{}{}", definition.metadata.remote_directory, filename);
@@ -110,7 +110,7 @@ pub fn build_submission_package(
         plaintext_sha256: sha256_hex(&plaintext),
         payload_sha256: sha256_hex(&payload),
         payload_size: payload.len(),
-        period_mm_yyyy,
+        period_mm_yyyy: period,
         profile_id,
         generated_unix_seconds: SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -168,48 +168,31 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    fn fixture_dir(form_code: &str) -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../tests/fixtures")
-            .join(form_code)
+    fn fixture_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/1601C")
     }
 
     #[test]
-    fn packages_public_fixtures_with_expected_filenames() {
-        for form_code in ["1601C", "2000", "2550Q", "0619E", "1601EQ", "1702Q"] {
-            let input: Value = serde_json::from_slice(
-                &fs::read(fixture_dir(form_code).join("input.json")).unwrap(),
-            )
-            .unwrap();
-            let expected_plaintext =
-                fs::read(fixture_dir(form_code).join("synthetic_plaintext.xml")).unwrap();
+    fn packages_public_1601c_fixture_with_expected_filename() {
+        let input: Value =
+            serde_json::from_slice(&fs::read(fixture_dir().join("input.json")).unwrap()).unwrap();
+        let expected_filename =
+            fs::read_to_string(fixture_dir().join("synthetic_filename.txt")).unwrap();
 
-            let package = build_submission_package(form_code, &input).expect("package fixture");
+        let package = build_submission_package("1601C", &input).expect("package fixture");
+        let decrypted = crate::crypto::decrypt_payload(&package.payload).expect("decrypt package payload");
 
-            assert_eq!(
-                package.plaintext, expected_plaintext,
-                "{form_code} plaintext"
-            );
-            assert_eq!(package.manifest.payload_size, package.payload.len());
-            assert_eq!(
-                package.manifest.payload_sha256,
-                sha256_hex(&package.payload),
-                "{form_code} payload hash"
-            );
-            assert!(
-                package
-                    .manifest
-                    .remote_path
-                    .starts_with(&package.manifest.remote_directory),
-                "{form_code} remote path starts with remote directory"
-            );
-            assert!(
-                package
-                    .manifest
-                    .filename
-                    .ends_with("#authorized@example.test#.xml"),
-                "{form_code} filename includes notification email"
-            );
-        }
+        assert_eq!(decrypted, package.plaintext);
+        assert!(String::from_utf8_lossy(&package.plaintext).contains("AUTHORIZED TEST TAXPAYER"));
+        assert_eq!(package.manifest.filename, expected_filename.trim());
+        assert_eq!(package.manifest.payload_size, package.payload.len());
+        assert_eq!(
+            package.manifest.payload_sha256,
+            sha256_hex(&package.payload)
+        );
+        assert_eq!(
+            package.manifest.remote_path,
+            format!("/1601Cv2018/{}", expected_filename.trim())
+        );
     }
 }

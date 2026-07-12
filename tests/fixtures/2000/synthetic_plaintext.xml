@@ -1,101 +1,49 @@
-<?xml version='1.0'?>
-<div>frm2000:txtMonth=02frm2000:txtMonth=</div>
-<div>frm2000:txtYear=2026frm2000:txtYear=</div>
-<div>frm2000:AmendedRtn_1=falsefrm2000:AmendedRtn_1=</div>
-<div>frm2000:AmendedRtn_2=truefrm2000:AmendedRtn_2=</div>
-<div>frm2000:txtSheets=0frm2000:txtSheets=</div>
-<div>frm2000:txtTIN1=123frm2000:txtTIN1=</div>
-<div>frm2000:txtTIN2=456frm2000:txtTIN2=</div>
-<div>frm2000:txtTIN3=789frm2000:txtTIN3=</div>
-<div>frm2000:txtBranchCode=000frm2000:txtBranchCode=</div>
-<div>frm2000:txtRDOCode=044frm2000:txtRDOCode=</div>
-<div>frm2000:txtTaxpayerName=SYNTHETIC%20TAXPAYER%20INC.frm2000:txtTaxpayerName=</div>
-<div>frm2000:txtAddress=SYNTHETIC%20ADDRESS%2C%20TAGUIG%20CITY%20NCRfrm2000:txtAddress=</div>
-<div>frm2000:txtZipCode=0000frm2000:txtZipCode=</div>
-<div>frm2000:txtTelNum=0000000frm2000:txtTelNum=</div>
-<div>txtEmail=AUTHORIZED@EXAMPLE.TESTtxtEmail=</div>
-<div>frm2000:optParty_1=falsefrm2000:optParty_1=</div>
-<div>frm2000:optParty_2=falsefrm2000:optParty_2=</div>
-<div>frm2000:optParty_3=truefrm2000:optParty_3=</div>
-<div>frm2000:txtOtherName=frm2000:txtOtherName=</div>
-<div>frm2000:txtOtherTIN=frm2000:txtOtherTIN=</div>
-<div>frm2000:optMode_1=falsefrm2000:optMode_1=</div>
-<div>frm2000:optMode_2=truefrm2000:optMode_2=</div>
-<div>frm2000:optMode_3=falsefrm2000:optMode_3=</div>
-<div>frm2000:txtTax14=7.80frm2000:txtTax14=</div>
-<div>frm2000:txtTax15A=0.00frm2000:txtTax15A=</div>
-<div>frm2000:txtTax15B=0.00frm2000:txtTax15B=</div>
-<div>frm2000:txtTax15C=0.00frm2000:txtTax15C=</div>
-<div>frm2000:txtTax15D=0.00frm2000:txtTax15D=</div>
-<div>frm2000:txtTax16=7.80frm2000:txtTax16=</div>
-<div>frm2000:txtTax17A=0.78frm2000:txtTax17A=</div>
-<div>frm2000:txtTax17B=0.05frm2000:txtTax17B=</div>
-<div>frm2000:txtTax17C=500.00frm2000:txtTax17C=</div>
-<div>frm2000:txtTax17D=500.83frm2000:txtTax17D=</div>
-<div>frm2000:txtTax18=508.63frm2000:txtTax18=</div>
-<div>frm2000:txtTax19=0.00frm2000:txtTax19=</div>
-<div>txtTaxAgentNo=txtTaxAgentNo=</div>
-<div>txtDateIssue=txtDateIssue=</div>
-<div>txtDateExpiry=txtDateExpiry=</div>
-<div>frm2000:txtAgency20=frm2000:txtAgency20=</div>
-<div>frm2000:txtNumber20=frm2000:txtNumber20=</div>
-<div>frm2000:txtDate20=frm2000:txtDate20=</div>
-<div>frm2000:txtAmount20=frm2000:txtAmount20=</div>
-<div>frm2000:txtAgency21=frm2000:txtAgency21=</div>
-<div>frm2000:txtNumber21=frm2000:txtNumber21=</div>
-<div>frm2000:txtDate21=frm2000:txtDate21=</div>
-<div>frm2000:txtAmount21=frm2000:txtAmount21=</div>
-<div>frm2000:txtAgency22=frm2000:txtAgency22=</div>
-<div>frm2000:txtNumber22=frm2000:txtNumber22=</div>
-<div>frm2000:txtDate22=frm2000:txtDate22=</div>
-<div>frm2000:txtAmount22=frm2000:txtAmount22=</div>
-<div>frm2000:txtParticular36=frm2000:txtParticular36=</div>
-<div>frm2000:txtAgency23=frm2000:txtAgency23=</div>
-<div>frm2000:txtNumber23=frm2000:txtNumber23=</div>
-<div>frm2000:txtDate23=frm2000:txtDate23=</div>
-<div>frm2000:txtAmount23=frm2000:txtAmount23=</div>
-<div>frm2000:txtPg2TIN1=123frm2000:txtPg2TIN1=</div>
-<div>frm2000:txtPg2TIN2=456frm2000:txtPg2TIN2=</div>
-<div>frm2000:txtPg2TIN3=789frm2000:txtPg2TIN3=</div>
-<div>frm2000:txtPg2BranchCode=000frm2000:txtPg2BranchCode=</div>
-<div>frm2000:txtPg2TaxpayerName=SYNTHETIC TAXPAYER INC.frm2000:txtPg2TaxpayerName=</div>
-<div>chkSchedule1Delete0=falsechkSchedule1Delete0=</div>
-<div>drpATCCode0=DS101drpATCCode0=</div>
-<div>frm2000:sched1:txtTaxBase0=780.00frm2000:sched1:txtTaxBase0=</div>
-<div>frm2000:sched1:txtTaxRate0=P2.00/P200frm2000:sched1:txtTaxRate0=</div>
-<div>frm2000:sched1:txtTaxDue0=7.80frm2000:sched1:txtTaxDue0=</div>
-<div>frm2000:sched1:txtTotalDue1=7.80frm2000:sched1:txtTotalDue1=</div>
-<div>frm2000:sched2:txtTotalPayment1=0.00frm2000:sched2:txtTotalPayment1=</div>
-<div>chkSchedule3Delete0=falsechkSchedule3Delete0=</div>
-<div>frm2000:sched3:txtPaymentDate0=frm2000:sched3:txtPaymentDate0=</div>
-<div>frm2000:sched3:txtReceipt0=frm2000:sched3:txtReceipt0=</div>
-<div>frm2000:sched3:txtAmountPaid0=0.00frm2000:sched3:txtAmountPaid0=</div>
-<div>chkSchedule3Delete1=falsechkSchedule3Delete1=</div>
-<div>frm2000:sched3:txtPaymentDate1=frm2000:sched3:txtPaymentDate1=</div>
-<div>frm2000:sched3:txtReceipt1=frm2000:sched3:txtReceipt1=</div>
-<div>frm2000:sched3:txtAmountPaid1=0.00frm2000:sched3:txtAmountPaid1=</div>
-<div>chkSchedule3Delete2=falsechkSchedule3Delete2=</div>
-<div>frm2000:sched3:txtPaymentDate2=frm2000:sched3:txtPaymentDate2=</div>
-<div>frm2000:sched3:txtReceipt2=frm2000:sched3:txtReceipt2=</div>
-<div>frm2000:sched3:txtAmountPaid2=0.00frm2000:sched3:txtAmountPaid2=</div>
-<div>frm2000:sched3:txtTotalPayment1=0.00frm2000:sched3:txtTotalPayment1=</div>
-<div>frm2000:sched4:txtTotalRemittance1=0.00frm2000:sched4:txtTotalRemittance1=</div>
-<div>frm2000:txtCurrentPage=1frm2000:txtCurrentPage=</div>
-<div>frm2000:txtMaxPage=2frm2000:txtMaxPage=</div>
-<div>frm2000:modLabel=Is the term of Debt Instrument less than a year?frm2000:modLabel=</div>
-<div>ds106modYes=falseds106modYes=</div>
-<div>ds106modNo=falseds106modNo=</div>
-<div>frm2000:numOfDays=0frm2000:numOfDays=</div>
-<div>frm2000:modLabel=Is the term of Debt Instrument less than a year?frm2000:modLabel=</div>
-<div>ds130modYes=falseds130modYes=</div>
-<div>ds130modNo=falseds130modNo=</div>
-<div>frm2000:numOfMonths=0frm2000:numOfMonths=</div>
-<div>frm2000:modLabel=Is the term of Debt Instrument less than a year?frm2000:modLabel=</div>
-<div>ds131modYes=falseds131modYes=</div>
-<div>ds131modNo=falseds131modNo=</div>
-<div>frm2000:numOfMonths131=0frm2000:numOfMonths131=</div>
-<div>frm2000:modLabel=Is the term of Debt Instrument less than a year?frm2000:modLabel=</div>
-<div>ds132modYes=falseds132modYes=</div>
-<div>ds132modNo=falseds132modNo=</div>
-<div>frm2000:numOfMonths132=0frm2000:numOfMonths132=</div>
-<div>frm2000:txtLineBus=BUSINESS%20SUPPORT%20SERVICE%20ACTIVITIES%2C%20N.E.C.frm2000:txtLineBus=</div>
+<?xml version='1.0'?>	
+            <div>frm2000:txtMonthDate=06/30/2026frm2000:txtMonthDate=</div>	
+            <div>frm2000:AmendedRtn_1=truefrm2000:AmendedRtn_1=</div>	
+            <div>frm2000:AmendedRtn_2=falsefrm2000:AmendedRtn_2=</div>	
+            <div>frm2000:txtSheets=frm2000:txtSheets=</div>	
+            <div>frm2000:txtTIN1=123frm2000:txtTIN1=</div>	
+            <div>frm2000:txtTIN2=456frm2000:txtTIN2=</div>	
+            <div>frm2000:txtTIN3=789frm2000:txtTIN3=</div>	
+            <div>frm2000:txtBranchCode=00000frm2000:txtBranchCode=</div>	
+            <div>frm2000:txtRDOCode=044frm2000:txtRDOCode=</div>	
+            <div>frm2000:txtTaxpayerName=AUTHORIZED TEST TAXPAYERfrm2000:txtTaxpayerName=</div>	
+            <div>frm2000:txtAddress=REDACTED TEST ADDRESSfrm2000:txtAddress=</div>	
+            <div>frm2000:txtZipCode=0000frm2000:txtZipCode=</div>	
+            <div>frm2000:txtTelNum=frm2000:txtTelNum=</div>	
+            <div>frm2000:txtEmail=authorized@example.testfrm2000:txtEmail=</div>	
+            <div>frm2000:optCreditor=truefrm2000:optCreditor=</div>	
+            <div>frm2000:optDebtor=falsefrm2000:optDebtor=</div>	
+            <div>frm2000:optOtherPartyNone=falsefrm2000:optOtherPartyNone=</div>	
+            <div>frm2000:txtOtherPartyName=AUTHORIZED TEST TAXPAYERfrm2000:txtOtherPartyName=</div>	
+            <div>frm2000:txtOtherPartyTin=frm2000:txtOtherPartyTin=</div>	
+            <div>frm2000:optEdstSystem=truefrm2000:optEdstSystem=</div>	
+            <div>frm2000:optConstructiveAffixture=falsefrm2000:optConstructiveAffixture=</div>	
+            <div>frm2000:optLooseStamps=falsefrm2000:optLooseStamps=</div>	
+            <div>frm2000:txtTax14=06/30/2026frm2000:txtTax14=</div>	
+            <div>frm2000:txtTax15A=0.00frm2000:txtTax15A=</div>	
+            <div>frm2000:txtTax15B=0.00frm2000:txtTax15B=</div>	
+            <div>frm2000:txtTax15C=06/30/2026frm2000:txtTax15C=</div>	
+            <div>frm2000:txtTax15D=0.00frm2000:txtTax15D=</div>	
+            <div>frm2000:txtTax16=0.00frm2000:txtTax16=</div>	
+            <div>frm2000:txtTax17A=0.00frm2000:txtTax17A=</div>	
+            <div>frm2000:txtTax17B=0.00frm2000:txtTax17B=</div>	
+            <div>frm2000:txtTax17C=0.00frm2000:txtTax17C=</div>	
+            <div>frm2000:txtTax17D=0.00frm2000:txtTax17D=</div>	
+            <div>frm2000:txtTax18=0.00frm2000:txtTax18=</div>	
+            <div>frm2000:txtTax19=06/30/2026frm2000:txtTax19=</div>	
+            <div>frm2000:txtAmount20=0.00frm2000:txtAmount20=</div>	
+            <div>frm2000:txtAmount21=0.00frm2000:txtAmount21=</div>	
+            <div>frm2000:txtAmount22=0.00frm2000:txtAmount22=</div>	
+            <div>frm2000:txtParticular23=frm2000:txtParticular23=</div>	
+            <div>frm2000:txtAmount23=0.00frm2000:txtAmount23=</div>	
+            <div>frm2000:sched1:txtATC1=WC160frm2000:sched1:txtATC1=</div>	
+            <div>frm2000:sched1:txtTaxBase1=0.00frm2000:sched1:txtTaxBase1=</div>	
+            <div>frm2000:sched1:txtTaxRate1=0.00frm2000:sched1:txtTaxRate1=</div>	
+            <div>frm2000:sched1:txtTaxDue1=0.00frm2000:sched1:txtTaxDue1=</div>	
+            <div>frm2000:sched1:txtTotalTaxDue=0.00frm2000:sched1:txtTotalTaxDue=</div>	
+            <div>frm2000:sched2:txtTotalPayments=0.00frm2000:sched2:txtTotalPayments=</div>	
+            <div>frm2000:sched3:txtTotalAdvancePayments=0.00frm2000:sched3:txtTotalAdvancePayments=</div>	
+            <div>frm2000:sched4:txtTotalRemittance=0.00frm2000:sched4:txtTotalRemittance=</div>	
+            All Rights Reserved BIR synthetic v2018

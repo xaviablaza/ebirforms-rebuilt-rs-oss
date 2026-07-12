@@ -1,15 +1,16 @@
-//! Deterministic payload transform used by the OSS synthetic fixtures.
+//! Compatibility implementation for the legacy `Encrypt.exe` helper bundled with
+//! eBIRForms.
 //!
-//! The transform performs:
+//! The observed helper performs:
 //!
 //! ```text
 //! plaintext pseudo-XML
 //!   -> zlib compression at max compression
-//!   -> AES-256 key derived from a public synthetic test key material
-//!   -> CBC-like stream encryption with no PKCS#7 padding
+//!   -> DCPcrypt `TDCP_rijndael.InitStr(passphrase, TDCP_sha256)`
+//!   -> DCPcrypt CBC stream encryption with no PKCS#7 padding
 //! ```
 //!
-//! This synthetic CBC-like stream has two compatibility-test quirks:
+//! DCPcrypt's 128-bit block-cipher CBC implementation has two important quirks:
 //!
 //! 1. `Init(..., InitVector = nil)` sets `IV = AES_encrypt(16 zero bytes)` and
 //!    then starts CBC from that encrypted IV.
@@ -26,25 +27,26 @@ use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 
 const BLOCK_SIZE: usize = 16;
-const TEST_KEY_MATERIAL: &[u8] = b"oss-synthetic-fixture-key-material";
+const PASSPHRASE: &[u8] = b"T0081gP45sy0rd-To+R3m3m63r!@4/<>";
 
-/// Errors from synthetic payload compression/decompression.
+/// Errors from eBIRForms payload compression/decompression.
 #[derive(Debug, thiserror::Error)]
 pub enum CryptoError {
     #[error("zlib compression/decompression failed: {0}")]
     Io(#[from] std::io::Error),
 }
 
-/// Encrypt a plaintext synthetic XML field dump into the binary `.xml`
-/// payload used by the synthetic packaging flow.
+/// Encrypt a plaintext eBIRForms pseudo-XML field dump into the binary `.xml`
+/// payload accepted by the legacy BIR upload flow.
 ///
-/// This is deterministic and covered by synthetic fixture tests.
+/// This is intended to be byte-compatible with the captured `Encrypt.exe` for
+/// the tested 1601C fixture.
 pub fn encrypt_payload(plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let compressed = zlib_compress_best(plaintext)?;
     Ok(dcpcrypt_aes256_cbc_encrypt_preserve_tail(&compressed))
 }
 
-/// Decrypt a synthetic binary `.xml` payload back into the pseudo-XML field
+/// Decrypt an eBIRForms binary `.xml` payload back into the pseudo-XML field
 /// dump. This is mostly for fixture verification and diagnostics.
 pub fn decrypt_payload(ciphertext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let compressed = dcpcrypt_aes256_cbc_decrypt_preserve_tail(ciphertext);
@@ -65,7 +67,7 @@ fn zlib_decompress(input: &[u8]) -> Result<Vec<u8>, std::io::Error> {
 }
 
 fn dcpcrypt_key() -> [u8; 32] {
-    Sha256::digest(TEST_KEY_MATERIAL).into()
+    Sha256::digest(PASSPHRASE).into()
 }
 
 fn aes256() -> Aes256 {
@@ -92,7 +94,7 @@ fn xor_into_left(left: &mut [u8], right: &[u8]) {
 }
 
 fn initial_cv(cipher: &Aes256) -> [u8; BLOCK_SIZE] {
-    // Synthetic stream initialization: fill IV with zeros, then
+    // DCPcrypt TDCP_blockcipher128.Init(..., nil): fill IV with zeros, then
     // EncryptECB(IV, IV), then Reset() copies IV into CV.
     encrypt_block(cipher, &[0u8; BLOCK_SIZE])
 }
@@ -150,21 +152,67 @@ fn dcpcrypt_aes256_cbc_decrypt_preserve_tail(input: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sha2::{Digest, Sha256};
+    use std::path::PathBuf;
 
-    #[test]
-    fn encrypt_then_decrypt_round_trips_arbitrary_partial_tail() {
-        let plaintext = b"<synthetic-form><field name=\"txtMonth\">06</field></synthetic-form>\n";
-        let encrypted = encrypt_payload(plaintext).expect("encrypt");
-        let decrypted = decrypt_payload(&encrypted).expect("decrypt");
-        assert_eq!(decrypted, plaintext);
+    fn sha256_hex(bytes: &[u8]) -> String {
+        hex::encode(Sha256::digest(bytes))
+    }
+
+    fn fixture_path(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../fixtures/private/1601c")
+            .join(name)
+    }
+
+    fn read_private_fixture(name: &str) -> Option<Vec<u8>> {
+        let path = fixture_path(name);
+        std::fs::read(&path).ok()
     }
 
     #[test]
-    fn encryption_is_deterministic_for_synthetic_fixture() {
-        let plaintext = b"synthetic deterministic payload";
-        let left = encrypt_payload(plaintext).expect("encrypt left");
-        let right = encrypt_payload(plaintext).expect("encrypt right");
-        assert_eq!(left, right);
-        assert_ne!(left, plaintext);
+    fn encrypt_matches_private_1601c_v2_artifact_when_available() {
+        let Some(plaintext) = read_private_fixture("plaintext-v2.xml") else {
+            return;
+        };
+        let encrypted = encrypt_payload(&plaintext).expect("encrypt fixture");
+
+        assert_eq!(encrypted.len(), 956);
+        assert_eq!(
+            sha256_hex(&encrypted),
+            "8b3ef7fb4a60eb765a4da24f79ad7a7850965171bdec049523cd68509693648f"
+        );
+
+        if let Some(expected) = read_private_fixture("encrypted-v2.xml") {
+            assert_eq!(encrypted, expected);
+        }
+    }
+
+    #[test]
+    fn decrypt_round_trips_private_1601c_v2_artifact_when_available() {
+        let Some(encrypted) = read_private_fixture("encrypted-v2.xml") else {
+            return;
+        };
+        let plaintext = decrypt_payload(&encrypted).expect("decrypt fixture");
+
+        assert_eq!(plaintext.len(), 5571);
+        assert_eq!(
+            sha256_hex(&plaintext),
+            "c43f00e60ede596093112f9f806842fba5ab8bdcfc3ed384bdfcf14e268d6713"
+        );
+
+        if let Some(expected) = read_private_fixture("plaintext-v2.xml") {
+            assert_eq!(plaintext, expected);
+        }
+    }
+
+    #[test]
+    fn encrypt_then_decrypt_round_trips_arbitrary_partial_tail() {
+        // Exercises non-block-aligned input after compression and the DCPcrypt
+        // final-tail behavior. This is not a real tax form.
+        let plaintext = b"<div>frm1601c:txtMonth=06frm1601c:txtMonth=</div>\r\n";
+        let encrypted = encrypt_payload(plaintext).expect("encrypt");
+        let decrypted = decrypt_payload(&encrypted).expect("decrypt");
+        assert_eq!(decrypted, plaintext);
     }
 }

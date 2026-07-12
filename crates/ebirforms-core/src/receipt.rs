@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ReceiptMetadata {
@@ -116,6 +117,100 @@ pub struct ReceiptPollReport {
     pub errors: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct HimalayaReceiptPollOptions {
+    pub account: Option<String>,
+    pub folder: Option<String>,
+    pub query: Vec<String>,
+    pub limit: usize,
+    pub binary: Option<String>,
+}
+
+impl Default for HimalayaReceiptPollOptions {
+    fn default() -> Self {
+        Self {
+            account: None,
+            folder: Some("INBOX".to_string()),
+            query: vec![
+                "subject".to_string(),
+                "Tax Return Receipt Confirmation".to_string(),
+            ],
+            limit: 25,
+            binary: None,
+        }
+    }
+}
+
+pub fn poll_receipts_himalaya(
+    store: &SubmissionStore,
+    options: HimalayaReceiptPollOptions,
+) -> Result<ReceiptPollReport, ReceiptError> {
+    let himalaya_bin = resolve_himalaya_binary(options.binary.as_deref());
+    let mut list_cmd = Command::new(&himalaya_bin);
+    if let Some(account) = options.account.as_deref().filter(|value| !value.is_empty()) {
+        list_cmd.arg("--account").arg(account);
+    }
+    list_cmd.arg("envelope").arg("list");
+    if let Some(folder) = options.folder.as_deref().filter(|value| !value.is_empty()) {
+        list_cmd.arg("--folder").arg(folder);
+    }
+    for part in &options.query {
+        if !part.trim().is_empty() {
+            list_cmd.arg(part);
+        }
+    }
+    list_cmd
+        .arg("--page-size")
+        .arg(options.limit.max(1).to_string());
+    list_cmd.arg("--output").arg("json");
+
+    let output = list_cmd
+        .output()
+        .map_err(|err| ReceiptError::Poll(format!("himalaya envelope list failed: {err}")))?;
+    if !output.status.success() {
+        return Err(ReceiptError::Poll(redact_command_stderr(
+            "himalaya envelope list",
+            &output.stderr,
+        )));
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let ids = himalaya_message_ids_from_json(&stdout);
+    let mut report = ReceiptPollReport {
+        scanned: 0,
+        confirmed: Vec::new(),
+        errors: Vec::new(),
+    };
+
+    for id in ids.into_iter().take(options.limit.max(1)) {
+        let mut read_cmd = Command::new(&himalaya_bin);
+        if let Some(account) = options.account.as_deref().filter(|value| !value.is_empty()) {
+            read_cmd.arg("--account").arg(account);
+        }
+        read_cmd.arg("message").arg("read").arg(&id);
+        if let Some(folder) = options.folder.as_deref().filter(|value| !value.is_empty()) {
+            read_cmd.arg("--folder").arg(folder);
+        }
+        let read_output = read_cmd.output().map_err(|err| {
+            ReceiptError::Poll(format!("himalaya message read {id} failed: {err}"))
+        })?;
+        if !read_output.status.success() {
+            report.errors.push(redact_command_stderr(
+                &format!("himalaya message read {id}"),
+                &read_output.stderr,
+            ));
+            continue;
+        }
+        report.scanned += 1;
+        let text = String::from_utf8_lossy(&read_output.stdout);
+        match parse_and_apply_receipt(store, &text) {
+            Ok(record) => report.confirmed.push(record),
+            Err(err) => report.errors.push(format!("message {id}: {err}")),
+        }
+    }
+
+    Ok(report)
+}
+
 pub fn poll_receipt_directory(
     store: &SubmissionStore,
     dir: &Path,
@@ -148,6 +243,37 @@ pub fn poll_receipt_directory(
         }
     }
     Ok(report)
+}
+
+fn resolve_himalaya_binary(configured: Option<&str>) -> String {
+    if let Some(value) = configured.filter(|value| !value.trim().is_empty()) {
+        return value.to_string();
+    }
+    if let Ok(value) = std::env::var("EBIRFORMS_HIMALAYA_BIN") {
+        if !value.trim().is_empty() {
+            return value;
+        }
+    }
+    if let Some(path) = adjacent_executable("himalaya") {
+        return path;
+    }
+    "himalaya".to_string()
+}
+
+fn adjacent_executable(name: &str) -> Option<String> {
+    let exe = std::env::current_exe().ok()?;
+    let dir = exe.parent()?;
+    let binary_name = if cfg!(windows) {
+        format!("{name}.exe")
+    } else {
+        name.to_string()
+    };
+    let candidate = dir.join(binary_name);
+    if candidate.is_file() {
+        Some(candidate.display().to_string())
+    } else {
+        None
+    }
 }
 
 fn parse_key_value_lines(text: &str) -> BTreeMap<String, String> {
@@ -184,7 +310,7 @@ struct BirConfirmationEmail {
 }
 
 fn parse_bir_confirmation_email(text: &str) -> Option<BirConfirmationEmail> {
-    let pattern = r#"(?is)this\s+confirms\s+receipt\s+of\s+your\s+submission\s+with\s+the\s+following\s+details\s+subject\s+to\s+validation\s+by\s+BIR:\s*File\s+name:\s*(?P<filename>\d{9,14}-(?P<form>1601C)(?:v\d{4})?-(?P<period>\d{6})V\d+\.xml)\s*\r?\n\s*Date\s+received\s+by\s+BIR:\s*(?P<date>[^\r\n]+?)\s*\r?\n\s*Time\s+received\s+by\s+BIR:\s*(?P<time>[^\r\n]+)"#;
+    let pattern = r#"(?is)this\s+confirms\s+receipt\s+of\s+your\s+submission\s+with\s+the\s+following\s+details\s+subject\s+to\s+validation\s+by\s+BIR:\s*File\s+name:\s*(?P<filename>\d{9,14}-(?P<form>1601C|1601EQ|2550Q|0619E|1702Q|2000)(?:v\d{4}[A-Z]?)?-(?P<period>\d{6}(?:Q[1-4])?|\d{4}Q[1-4])(?:V\d+)?(?:#[^#\r\n]+#)?\.xml)\s*\r?\n\s*Date\s+received\s+by\s+BIR:\s*(?P<date>[^\r\n]+?)\s*\r?\n\s*Time\s+received\s+by\s+BIR:\s*(?P<time>[^\r\n]+)"#;
     let regex = Regex::new(pattern).expect("BIR receipt confirmation regex is valid");
     let captures = regex.captures(text)?;
     let filename = captures.name("filename")?.as_str().trim().to_string();
@@ -253,6 +379,60 @@ fn is_accepted_status(value: &str) -> bool {
         value.trim().to_ascii_lowercase().as_str(),
         "accepted" | "confirmed" | "received"
     )
+}
+
+fn himalaya_message_ids_from_json(stdout: &str) -> Vec<String> {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(stdout) else {
+        return Vec::new();
+    };
+    let mut ids = Vec::new();
+    collect_himalaya_ids(&value, &mut ids);
+    ids.sort();
+    ids.dedup();
+    ids
+}
+
+fn collect_himalaya_ids(value: &serde_json::Value, ids: &mut Vec<String>) {
+    match value {
+        serde_json::Value::Array(items) => {
+            for item in items {
+                collect_himalaya_ids(item, ids);
+            }
+        }
+        serde_json::Value::Object(map) => {
+            for key in ["id", "uid", "message_id", "message-id"] {
+                if let Some(id) = map.get(key).and_then(|value| match value {
+                    serde_json::Value::String(text) => Some(text.clone()),
+                    serde_json::Value::Number(number) => Some(number.to_string()),
+                    _ => None,
+                }) {
+                    if !id.trim().is_empty() {
+                        ids.push(id);
+                        return;
+                    }
+                }
+            }
+            for value in map.values() {
+                collect_himalaya_ids(value, ids);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn redact_command_stderr(command: &str, stderr: &[u8]) -> String {
+    let detail = String::from_utf8_lossy(stderr)
+        .lines()
+        .take(3)
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect::<Vec<_>>()
+        .join(" | ");
+    if detail.is_empty() {
+        format!("{command} exited unsuccessfully")
+    } else {
+        format!("{command}: {detail}")
+    }
 }
 
 #[cfg(test)]
@@ -324,6 +504,53 @@ Bureau of Internal Revenue"#,
         assert_eq!(
             receipt.receipt_id,
             "BIR-010961925000-1601Cv2018-012026V1.xml"
+        );
+    }
+
+    #[test]
+    fn parses_bir_receipt_confirmation_email_for_quarterly_and_versioned_forms() {
+        let cases = [
+            (
+                "12345678900000-2550Qv2024-122026Q1#authorized@example.test#.xml",
+                "2550Q",
+                "122026Q1",
+            ),
+            (
+                "12345678900000-1702Qv2018C-2026Q1#authorized@example.test#.xml",
+                "1702Q",
+                "2026Q1",
+            ),
+        ];
+
+        for (filename, form_code, period) in cases {
+            let receipt = parse_receipt(&format!(
+                "SUBJECT: \"Tax Return Receipt Confirmation\"
+FROM: ebirforms-noreply@bir.gov.ph
+This confirms receipt of your submission with the following details subject to validation by BIR:
+File name: {filename}
+Date received by BIR: 15 April 2026
+Time received by BIR: 03:10 PM
+This is a system-generated email. Please do not reply.
+"
+            ))
+            .unwrap();
+
+            assert_eq!(receipt.filename, filename);
+            assert_eq!(receipt.form_code, form_code);
+            assert_eq!(receipt.period_mm_yyyy, period);
+            assert_eq!(receipt.status_text, "RECEIVED");
+        }
+    }
+
+    #[test]
+    fn extracts_himalaya_message_ids_from_json_shapes() {
+        let ids = himalaya_message_ids_from_json(
+            r#"[{"id":42,"subject":"Tax Return Receipt Confirmation"},{"envelopes":[{"uid":"abc"},{"message_id":"def"}]}]"#,
+        );
+
+        assert_eq!(
+            ids,
+            vec!["42".to_string(), "abc".to_string(), "def".to_string()]
         );
     }
 

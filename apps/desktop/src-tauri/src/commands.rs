@@ -1,13 +1,14 @@
 use crate::state;
 use ebirforms_core::{
-    build_submission_package, parse_and_apply_receipt, render_form, run_due_jobs_dry_run,
-    AppSettings, JobMode, SubmissionJob, SubmissionManifest, SubmissionRecord, TaxpayerProfile,
-    Theme,
+    build_submission_package, parse_and_apply_receipt, poll_receipts_himalaya, render_form,
+    run_due_jobs_dry_run, run_due_jobs_live, AppSettings, HimalayaReceiptPollOptions, JobMode,
+    ReceiptPollReport, SubmissionJob, SubmissionManifest, SubmissionModePreference, SubmissionRecord,
+    TaxpayerProfile, Theme,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct AppSnapshot {
@@ -110,6 +111,14 @@ pub fn update_settings(app: AppHandle, theme: String) -> Result<AppSettings, Str
 }
 
 #[tauri::command]
+pub fn update_submission_mode(app: AppHandle, mode: String) -> Result<AppSettings, String> {
+    let mode = SubmissionModePreference::parse(&mode).map_err(|err| err.to_string())?;
+    state::app_state_store(&app)?
+        .set_submission_mode(mode)
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
 pub fn lock_init(app: AppHandle, pin: String) -> Result<AppSettings, String> {
     state::app_state_store(&app)?
         .set_master_pin(&pin)
@@ -158,14 +167,33 @@ pub fn package_1601c(app: AppHandle, input: Value) -> Result<PackagePreview, Str
 }
 
 #[tauri::command]
+pub fn queue_tax_form(
+    app: AppHandle,
+    form_code: String,
+    input: Value,
+    mode: Option<String>,
+) -> Result<SubmissionJob, String> {
+    let job_mode = match mode {
+        Some(value) => parse_job_mode(&value)?,
+        None => {
+            let settings = state::app_state_store(&app)?
+                .settings()
+                .map_err(|err| err.to_string())?;
+            job_mode_from_preference(settings.submission_mode)
+        }
+    };
+    state::job_store(&app)?
+        .enqueue(&form_code, &input, job_mode, 3)
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
 pub fn queue_tax_form_dry_run(
     app: AppHandle,
     form_code: String,
     input: Value,
 ) -> Result<SubmissionJob, String> {
-    state::job_store(&app)?
-        .enqueue(&form_code, &input, JobMode::DryRun, 3)
-        .map_err(|err| err.to_string())
+    queue_tax_form(app, form_code, input, Some("dry_run".to_string()))
 }
 
 #[tauri::command]
@@ -181,13 +209,35 @@ pub fn list_jobs(app: AppHandle) -> Result<Vec<SubmissionJob>, String> {
 }
 
 #[tauri::command]
+pub fn run_queue(
+    app: AppHandle,
+    mode: Option<String>,
+    limit: Option<usize>,
+) -> Result<Vec<SubmissionJob>, String> {
+    let job_mode = match mode {
+        Some(value) => parse_job_mode(&value)?,
+        None => {
+            let settings = state::app_state_store(&app)?
+                .settings()
+                .map_err(|err| err.to_string())?;
+            job_mode_from_preference(settings.submission_mode)
+        }
+    };
+    let jobs = state::job_store(&app)?;
+    let submissions = state::submission_store(&app)?;
+    match job_mode {
+        JobMode::DryRun => run_due_jobs_dry_run(&jobs, &submissions, limit.unwrap_or(10)),
+        JobMode::Live => run_due_jobs_live(&jobs, &submissions, limit.unwrap_or(10)),
+    }
+    .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
 pub fn run_queue_dry_run(
     app: AppHandle,
     limit: Option<usize>,
 ) -> Result<Vec<SubmissionJob>, String> {
-    let jobs = state::job_store(&app)?;
-    let submissions = state::submission_store(&app)?;
-    run_due_jobs_dry_run(&jobs, &submissions, limit.unwrap_or(10)).map_err(|err| err.to_string())
+    run_queue(app, Some("dry_run".to_string()), limit)
 }
 
 #[tauri::command]
@@ -209,6 +259,26 @@ pub fn match_receipt(
     let store = state::submission_store(&app)?;
     parse_and_apply_receipt(&store, &receipt_text).map_err(|err| err.to_string())?;
     list_submissions(app)
+}
+
+#[tauri::command]
+pub fn poll_himalaya_receipts(
+    app: AppHandle,
+    account: Option<String>,
+    folder: Option<String>,
+    query: Option<Vec<String>>,
+    limit: Option<usize>,
+) -> Result<ReceiptPollReport, String> {
+    let store = state::submission_store(&app)?;
+    let mut options = HimalayaReceiptPollOptions::default();
+    options.account = account.and_then(clean_string);
+    options.folder = folder.and_then(clean_string).or(options.folder);
+    if let Some(query) = query.filter(|items| !items.is_empty()) {
+        options.query = query;
+    }
+    options.limit = limit.unwrap_or(options.limit);
+    options.binary = bundled_himalaya_binary(&app).or(options.binary);
+    poll_receipts_himalaya(&store, options).map_err(|err| err.to_string())
 }
 
 impl From<SubmissionRecord> for SafeSubmissionRecord {
@@ -250,6 +320,16 @@ fn clean_optional(value: Option<String>) -> Option<String> {
     })
 }
 
+fn bundled_himalaya_binary(app: &AppHandle) -> Option<String> {
+    let binary_name = if cfg!(windows) { "himalaya.exe" } else { "himalaya" };
+    app.path()
+        .resource_dir()
+        .ok()
+        .map(|dir| dir.join(binary_name))
+        .filter(|path| path.is_file())
+        .map(|path| path.display().to_string())
+}
+
 fn short_hash(value: &str) -> String {
     value.chars().take(12).collect()
 }
@@ -265,4 +345,24 @@ fn sanitize_filename(value: &str) -> String {
             }
         })
         .collect()
+}
+
+fn parse_job_mode(value: &str) -> Result<JobMode, String> {
+    match value.to_ascii_lowercase().replace('-', "_").as_str() {
+        "dry_run" | "dryrun" | "dry" => Ok(JobMode::DryRun),
+        "live" => Ok(JobMode::Live),
+        _ => Err("submission mode must be dry_run or live".to_string()),
+    }
+}
+
+fn job_mode_from_preference(mode: SubmissionModePreference) -> JobMode {
+    match mode {
+        SubmissionModePreference::DryRun => JobMode::DryRun,
+        SubmissionModePreference::Live => JobMode::Live,
+    }
+}
+
+fn clean_string(value: String) -> Option<String> {
+    let trimmed = value.trim().to_string();
+    if trimmed.is_empty() { None } else { Some(trimmed) }
 }
