@@ -86,18 +86,23 @@ The default persistent stores are `.ebirforms/submissions.json` for latest-state
 
 Live submission is gated behind `--live --confirm` and `BIR_SFTP_*` environment variables. The implementation writes a durable submission record before attempting network transport. Missing credentials fail safely with a `Failed` record; uncertain SFTP failures are recorded as `Uncertain` so later automatic retries with the same idempotency key are blocked for manual review.
 
-For BIR's current 1601C SFTP endpoint, use a non-OpenSSH backend when password auth is required:
+For BIR's current 1601C SFTP endpoint, the default live backend is the native Rust transport:
 
 ```dotenv
-# Preferred in-code transport: Rust ssh2/libssh2 SFTP, no external sftp process.
+# Optional; this is already the default when BIR_SFTP_BACKEND is unset.
 BIR_SFTP_BACKEND=native
+```
 
-# Fallback that mirrors the official helper most closely:
+The native backend connects directly from Rust via `ssh2`, authenticates with `BIR_SFTP_USERNAME`/`BIR_SFTP_PASSWORD`, opens the remote filename, writes the encrypted payload, and treats successful close as the server acknowledgement. It intentionally does not call `fsync` because BIR's FileZilla SFTP server reports that extension as unsupported after a successful write.
+
+The WinSCP backend remains as a private/local compatibility fallback only:
+
+```dotenv
 BIR_SFTP_BACKEND=winscp
 BIR_WINSCP_EXE=/path/to/WinSCP.exe
 BIR_WINE_CMD=wine
 ```
 
-The native backend connects directly from Rust via `ssh2`, authenticates with `BIR_SFTP_USERNAME`/`BIR_SFTP_PASSWORD`, opens the remote filename, writes the encrypted payload, and treats successful close as the server acknowledgement. It intentionally does not call `fsync` because BIR's FileZilla SFTP server reports that extension as unsupported after a successful write.
+Do not vendor or redistribute WinSCP binaries in this repository. WinSCP is GPL-licensed, while this repository may be shipped under non-GPL terms; bundling WinSCP would require GPL redistribution compliance and is not appropriate for the public repo. The fallback only invokes a separately installed copy supplied by the operator. Credentials remain in a chmod-600 temporary WinSCP script, not argv.
 
-The WinSCP backend remains as a compatibility fallback. It mirrors the official helper more closely than OpenSSH: WinSCP SFTP-over-SSH, binary transfer, safe SFTP v3 negotiation, and no remote `mkdir` attempt because BIR pre-creates `/1601Cv2018` and may reject `mkdir` even when upload is allowed. Credentials remain in a chmod-600 temporary WinSCP script, not argv. The default backend remains `openssh` unless `BIR_SFTP_BACKEND` is set. For OpenSSH password auth, the implementation forces `BatchMode=no`; otherwise `sftp -b` will not prompt and `sshpass` cannot supply the password.
+The OpenSSH backend remains available with `BIR_SFTP_BACKEND=openssh`, but it is not the default. For OpenSSH password auth, the implementation forces `BatchMode=no`; otherwise `sftp -b` will not prompt and `sshpass` cannot supply the password.

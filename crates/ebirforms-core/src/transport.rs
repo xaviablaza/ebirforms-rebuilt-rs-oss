@@ -94,10 +94,10 @@ pub struct SftpConfig {
     /// permissive first-connect behavior without disabling host-key checks
     /// entirely.
     pub accept_unknown_host: bool,
-    /// Upload backend. Default is `openssh` for portable Linux operation.
-    /// Set `BIR_SFTP_BACKEND=winscp` when reproducing the official eBIRForms
-    /// path: WinSCP SFTP over SSH via Wine, with a temporary script file that
-    /// holds credentials outside argv and is removed after execution.
+    /// Upload backend. Default is `native` for the in-code Rust ssh2/libssh2
+    /// SFTP path that has been live-tested against BIR. Set
+    /// `BIR_SFTP_BACKEND=winscp` only as an optional compatibility fallback for
+    /// local/private runs with a separately obtained WinSCP binary.
     pub backend: SftpBackend,
 }
 
@@ -111,7 +111,7 @@ pub enum SftpBackend {
 impl SftpBackend {
     fn from_env() -> Self {
         match std::env::var("BIR_SFTP_BACKEND")
-            .unwrap_or_else(|_| "openssh".to_string())
+            .unwrap_or_else(|_| "native".to_string())
             .to_ascii_lowercase()
             .as_str()
         {
@@ -322,8 +322,8 @@ fn submit_with_winscp(
         let _ = std::fs::set_permissions(&script_path, std::fs::Permissions::from_mode(0o600));
     }
 
-    let winscp_exe = std::env::var("BIR_WINSCP_EXE")
-        .unwrap_or_else(|_| "/home/vettel/ebirforms-binaries/WinSCP.exe".to_string());
+    let winscp_exe =
+        std::env::var("BIR_WINSCP_EXE").map_err(|_| TransportError::MissingLiveConfig)?;
     let wine_cmd = std::env::var("BIR_WINE_CMD").unwrap_or_else(|_| "wine".to_string());
     let output = Command::new(wine_cmd)
         .arg(winscp_exe)
