@@ -1,0 +1,59 @@
+{
+  "profile": {
+    "tin": "123-456-789-00000",
+    "email": "authorized@example.test",
+    "profile_id": "redacted-test-profile"
+  },
+  "return": {
+    "period": {
+      "month": 6,
+      "year": 2026,
+      "quarter": 2
+    },
+    "is_amended": true,
+    "amendment_number": 2
+  },
+  "fields": {
+    "txtMonthYear": "06/30/2026",
+    "txtDueDate": "06/30/2026",
+    "AmendedRtn_1": "true",
+    "AmendedRtn_2": "false",
+    "TaxWithheld_1": "true",
+    "TaxWithheld_2": "false",
+    "txtATC": "WC160",
+    "txtTaxType": "WE",
+    "txtTIN1": "123",
+    "txtTIN2": "456",
+    "txtTIN3": "789",
+    "txtBranchCode": "00000",
+    "txtRDOCode": "044",
+    "txtTaxpayerName": "AUTHORIZED TEST TAXPAYER",
+    "txtAddress": "REDACTED TEST ADDRESS",
+    "txtZipCode": "0000",
+    "txtTelNum": "",
+    "CatAgent_P": "true",
+    "CatAgent_G": "false",
+    "txtEmail": "authorized@example.test",
+    "txtTax14": "0.00",
+    "txtTax15": "0.00",
+    "txtTax16": "0.00",
+    "txtTax17A": "0.00",
+    "txtTax17B": "0.00",
+    "txtTax17C": "0.00",
+    "txtTax17D": "0.00",
+    "txtTax18": "0.00",
+    "txtAgency19": "",
+    "txtNumber19": "",
+    "txtDate19": "06/30/2026",
+    "txtAmount19": "0.00",
+    "txtAgency20": "",
+    "txtNumber20": "",
+    "txtDate20": "06/30/2026",
+    "txtAmount20": "0.00",
+    "txtNumber21": "0.00",
+    "txtDate21": "06/30/2026",
+    "txtAmount21": "0.00",
+    "txtParticular22": "",
+    "txtAmount22": "0.00"
+  }
+}

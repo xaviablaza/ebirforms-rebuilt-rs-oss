@@ -19,7 +19,7 @@
             <div>frm1601c:txtTelNum={{txtTelNum}}frm1601c:txtTelNum=</div>	
             <div>frm1601c:CatAgent_P={{CatAgent_P}}frm1601c:CatAgent_P=</div>	
             <div>frm1601c:CatAgent_G={{CatAgent_G}}frm1601c:CatAgent_G=</div>	
-            <div>txtEmail=CORPORATE.SECRETARY@NOTARIALOS.COMtxtEmail=</div>	
+            <div>txtEmail={{txtEmail}}txtEmail=</div>	
             <div>frm1601c:SpecialTax_1={{SpecialTax_1}}frm1601c:SpecialTax_1=</div>	
             <div>frm1601c:SpecialTax_2={{SpecialTax_2}}frm1601c:SpecialTax_2=</div>	
             <div>frm1601c:selTreaty={{selTreaty}}frm1601c:selTreaty=</div>	
@@ -48,9 +48,9 @@
             <div>frm1601c:txtTax34={{txtTax34}}frm1601c:txtTax34=</div>	
             <div>frm1601c:txtTax35={{txtTax35}}frm1601c:txtTax35=</div>	
             <div>frm1601c:txtTax36={{txtTax36}}frm1601c:txtTax36=</div>	
-            <div>txtTaxAgentNo=txtTaxAgentNo=</div>	
-            <div>txtDateIssue=txtDateIssue=</div>	
-            <div>txtDateExpiry=txtDateExpiry=</div>	
+            <div>txtTaxAgentNo={{txtTaxAgentNo}}txtTaxAgentNo=</div>	
+            <div>txtDateIssue={{txtDateIssue}}txtDateIssue=</div>	
+            <div>txtDateExpiry={{txtDateExpiry}}txtDateExpiry=</div>	
             <div>frm1601c:txtAgency37={{txtAgency37}}frm1601c:txtAgency37=</div>	
             <div>frm1601c:txtNumber37={{txtNumber37}}frm1601c:txtNumber37=</div>	
             <div>frm1601c:txtDate37={{txtDate37}}frm1601c:txtDate37=</div>	

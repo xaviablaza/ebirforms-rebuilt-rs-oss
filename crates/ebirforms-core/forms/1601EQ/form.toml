@@ -1,0 +1,327 @@
+code = "1601EQ"
+version = "v2019"
+display_name = "Quarterly Remittance Return of Creditable Income Taxes Withheld (Expanded)"
+category = "expanded_withholding"
+frequency = "quarterly"
+period_format = "YYYYQn"
+pdf_url = "https://bir-cdn.bir.gov.ph/local/pdf/1601-EQ%20January%202019%20ENCS%20final.pdf"
+remote_directory = "/1601EQ/"
+filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = true
+requires_vat_registered = false
+
+[[sections]]
+page = 1
+part = "header"
+title = "Filing period and return flags"
+[[sections.fields]]
+item = "1"
+label = "For the Year"
+json_path = "fields.txtYear"
+xml_key = "txtYear"
+[[sections.fields]]
+item = "2"
+label = "Quarter - 1st"
+json_path = "fields.optQuarter1"
+xml_key = "optQuarter1"
+[[sections.fields]]
+item = "2"
+label = "Quarter - 2nd"
+json_path = "fields.optQuarter2"
+xml_key = "optQuarter2"
+[[sections.fields]]
+item = "2"
+label = "Quarter - 3rd"
+json_path = "fields.optQuarter3"
+xml_key = "optQuarter3"
+[[sections.fields]]
+item = "2"
+label = "Quarter - 4th"
+json_path = "fields.optQuarter4"
+xml_key = "optQuarter4"
+[[sections.fields]]
+item = "3"
+label = "Amended Return? - Yes"
+json_path = "fields.AmendedRtn_1"
+xml_key = "AmendedRtn_1"
+[[sections.fields]]
+item = "3"
+label = "Amended Return? - No"
+json_path = "fields.AmendedRtn_2"
+xml_key = "AmendedRtn_2"
+[[sections.fields]]
+item = "4"
+label = "Any Taxes Withheld? - Yes"
+json_path = "fields.TaxWithheld_1"
+xml_key = "TaxWithheld_1"
+[[sections.fields]]
+item = "4"
+label = "Any Taxes Withheld? - No"
+json_path = "fields.TaxWithheld_2"
+xml_key = "TaxWithheld_2"
+[[sections.fields]]
+item = "5"
+label = "No. of Sheet/s Attached"
+json_path = "fields.txtSheets"
+xml_key = "txtSheets"
+
+[[sections]]
+page = 1
+part = "part_i"
+title = "Part I – Background Information"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer Identification Number (TIN) - first 3 digits"
+json_path = "fields.txtTIN1"
+xml_key = "txtTIN1"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer Identification Number (TIN) - second 3 digits"
+json_path = "fields.txtTIN2"
+xml_key = "txtTIN2"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer Identification Number (TIN) - third 3 digits"
+json_path = "fields.txtTIN3"
+xml_key = "txtTIN3"
+[[sections.fields]]
+item = "6"
+label = "Branch Code"
+json_path = "fields.txtBranchCode"
+xml_key = "txtBranchCode"
+[[sections.fields]]
+item = "7"
+label = "RDO Code"
+json_path = "fields.txtRDOCode"
+xml_key = "txtRDOCode"
+[[sections.fields]]
+item = "8"
+label = "Withholding Agent’s Name"
+json_path = "fields.txtTaxpayerName"
+xml_key = "txtTaxpayerName"
+[[sections.fields]]
+item = "9"
+label = "Registered Address"
+json_path = "fields.txtAddress"
+xml_key = "txtAddress"
+[[sections.fields]]
+item = "9A"
+label = "ZIP Code"
+json_path = "fields.txtZipCode"
+xml_key = "txtZipCode"
+[[sections.fields]]
+item = "10"
+label = "Contact Number"
+json_path = "fields.txtTelNum"
+xml_key = "txtTelNum"
+[[sections.fields]]
+item = "11"
+label = "Category of Withholding Agent - Private"
+json_path = "fields.CatAgent_P"
+xml_key = "CatAgent_P"
+[[sections.fields]]
+item = "11"
+label = "Category of Withholding Agent - Government"
+json_path = "fields.CatAgent_G"
+xml_key = "CatAgent_G"
+[[sections.fields]]
+item = "12"
+label = "Email Address"
+json_path = "fields.txtEmail"
+xml_key = "txtEmail"
+
+[[sections]]
+page = 1
+part = "part_ii"
+title = "Part II – Computation of Tax"
+[[sections.fields]]
+item = "13"
+label = "ATC row 1"
+json_path = "fields.txtATC13"
+xml_key = "txtATC13"
+[[sections.fields]]
+item = "13"
+label = "Tax Base row 1"
+json_path = "fields.txtTaxBase13"
+xml_key = "txtTaxBase13"
+[[sections.fields]]
+item = "13"
+label = "Tax Rate row 1"
+json_path = "fields.txtTaxRate13"
+xml_key = "txtTaxRate13"
+[[sections.fields]]
+item = "13"
+label = "Tax Withheld row 1"
+json_path = "fields.txtTax13"
+xml_key = "txtTax13"
+[[sections.fields]]
+item = "14"
+label = "ATC row 2"
+json_path = "fields.txtATC14"
+xml_key = "txtATC14"
+[[sections.fields]]
+item = "14"
+label = "Tax Base row 2"
+json_path = "fields.txtTaxBase14"
+xml_key = "txtTaxBase14"
+[[sections.fields]]
+item = "14"
+label = "Tax Rate row 2"
+json_path = "fields.txtTaxRate14"
+xml_key = "txtTaxRate14"
+[[sections.fields]]
+item = "14"
+label = "Tax Withheld row 2"
+json_path = "fields.txtTax14"
+xml_key = "txtTax14"
+[[sections.fields]]
+item = "15"
+label = "ATC row 3"
+json_path = "fields.txtATC15"
+xml_key = "txtATC15"
+[[sections.fields]]
+item = "15"
+label = "Tax Withheld row 3"
+json_path = "fields.txtTax15"
+xml_key = "txtTax15"
+[[sections.fields]]
+item = "16"
+label = "ATC row 4"
+json_path = "fields.txtATC16"
+xml_key = "txtATC16"
+[[sections.fields]]
+item = "16"
+label = "Tax Withheld row 4"
+json_path = "fields.txtTax16"
+xml_key = "txtTax16"
+[[sections.fields]]
+item = "17"
+label = "ATC row 5"
+json_path = "fields.txtATC17"
+xml_key = "txtATC17"
+[[sections.fields]]
+item = "17"
+label = "Tax Withheld row 5"
+json_path = "fields.txtTax17"
+xml_key = "txtTax17"
+[[sections.fields]]
+item = "18"
+label = "ATC row 6"
+json_path = "fields.txtATC18"
+xml_key = "txtATC18"
+[[sections.fields]]
+item = "18"
+label = "Tax Withheld row 6"
+json_path = "fields.txtTax18"
+xml_key = "txtTax18"
+[[sections.fields]]
+item = "19"
+label = "Total Taxes Withheld for the Quarter"
+json_path = "fields.txtTax19"
+xml_key = "txtTax19"
+[[sections.fields]]
+item = "20"
+label = "Remittances Made: 1st Month of the Quarter"
+json_path = "fields.txtTax20"
+xml_key = "txtTax20"
+[[sections.fields]]
+item = "21"
+label = "Remittances Made: 2nd Month of the Quarter"
+json_path = "fields.txtTax21"
+xml_key = "txtTax21"
+[[sections.fields]]
+item = "22"
+label = "Tax Remitted in Return Previously Filed"
+json_path = "fields.txtTax22"
+xml_key = "txtTax22"
+[[sections.fields]]
+item = "23"
+label = "Over-remittance from Previous Quarter"
+json_path = "fields.txtTax23"
+xml_key = "txtTax23"
+[[sections.fields]]
+item = "24"
+label = "Other Payments Made"
+json_path = "fields.txtTax24"
+xml_key = "txtTax24"
+[[sections.fields]]
+item = "25"
+label = "Total Remittances Made"
+json_path = "fields.txtTax25"
+xml_key = "txtTax25"
+[[sections.fields]]
+item = "26"
+label = "Tax Still Due/(Over-remittance)"
+json_path = "fields.txtTax26"
+xml_key = "txtTax26"
+[[sections.fields]]
+item = "27"
+label = "Surcharge"
+json_path = "fields.txtTax27"
+xml_key = "txtTax27"
+[[sections.fields]]
+item = "28"
+label = "Interest"
+json_path = "fields.txtTax28"
+xml_key = "txtTax28"
+[[sections.fields]]
+item = "29"
+label = "Compromise"
+json_path = "fields.txtTax29"
+xml_key = "txtTax29"
+[[sections.fields]]
+item = "30"
+label = "Total Penalties"
+json_path = "fields.txtTax30"
+xml_key = "txtTax30"
+[[sections.fields]]
+item = "31"
+label = "Total Amount Still Due/(Over-remittance)"
+json_path = "fields.txtTax31"
+xml_key = "txtTax31"
+[[sections.fields]]
+item = "31"
+label = "Over-remittance disposition - Refund"
+json_path = "fields.optOverRemitRefund"
+xml_key = "optOverRemitRefund"
+[[sections.fields]]
+item = "31"
+label = "Over-remittance disposition - Tax Credit Certificate"
+json_path = "fields.optOverRemitTcc"
+xml_key = "optOverRemitTcc"
+[[sections.fields]]
+item = "31"
+label = "Over-remittance disposition - Carry over to next quarter"
+json_path = "fields.optOverRemitCarryOver"
+xml_key = "optOverRemitCarryOver"
+
+[[sections]]
+page = 1
+part = "part_iii"
+title = "Part III – Details of Payment"
+[[sections.fields]]
+item = "32"
+label = "Cash/Bank Debit Memo - Amount"
+json_path = "fields.txtAmount32"
+xml_key = "txtAmount32"
+[[sections.fields]]
+item = "33"
+label = "Check - Amount"
+json_path = "fields.txtAmount33"
+xml_key = "txtAmount33"
+[[sections.fields]]
+item = "34"
+label = "Tax Debit Memo - Amount"
+json_path = "fields.txtAmount34"
+xml_key = "txtAmount34"
+[[sections.fields]]
+item = "35"
+label = "Others - Particulars"
+json_path = "fields.txtParticular35"
+xml_key = "txtParticular35"
+[[sections.fields]]
+item = "35"
+label = "Others - Amount"
+json_path = "fields.txtAmount35"
+xml_key = "txtAmount35"

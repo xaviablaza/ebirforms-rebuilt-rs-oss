@@ -1,0 +1,237 @@
+code = "0619E"
+version = "v2018"
+display_name = "Monthly Remittance Form of Creditable Income Taxes Withheld (Expanded)"
+category = "expanded_withholding"
+frequency = "monthly"
+period_format = "MMYYYY"
+pdf_url = "https://bir-cdn.bir.gov.ph/local/pdf/0619-E%20Jan%202018%20rev%20final.pdf"
+remote_directory = "/0619E/"
+filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = true
+requires_vat_registered = false
+
+[[sections]]
+page = 1
+part = "header"
+title = "Filing period and return flags"
+[[sections.fields]]
+item = "1"
+label = "For the Month of (MM/YYYY)"
+json_path = "fields.txtMonthYear"
+xml_key = "txtMonthYear"
+[[sections.fields]]
+item = "2"
+label = "Due Date (MM/DD/YYYY)"
+json_path = "fields.txtDueDate"
+xml_key = "txtDueDate"
+[[sections.fields]]
+item = "3"
+label = "Amended Form?"
+json_path = "fields.AmendedRtn_1"
+xml_key = "AmendedRtn_1"
+[[sections.fields]]
+item = "3"
+label = "Amended Form? - No"
+json_path = "fields.AmendedRtn_2"
+xml_key = "AmendedRtn_2"
+[[sections.fields]]
+item = "4"
+label = "Any Taxes Withheld? - Yes"
+json_path = "fields.TaxWithheld_1"
+xml_key = "TaxWithheld_1"
+[[sections.fields]]
+item = "4"
+label = "Any Taxes Withheld? - No"
+json_path = "fields.TaxWithheld_2"
+xml_key = "TaxWithheld_2"
+[[sections.fields]]
+item = "5"
+label = "ATC"
+json_path = "fields.txtATC"
+xml_key = "txtATC"
+[[sections.fields]]
+item = "6"
+label = "Tax Type Code"
+json_path = "fields.txtTaxType"
+xml_key = "txtTaxType"
+
+[[sections]]
+page = 1
+part = "part_i"
+title = "Part I – Background Information"
+[[sections.fields]]
+item = "7"
+label = "Taxpayer Identification Number (TIN) - first 3 digits"
+json_path = "fields.txtTIN1"
+xml_key = "txtTIN1"
+[[sections.fields]]
+item = "7"
+label = "Taxpayer Identification Number (TIN) - second 3 digits"
+json_path = "fields.txtTIN2"
+xml_key = "txtTIN2"
+[[sections.fields]]
+item = "7"
+label = "Taxpayer Identification Number (TIN) - third 3 digits"
+json_path = "fields.txtTIN3"
+xml_key = "txtTIN3"
+[[sections.fields]]
+item = "7"
+label = "Branch Code"
+json_path = "fields.txtBranchCode"
+xml_key = "txtBranchCode"
+[[sections.fields]]
+item = "8"
+label = "RDO Code"
+json_path = "fields.txtRDOCode"
+xml_key = "txtRDOCode"
+[[sections.fields]]
+item = "9"
+label = "Withholding Agent’s Name"
+json_path = "fields.txtTaxpayerName"
+xml_key = "txtTaxpayerName"
+[[sections.fields]]
+item = "10"
+label = "Registered Address"
+json_path = "fields.txtAddress"
+xml_key = "txtAddress"
+[[sections.fields]]
+item = "10A"
+label = "ZIP Code"
+json_path = "fields.txtZipCode"
+xml_key = "txtZipCode"
+[[sections.fields]]
+item = "11"
+label = "Contact Number"
+json_path = "fields.txtTelNum"
+xml_key = "txtTelNum"
+[[sections.fields]]
+item = "12"
+label = "Category of Withholding Agent - Private"
+json_path = "fields.CatAgent_P"
+xml_key = "CatAgent_P"
+[[sections.fields]]
+item = "12"
+label = "Category of Withholding Agent - Government"
+json_path = "fields.CatAgent_G"
+xml_key = "CatAgent_G"
+[[sections.fields]]
+item = "13"
+label = "Email Address"
+json_path = "fields.txtEmail"
+xml_key = "txtEmail"
+
+[[sections]]
+page = 1
+part = "part_ii"
+title = "Part II – Tax Remittance"
+[[sections.fields]]
+item = "14"
+label = "Amount of Remittance"
+json_path = "fields.txtTax14"
+xml_key = "txtTax14"
+[[sections.fields]]
+item = "15"
+label = "Less: Amount Remitted from Previously Filed Form, if this is an amended form"
+json_path = "fields.txtTax15"
+xml_key = "txtTax15"
+[[sections.fields]]
+item = "16"
+label = "Net Amount of Remittance (Item 14 Less Item 15)"
+json_path = "fields.txtTax16"
+xml_key = "txtTax16"
+[[sections.fields]]
+item = "17A"
+label = "Surcharge"
+json_path = "fields.txtTax17A"
+xml_key = "txtTax17A"
+[[sections.fields]]
+item = "17B"
+label = "Interest"
+json_path = "fields.txtTax17B"
+xml_key = "txtTax17B"
+[[sections.fields]]
+item = "17C"
+label = "Compromise"
+json_path = "fields.txtTax17C"
+xml_key = "txtTax17C"
+[[sections.fields]]
+item = "17D"
+label = "Total Penalties (Sum of Items 17A to 17C)"
+json_path = "fields.txtTax17D"
+xml_key = "txtTax17D"
+[[sections.fields]]
+item = "18"
+label = "Total Amount of Remittance (Sum of Items 16 and 17D)"
+json_path = "fields.txtTax18"
+xml_key = "txtTax18"
+
+[[sections]]
+page = 1
+part = "part_iii"
+title = "Part III – Details of Payment"
+[[sections.fields]]
+item = "19"
+label = "Cash/Bank Debit Memo - Drawee Bank/Agency"
+json_path = "fields.txtAgency19"
+xml_key = "txtAgency19"
+[[sections.fields]]
+item = "19"
+label = "Cash/Bank Debit Memo - Number"
+json_path = "fields.txtNumber19"
+xml_key = "txtNumber19"
+[[sections.fields]]
+item = "19"
+label = "Cash/Bank Debit Memo - Date"
+json_path = "fields.txtDate19"
+xml_key = "txtDate19"
+[[sections.fields]]
+item = "19"
+label = "Cash/Bank Debit Memo - Amount"
+json_path = "fields.txtAmount19"
+xml_key = "txtAmount19"
+[[sections.fields]]
+item = "20"
+label = "Check - Drawee Bank/Agency"
+json_path = "fields.txtAgency20"
+xml_key = "txtAgency20"
+[[sections.fields]]
+item = "20"
+label = "Check - Number"
+json_path = "fields.txtNumber20"
+xml_key = "txtNumber20"
+[[sections.fields]]
+item = "20"
+label = "Check - Date"
+json_path = "fields.txtDate20"
+xml_key = "txtDate20"
+[[sections.fields]]
+item = "20"
+label = "Check - Amount"
+json_path = "fields.txtAmount20"
+xml_key = "txtAmount20"
+[[sections.fields]]
+item = "21"
+label = "Tax Debit Memo - Number"
+json_path = "fields.txtNumber21"
+xml_key = "txtNumber21"
+[[sections.fields]]
+item = "21"
+label = "Tax Debit Memo - Date"
+json_path = "fields.txtDate21"
+xml_key = "txtDate21"
+[[sections.fields]]
+item = "21"
+label = "Tax Debit Memo - Amount"
+json_path = "fields.txtAmount21"
+xml_key = "txtAmount21"
+[[sections.fields]]
+item = "22"
+label = "Others - Particulars"
+json_path = "fields.txtParticular22"
+xml_key = "txtParticular22"
+[[sections.fields]]
+item = "22"
+label = "Others - Amount"
+json_path = "fields.txtAmount22"
+xml_key = "txtAmount22"

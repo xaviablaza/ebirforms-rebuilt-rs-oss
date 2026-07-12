@@ -1,0 +1,402 @@
+code = "1702Q"
+version = "v2018"
+display_name = "Quarterly Income Tax Return for Corporations, Partnerships and Other Non-Individual Taxpayers"
+category = "income_tax_corporate"
+frequency = "quarterly"
+period_format = "YYYYQn"
+pdf_url = "https://bir-cdn.bir.gov.ph/local/pdf/1702Q%202018ENCS%20final2.pdf"
+remote_directory = "/1702Q/"
+filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = false
+requires_vat_registered = false
+
+[[sections]]
+page = 1
+part = "header"
+title = "Filing period and return flags"
+[[sections.fields]]
+item = "1"
+label = "Calendar Year filer"
+json_path = "fields.optCalendar"
+xml_key = "optCalendar"
+[[sections.fields]]
+item = "1"
+label = "Fiscal Year filer"
+json_path = "fields.optFiscal"
+xml_key = "optFiscal"
+[[sections.fields]]
+item = "2"
+label = "Year Ended (MM/20YY)"
+json_path = "fields.txtYearEnded"
+xml_key = "txtYearEnded"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 1st"
+json_path = "fields.optQuarter1"
+xml_key = "optQuarter1"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 2nd"
+json_path = "fields.optQuarter2"
+xml_key = "optQuarter2"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 3rd"
+json_path = "fields.optQuarter3"
+xml_key = "optQuarter3"
+[[sections.fields]]
+item = "4"
+label = "Amended Return? - Yes"
+json_path = "fields.AmendedRtn_1"
+xml_key = "AmendedRtn_1"
+[[sections.fields]]
+item = "4"
+label = "Amended Return? - No"
+json_path = "fields.AmendedRtn_2"
+xml_key = "AmendedRtn_2"
+[[sections.fields]]
+item = "5"
+label = "Alphanumeric Tax Code (ATC)"
+json_path = "fields.txtATC"
+xml_key = "txtATC"
+
+[[sections]]
+page = 1
+part = "part_i"
+title = "Part I – Background Information"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer Identification Number (TIN) - first 3 digits"
+json_path = "fields.txtTIN1"
+xml_key = "txtTIN1"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer Identification Number (TIN) - second 3 digits"
+json_path = "fields.txtTIN2"
+xml_key = "txtTIN2"
+[[sections.fields]]
+item = "6"
+label = "Taxpayer Identification Number (TIN) - third 3 digits"
+json_path = "fields.txtTIN3"
+xml_key = "txtTIN3"
+[[sections.fields]]
+item = "6"
+label = "Branch Code"
+json_path = "fields.txtBranchCode"
+xml_key = "txtBranchCode"
+[[sections.fields]]
+item = "7"
+label = "RDO Code"
+json_path = "fields.txtRDOCode"
+xml_key = "txtRDOCode"
+[[sections.fields]]
+item = "8"
+label = "Registered Name"
+json_path = "fields.txtTaxpayerName"
+xml_key = "txtTaxpayerName"
+[[sections.fields]]
+item = "9"
+label = "Registered Address"
+json_path = "fields.txtAddress"
+xml_key = "txtAddress"
+[[sections.fields]]
+item = "9A"
+label = "ZIP Code"
+json_path = "fields.txtZipCode"
+xml_key = "txtZipCode"
+[[sections.fields]]
+item = "10"
+label = "Contact Number"
+json_path = "fields.txtTelNum"
+xml_key = "txtTelNum"
+[[sections.fields]]
+item = "11"
+label = "Email Address"
+json_path = "fields.txtEmail"
+xml_key = "txtEmail"
+[[sections.fields]]
+item = "12"
+label = "Method of Deductions - Itemized"
+json_path = "fields.optItemizedDeductions"
+xml_key = "optItemizedDeductions"
+[[sections.fields]]
+item = "12"
+label = "Method of Deductions - Optional Standard Deduction"
+json_path = "fields.optOptionalStandardDeduction"
+xml_key = "optOptionalStandardDeduction"
+[[sections.fields]]
+item = "13"
+label = "Special Law/International Tax Treaty? - Yes"
+json_path = "fields.SpecialTax_1"
+xml_key = "SpecialTax_1"
+[[sections.fields]]
+item = "13"
+label = "Special Law/International Tax Treaty? - No"
+json_path = "fields.SpecialTax_2"
+xml_key = "SpecialTax_2"
+[[sections.fields]]
+item = "13A"
+label = "Special Law/International Tax Treaty details"
+json_path = "fields.txtSpecialTaxDetails"
+xml_key = "txtSpecialTaxDetails"
+
+[[sections]]
+page = 1
+part = "part_ii"
+title = "Part II – Total Tax Payable"
+[[sections.fields]]
+item = "14"
+label = "Income Tax Due – Regular/Normal Rate"
+json_path = "fields.txtTax14"
+xml_key = "txtTax14"
+[[sections.fields]]
+item = "15"
+label = "Less: Unexpired Excess of Prior Year’s MCIT over Regular/Normal Income Tax Rate"
+json_path = "fields.txtTax15"
+xml_key = "txtTax15"
+[[sections.fields]]
+item = "16"
+label = "Balance/Income Tax Still Due – Regular/Normal Rate"
+json_path = "fields.txtTax16"
+xml_key = "txtTax16"
+[[sections.fields]]
+item = "17"
+label = "Income Tax Due – Special Rate"
+json_path = "fields.txtTax17"
+xml_key = "txtTax17"
+[[sections.fields]]
+item = "18"
+label = "Aggregate Income Tax Due"
+json_path = "fields.txtTax18"
+xml_key = "txtTax18"
+[[sections.fields]]
+item = "19"
+label = "Total Tax Credits/Payments"
+json_path = "fields.txtTax19"
+xml_key = "txtTax19"
+[[sections.fields]]
+item = "20"
+label = "Net Tax Payable/(Overpayment)"
+json_path = "fields.txtTax20"
+xml_key = "txtTax20"
+[[sections.fields]]
+item = "21"
+label = "Surcharge"
+json_path = "fields.txtTax21"
+xml_key = "txtTax21"
+[[sections.fields]]
+item = "22"
+label = "Interest"
+json_path = "fields.txtTax22"
+xml_key = "txtTax22"
+[[sections.fields]]
+item = "23"
+label = "Compromise"
+json_path = "fields.txtTax23"
+xml_key = "txtTax23"
+[[sections.fields]]
+item = "24"
+label = "Total Penalties"
+json_path = "fields.txtTax24"
+xml_key = "txtTax24"
+[[sections.fields]]
+item = "25"
+label = "Total Amount Payable/(Overpayment)"
+json_path = "fields.txtTax25"
+xml_key = "txtTax25"
+[[sections.fields]]
+item = "26"
+label = "Number of attachments"
+json_path = "fields.txtSheets"
+xml_key = "txtSheets"
+
+[[sections]]
+page = 1
+part = "part_iii"
+title = "Part III – Details of Payment"
+[[sections.fields]]
+item = "27"
+label = "Cash/Bank Debit Memo - Amount"
+json_path = "fields.txtAmount27"
+xml_key = "txtAmount27"
+[[sections.fields]]
+item = "28"
+label = "Check - Amount"
+json_path = "fields.txtAmount28"
+xml_key = "txtAmount28"
+[[sections.fields]]
+item = "29"
+label = "Tax Debit Memo - Amount"
+json_path = "fields.txtAmount29"
+xml_key = "txtAmount29"
+[[sections.fields]]
+item = "30"
+label = "Others - Particulars"
+json_path = "fields.txtParticular30"
+xml_key = "txtParticular30"
+[[sections.fields]]
+item = "30"
+label = "Others - Amount"
+json_path = "fields.txtAmount30"
+xml_key = "txtAmount30"
+
+[[sections]]
+page = 2
+part = "part_iv_schedule_1"
+title = "Part IV – Schedule 1: Declaration this Quarter (Exempt/Special)"
+[[sections.fields]]
+item = "S1-1"
+label = "Sales/Receipts/Revenues/Fees"
+json_path = "fields.sched1_txtSales1"
+xml_key = "sched1:txtSales1"
+[[sections.fields]]
+item = "S1-2"
+label = "Less: Cost of Sales/Services"
+json_path = "fields.sched1_txtCost2"
+xml_key = "sched1:txtCost2"
+[[sections.fields]]
+item = "S1-3"
+label = "Gross Income from Operation"
+json_path = "fields.sched1_txtGross3"
+xml_key = "sched1:txtGross3"
+[[sections.fields]]
+item = "S1-4"
+label = "Non-Operating and Other Taxable Income"
+json_path = "fields.sched1_txtOtherIncome4"
+xml_key = "sched1:txtOtherIncome4"
+[[sections.fields]]
+item = "S1-5"
+label = "Total Gross Income"
+json_path = "fields.sched1_txtTotalGross5"
+xml_key = "sched1:txtTotalGross5"
+[[sections.fields]]
+item = "S1-6"
+label = "Less: Deductions"
+json_path = "fields.sched1_txtDeductions6"
+xml_key = "sched1:txtDeductions6"
+[[sections.fields]]
+item = "S1-7"
+label = "Taxable Income this Quarter"
+json_path = "fields.sched1_txtTaxable7"
+xml_key = "sched1:txtTaxable7"
+[[sections.fields]]
+item = "S1-8"
+label = "Taxable Income Previous Quarter/s"
+json_path = "fields.sched1_txtPrevious8"
+xml_key = "sched1:txtPrevious8"
+[[sections.fields]]
+item = "S1-9"
+label = "Total Taxable Income to Date"
+json_path = "fields.sched1_txtTotalTaxable9"
+xml_key = "sched1:txtTotalTaxable9"
+[[sections.fields]]
+item = "S1-10"
+label = "Applicable Income Tax Rate"
+json_path = "fields.sched1_txtRate10"
+xml_key = "sched1:txtRate10"
+[[sections.fields]]
+item = "S1-11"
+label = "Income Tax Due Other than MCIT"
+json_path = "fields.sched1_txtTaxDue11"
+xml_key = "sched1:txtTaxDue11"
+[[sections.fields]]
+item = "S1-12"
+label = "Share of Other Agencies"
+json_path = "fields.sched1_txtShare12"
+xml_key = "sched1:txtShare12"
+[[sections.fields]]
+item = "S1-13"
+label = "Net Income Tax Due to National Government"
+json_path = "fields.sched1_txtNetTax13"
+xml_key = "sched1:txtNetTax13"
+
+[[sections]]
+page = 2
+part = "part_iv_schedule_2"
+title = "Part IV – Schedule 2: Declaration this Quarter (Regular/Normal Rate)"
+[[sections.fields]]
+item = "S2-1"
+label = "Sales/Receipts/Revenues/Fees"
+json_path = "fields.sched2_txtSales1"
+xml_key = "sched2:txtSales1"
+[[sections.fields]]
+item = "S2-13"
+label = "Income Tax Due"
+json_path = "fields.sched2_txtTaxDue13"
+xml_key = "sched2:txtTaxDue13"
+
+[[sections]]
+page = 2
+part = "part_iv_schedule_3"
+title = "Part IV – Schedule 3: MCIT Tax for the Quarter/s"
+[[sections.fields]]
+item = "S3-1"
+label = "Gross Income Regular/Normal Rate - 1st Quarter"
+json_path = "fields.sched3_txtGross1"
+xml_key = "sched3:txtGross1"
+[[sections.fields]]
+item = "S3-2"
+label = "Gross Income Regular/Normal Rate - 2nd Quarter"
+json_path = "fields.sched3_txtGross2"
+xml_key = "sched3:txtGross2"
+[[sections.fields]]
+item = "S3-3"
+label = "Gross Income Regular/Normal Rate - 3rd Quarter"
+json_path = "fields.sched3_txtGross3"
+xml_key = "sched3:txtGross3"
+[[sections.fields]]
+item = "S3-4"
+label = "Total Gross Income"
+json_path = "fields.sched3_txtTotal4"
+xml_key = "sched3:txtTotal4"
+[[sections.fields]]
+item = "S3-5"
+label = "MCIT Rate"
+json_path = "fields.sched3_txtRate5"
+xml_key = "sched3:txtRate5"
+[[sections.fields]]
+item = "S3-6"
+label = "Minimum Corporate Income Tax"
+json_path = "fields.sched3_txtMcit6"
+xml_key = "sched3:txtMcit6"
+
+[[sections]]
+page = 2
+part = "part_iv_schedule_4"
+title = "Part IV – Schedule 4: Tax Credits/Payments"
+[[sections.fields]]
+item = "S4-1"
+label = "Prior Year’s Excess Credits"
+json_path = "fields.sched4_txtPriorYearCredits1"
+xml_key = "sched4:txtPriorYearCredits1"
+[[sections.fields]]
+item = "S4-2"
+label = "Tax payments for previous quarters other than MCIT"
+json_path = "fields.sched4_txtPreviousPayments2"
+xml_key = "sched4:txtPreviousPayments2"
+[[sections.fields]]
+item = "S4-3"
+label = "MCIT payments for previous quarters"
+json_path = "fields.sched4_txtMcitPayments3"
+xml_key = "sched4:txtMcitPayments3"
+[[sections.fields]]
+item = "S4-4"
+label = "Creditable Tax Withheld for previous quarters"
+json_path = "fields.sched4_txtCwtPrevious4"
+xml_key = "sched4:txtCwtPrevious4"
+[[sections.fields]]
+item = "S4-5"
+label = "Creditable Tax Withheld per BIR Form No. 2307 for this quarter"
+json_path = "fields.sched4_txtCwtCurrent5"
+xml_key = "sched4:txtCwtCurrent5"
+[[sections.fields]]
+item = "S4-6"
+label = "Tax paid in return previously filed"
+json_path = "fields.sched4_txtPriorReturnTax6"
+xml_key = "sched4:txtPriorReturnTax6"
+[[sections.fields]]
+item = "S4-7"
+label = "Total Tax Credits/Payments"
+json_path = "fields.sched4_txtTotal7"
+xml_key = "sched4:txtTotal7"

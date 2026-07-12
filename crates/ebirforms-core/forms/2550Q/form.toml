@@ -1,0 +1,467 @@
+code = "2550Q"
+version = "v2024"
+display_name = "Quarterly Value-Added Tax (VAT) Return"
+category = "vat"
+frequency = "quarterly"
+period_format = "MMYYYYQn"
+pdf_url = "https://bir-cdn.bir.gov.ph/BIR/pdf/2550Q%20%20April%202024%20ENCS_Final.pdf"
+remote_directory = "/2550Q/"
+filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}#{email}#.xml"
+requires_employees = false
+requires_expanded_withholding_agent = false
+requires_vat_registered = true
+
+[[sections]]
+page = 1
+part = "header"
+title = "Filing period and return flags"
+[[sections.fields]]
+item = "1"
+label = "Calendar Year filer"
+json_path = "fields.optCalendar"
+xml_key = "optCalendar"
+[[sections.fields]]
+item = "1"
+label = "Fiscal Year filer"
+json_path = "fields.optFiscal"
+xml_key = "optFiscal"
+[[sections.fields]]
+item = "2"
+label = "Year Ended (MM/YYYY)"
+json_path = "fields.txtYearEnded"
+xml_key = "txtYearEnded"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 1st"
+json_path = "fields.optQuarter1"
+xml_key = "optQuarter1"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 2nd"
+json_path = "fields.optQuarter2"
+xml_key = "optQuarter2"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 3rd"
+json_path = "fields.optQuarter3"
+xml_key = "optQuarter3"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 4th"
+json_path = "fields.optQuarter4"
+xml_key = "optQuarter4"
+[[sections.fields]]
+item = "4"
+label = "Return Period From (MM/DD/YYYY)"
+json_path = "fields.txtReturnPeriodFrom"
+xml_key = "txtReturnPeriodFrom"
+[[sections.fields]]
+item = "4"
+label = "Return Period To (MM/DD/YYYY)"
+json_path = "fields.txtReturnPeriodTo"
+xml_key = "txtReturnPeriodTo"
+[[sections.fields]]
+item = "5"
+label = "Amended Return? - Yes"
+json_path = "fields.AmendedRtn_1"
+xml_key = "AmendedRtn_1"
+[[sections.fields]]
+item = "5"
+label = "Amended Return? - No"
+json_path = "fields.AmendedRtn_2"
+xml_key = "AmendedRtn_2"
+[[sections.fields]]
+item = "6"
+label = "Short Period Return? - Yes"
+json_path = "fields.ShortPeriod_1"
+xml_key = "ShortPeriod_1"
+[[sections.fields]]
+item = "6"
+label = "Short Period Return? - No"
+json_path = "fields.ShortPeriod_2"
+xml_key = "ShortPeriod_2"
+
+[[sections]]
+page = 1
+part = "part_i"
+title = "Part I – Background Information"
+[[sections.fields]]
+item = "7"
+label = "Taxpayer Identification Number (TIN) - first 3 digits"
+json_path = "fields.txtTIN1"
+xml_key = "txtTIN1"
+[[sections.fields]]
+item = "7"
+label = "Taxpayer Identification Number (TIN) - second 3 digits"
+json_path = "fields.txtTIN2"
+xml_key = "txtTIN2"
+[[sections.fields]]
+item = "7"
+label = "Taxpayer Identification Number (TIN) - third 3 digits"
+json_path = "fields.txtTIN3"
+xml_key = "txtTIN3"
+[[sections.fields]]
+item = "7"
+label = "Branch Code"
+json_path = "fields.txtBranchCode"
+xml_key = "txtBranchCode"
+[[sections.fields]]
+item = "8"
+label = "RDO Code"
+json_path = "fields.txtRDOCode"
+xml_key = "txtRDOCode"
+[[sections.fields]]
+item = "9"
+label = "Taxpayer’s Name"
+json_path = "fields.txtTaxpayerName"
+xml_key = "txtTaxpayerName"
+[[sections.fields]]
+item = "10"
+label = "Registered Address"
+json_path = "fields.txtAddress"
+xml_key = "txtAddress"
+[[sections.fields]]
+item = "10A"
+label = "ZIP Code"
+json_path = "fields.txtZipCode"
+xml_key = "txtZipCode"
+[[sections.fields]]
+item = "11"
+label = "Contact Number"
+json_path = "fields.txtTelNum"
+xml_key = "txtTelNum"
+[[sections.fields]]
+item = "12"
+label = "Email Address"
+json_path = "fields.txtEmail"
+xml_key = "txtEmail"
+[[sections.fields]]
+item = "13"
+label = "Taxpayer Classification - Micro"
+json_path = "fields.optClassMicro"
+xml_key = "optClassMicro"
+[[sections.fields]]
+item = "13"
+label = "Taxpayer Classification - Small"
+json_path = "fields.optClassSmall"
+xml_key = "optClassSmall"
+[[sections.fields]]
+item = "13"
+label = "Taxpayer Classification - Medium"
+json_path = "fields.optClassMedium"
+xml_key = "optClassMedium"
+[[sections.fields]]
+item = "13"
+label = "Taxpayer Classification - Large"
+json_path = "fields.optClassLarge"
+xml_key = "optClassLarge"
+[[sections.fields]]
+item = "14"
+label = "Special Law or International Tax Treaty? - Yes"
+json_path = "fields.SpecialTax_1"
+xml_key = "SpecialTax_1"
+[[sections.fields]]
+item = "14"
+label = "Special Law or International Tax Treaty? - No"
+json_path = "fields.SpecialTax_2"
+xml_key = "SpecialTax_2"
+[[sections.fields]]
+item = "14A"
+label = "If yes, specify"
+json_path = "fields.txtSpecialTaxDetails"
+xml_key = "txtSpecialTaxDetails"
+
+[[sections]]
+page = 1
+part = "part_ii"
+title = "Part II – Total Tax Payable"
+[[sections.fields]]
+item = "15"
+label = "Net VAT Payable/(Excess Input Tax)"
+json_path = "fields.txtTax15"
+xml_key = "txtTax15"
+[[sections.fields]]
+item = "16"
+label = "Creditable VAT Withheld"
+json_path = "fields.txtTax16"
+xml_key = "txtTax16"
+[[sections.fields]]
+item = "17"
+label = "Advance VAT Payments"
+json_path = "fields.txtTax17"
+xml_key = "txtTax17"
+[[sections.fields]]
+item = "18"
+label = "VAT paid in return previously filed"
+json_path = "fields.txtTax18"
+xml_key = "txtTax18"
+[[sections.fields]]
+item = "19"
+label = "Other Credits/Payment - specify"
+json_path = "fields.txtOtherCredits19"
+xml_key = "txtOtherCredits19"
+[[sections.fields]]
+item = "19"
+label = "Other Credits/Payment - amount"
+json_path = "fields.txtTax19"
+xml_key = "txtTax19"
+[[sections.fields]]
+item = "20"
+label = "Total Tax Credits/Payment"
+json_path = "fields.txtTax20"
+xml_key = "txtTax20"
+[[sections.fields]]
+item = "21"
+label = "Tax Still Payable/(Excess Credits)"
+json_path = "fields.txtTax21"
+xml_key = "txtTax21"
+[[sections.fields]]
+item = "22"
+label = "Surcharge"
+json_path = "fields.txtTax22"
+xml_key = "txtTax22"
+[[sections.fields]]
+item = "23"
+label = "Interest"
+json_path = "fields.txtTax23"
+xml_key = "txtTax23"
+[[sections.fields]]
+item = "24"
+label = "Compromise"
+json_path = "fields.txtTax24"
+xml_key = "txtTax24"
+[[sections.fields]]
+item = "25"
+label = "Total Penalties"
+json_path = "fields.txtTax25"
+xml_key = "txtTax25"
+[[sections.fields]]
+item = "26"
+label = "Total Amount Payable/(Excess Credits)"
+json_path = "fields.txtTax26"
+xml_key = "txtTax26"
+
+[[sections]]
+page = 1
+part = "part_iii"
+title = "Part III – Details of Payment"
+[[sections.fields]]
+item = "27"
+label = "Cash/Bank Debit Advice - Amount"
+json_path = "fields.txtAmount27"
+xml_key = "txtAmount27"
+[[sections.fields]]
+item = "28"
+label = "Check - Amount"
+json_path = "fields.txtAmount28"
+xml_key = "txtAmount28"
+[[sections.fields]]
+item = "29"
+label = "Tax Debit Memo - Amount"
+json_path = "fields.txtAmount29"
+xml_key = "txtAmount29"
+[[sections.fields]]
+item = "30"
+label = "Others - Particulars"
+json_path = "fields.txtParticular30"
+xml_key = "txtParticular30"
+[[sections.fields]]
+item = "30"
+label = "Others - Amount"
+json_path = "fields.txtAmount30"
+xml_key = "txtAmount30"
+
+[[sections]]
+page = 2
+part = "part_iv"
+title = "Part IV – Details of VAT Computation"
+[[sections.fields]]
+item = "31A"
+label = "VATable Sales - Sales for the Quarter"
+json_path = "fields.txtSales31A"
+xml_key = "txtSales31A"
+[[sections.fields]]
+item = "31B"
+label = "VATable Sales - Output Tax for the Quarter"
+json_path = "fields.txtTax31B"
+xml_key = "txtTax31B"
+[[sections.fields]]
+item = "32A"
+label = "Zero-Rated Sales"
+json_path = "fields.txtSales32A"
+xml_key = "txtSales32A"
+[[sections.fields]]
+item = "33A"
+label = "Exempt Sales"
+json_path = "fields.txtSales33A"
+xml_key = "txtSales33A"
+[[sections.fields]]
+item = "34A"
+label = "Total Sales"
+json_path = "fields.txtSales34A"
+xml_key = "txtSales34A"
+[[sections.fields]]
+item = "34B"
+label = "Output Tax Due"
+json_path = "fields.txtTax34B"
+xml_key = "txtTax34B"
+[[sections.fields]]
+item = "35B"
+label = "Output VAT on Uncollected Receivables"
+json_path = "fields.txtTax35B"
+xml_key = "txtTax35B"
+[[sections.fields]]
+item = "36B"
+label = "Output VAT on Recovered Uncollected Receivables"
+json_path = "fields.txtTax36B"
+xml_key = "txtTax36B"
+[[sections.fields]]
+item = "37B"
+label = "Total Adjusted Output Tax Due"
+json_path = "fields.txtTax37B"
+xml_key = "txtTax37B"
+[[sections.fields]]
+item = "38B"
+label = "Input Tax Carried Over from Previous Quarter"
+json_path = "fields.txtTax38B"
+xml_key = "txtTax38B"
+[[sections.fields]]
+item = "39B"
+label = "Input Tax Deferred on Capital Goods"
+json_path = "fields.txtTax39B"
+xml_key = "txtTax39B"
+[[sections.fields]]
+item = "40B"
+label = "Transitional Input Tax"
+json_path = "fields.txtTax40B"
+xml_key = "txtTax40B"
+[[sections.fields]]
+item = "41B"
+label = "Presumptive Input Tax"
+json_path = "fields.txtTax41B"
+xml_key = "txtTax41B"
+[[sections.fields]]
+item = "42B"
+label = "Others - input tax"
+json_path = "fields.txtTax42B"
+xml_key = "txtTax42B"
+[[sections.fields]]
+item = "43B"
+label = "Total Allowable Input Tax before current purchases"
+json_path = "fields.txtTax43B"
+xml_key = "txtTax43B"
+[[sections.fields]]
+item = "44A"
+label = "Domestic Purchases"
+json_path = "fields.txtPurchases44A"
+xml_key = "txtPurchases44A"
+[[sections.fields]]
+item = "44B"
+label = "Domestic Purchases - Input Tax"
+json_path = "fields.txtTax44B"
+xml_key = "txtTax44B"
+[[sections.fields]]
+item = "45A"
+label = "Services Rendered by Non-Residents"
+json_path = "fields.txtPurchases45A"
+xml_key = "txtPurchases45A"
+[[sections.fields]]
+item = "45B"
+label = "Services Rendered by Non-Residents - Input Tax"
+json_path = "fields.txtTax45B"
+xml_key = "txtTax45B"
+[[sections.fields]]
+item = "46A"
+label = "Importations"
+json_path = "fields.txtPurchases46A"
+xml_key = "txtPurchases46A"
+[[sections.fields]]
+item = "46B"
+label = "Importations - Input Tax"
+json_path = "fields.txtTax46B"
+xml_key = "txtTax46B"
+[[sections.fields]]
+item = "47A"
+label = "Other Purchases"
+json_path = "fields.txtPurchases47A"
+xml_key = "txtPurchases47A"
+[[sections.fields]]
+item = "47B"
+label = "Other Purchases - Input Tax"
+json_path = "fields.txtTax47B"
+xml_key = "txtTax47B"
+[[sections.fields]]
+item = "48A"
+label = "Domestic Purchases with No Input Tax"
+json_path = "fields.txtPurchases48A"
+xml_key = "txtPurchases48A"
+[[sections.fields]]
+item = "49A"
+label = "VAT-Exempt Importations"
+json_path = "fields.txtPurchases49A"
+xml_key = "txtPurchases49A"
+[[sections.fields]]
+item = "50A"
+label = "Total Current Purchases"
+json_path = "fields.txtPurchases50A"
+xml_key = "txtPurchases50A"
+[[sections.fields]]
+item = "50B"
+label = "Total Current Purchases/Input Tax"
+json_path = "fields.txtTax50B"
+xml_key = "txtTax50B"
+[[sections.fields]]
+item = "51B"
+label = "Total Available Input Tax"
+json_path = "fields.txtTax51B"
+xml_key = "txtTax51B"
+[[sections.fields]]
+item = "52B"
+label = "Deferred input tax on capital goods"
+json_path = "fields.txtTax52B"
+xml_key = "txtTax52B"
+[[sections.fields]]
+item = "53B"
+label = "Input Tax Attributable to VAT Exempt Sales"
+json_path = "fields.txtTax53B"
+xml_key = "txtTax53B"
+[[sections.fields]]
+item = "54B"
+label = "VAT Refund/TCC Claimed"
+json_path = "fields.txtTax54B"
+xml_key = "txtTax54B"
+[[sections.fields]]
+item = "55B"
+label = "Input VAT on Unpaid Payables"
+json_path = "fields.txtTax55B"
+xml_key = "txtTax55B"
+[[sections.fields]]
+item = "56B"
+label = "Other Deductions"
+json_path = "fields.txtTax56B"
+xml_key = "txtTax56B"
+[[sections.fields]]
+item = "57B"
+label = "Total Deductions from Input Tax"
+json_path = "fields.txtTax57B"
+xml_key = "txtTax57B"
+[[sections.fields]]
+item = "58B"
+label = "Input VAT on Settled Unpaid Payables Previously Deducted"
+json_path = "fields.txtTax58B"
+xml_key = "txtTax58B"
+[[sections.fields]]
+item = "59B"
+label = "Adjusted Deductions from Input Tax"
+json_path = "fields.txtTax59B"
+xml_key = "txtTax59B"
+[[sections.fields]]
+item = "60B"
+label = "Total Allowable Input Tax"
+json_path = "fields.txtTax60B"
+xml_key = "txtTax60B"
+[[sections.fields]]
+item = "61B"
+label = "Net VAT Payable/(Excess Input Tax)"
+json_path = "fields.txtTax61B"
+xml_key = "txtTax61B"

@@ -12,7 +12,7 @@ ALv2 Future License (`FSL-1.1-ALv2`). See `LICENSE.md`.
 Implemented programmatic-submission MVP slices from `docs/architecture/optimized-programmatic-submission-plan.md`:
 
 - `ebirforms-core::crypto::{encrypt_payload,decrypt_payload}` for the confirmed zlib + DCPcrypt-compatible AES-256 transform.
-- `ebirforms-core::form` for template-first 1601C rendering from JSON using bundled `form.toml`, `mapping.toml`, and `template.xml`.
+- `ebirforms-core::form` for template-first rendering from JSON using bundled `form.toml`, `mapping.toml`, `template.xml`, the existing 1601C fixture, and PDF-derived physical layouts for new BIR forms 1702Q, 0619E, 2000, 1601EQ, and 2550Q.
 - `ebirforms-core::package` for JSON → plaintext → encrypted upload artifact plus manifest, hashes, remote path, and filename.
 - `ebirforms-core::transport` for safe dry-run submission receipts, idempotency-key duplicate protection, and a gated live SFTP abstraction.
 - `ebirforms-core::submission` for durable JSON submission records, audit status, pre-network idempotency persistence, and `Uncertain` duplicate-risk blocking.
@@ -20,7 +20,7 @@ Implemented programmatic-submission MVP slices from `docs/architecture/optimized
 - `ebirforms-core::profile` for desktop-ready taxpayer profiles, theme settings, and a basic local master-PIN verifier.
 - `ebirforms-core::receipt` for fixture-proven receipt parsing/matching and local directory polling that confirms stored submissions without resubmitting.
 - `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, queue commands (`queue`, `run-queue`, `jobs`), local IPC server (`serve`), profile/settings commands, and receipt commands (`receipt-match`, `receipt-poll`).
-- Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus private captured fixture tests.
+- Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus synthetic PDF-derived smoke fixtures for 1702Q, 0619E, 2000, 1601EQ, and 2550Q; private captured fixture tests remain local-only.
 
 ## Knowledge handoff
 
@@ -60,6 +60,10 @@ cargo run -p ebirforms-cli -- decrypt fixtures/private/1601c/encrypted-v2.xml /t
 
 # Template-first MVP flow
 cargo run -p ebirforms-cli -- render --form 1601C --input tests/fixtures/1601C/input.json --out /tmp/plaintext.xml
+# New PDF-derived forms also render/package from their synthetic fixtures:
+for form in 0619E 1601EQ 1702Q 2000 2550Q; do
+  cargo run -p ebirforms-cli -- render --form "$form" --input "tests/fixtures/$form/input.json" --out "/tmp/$form.xml"
+done
 cargo run -p ebirforms-cli -- package --form 1601C --input tests/fixtures/1601C/input.json --out /tmp/upload.xml --manifest /tmp/manifest.json
 cargo run -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/official_encrypted.xml
 cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-submissions.json

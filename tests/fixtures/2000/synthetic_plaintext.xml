@@ -1,0 +1,49 @@
+<?xml version='1.0'?>	
+            <div>frm2000:txtMonthDate=06/30/2026frm2000:txtMonthDate=</div>	
+            <div>frm2000:AmendedRtn_1=truefrm2000:AmendedRtn_1=</div>	
+            <div>frm2000:AmendedRtn_2=falsefrm2000:AmendedRtn_2=</div>	
+            <div>frm2000:txtSheets=frm2000:txtSheets=</div>	
+            <div>frm2000:txtTIN1=123frm2000:txtTIN1=</div>	
+            <div>frm2000:txtTIN2=456frm2000:txtTIN2=</div>	
+            <div>frm2000:txtTIN3=789frm2000:txtTIN3=</div>	
+            <div>frm2000:txtBranchCode=00000frm2000:txtBranchCode=</div>	
+            <div>frm2000:txtRDOCode=044frm2000:txtRDOCode=</div>	
+            <div>frm2000:txtTaxpayerName=AUTHORIZED TEST TAXPAYERfrm2000:txtTaxpayerName=</div>	
+            <div>frm2000:txtAddress=REDACTED TEST ADDRESSfrm2000:txtAddress=</div>	
+            <div>frm2000:txtZipCode=0000frm2000:txtZipCode=</div>	
+            <div>frm2000:txtTelNum=frm2000:txtTelNum=</div>	
+            <div>frm2000:txtEmail=authorized@example.testfrm2000:txtEmail=</div>	
+            <div>frm2000:optCreditor=truefrm2000:optCreditor=</div>	
+            <div>frm2000:optDebtor=falsefrm2000:optDebtor=</div>	
+            <div>frm2000:optOtherPartyNone=falsefrm2000:optOtherPartyNone=</div>	
+            <div>frm2000:txtOtherPartyName=AUTHORIZED TEST TAXPAYERfrm2000:txtOtherPartyName=</div>	
+            <div>frm2000:txtOtherPartyTin=frm2000:txtOtherPartyTin=</div>	
+            <div>frm2000:optEdstSystem=truefrm2000:optEdstSystem=</div>	
+            <div>frm2000:optConstructiveAffixture=falsefrm2000:optConstructiveAffixture=</div>	
+            <div>frm2000:optLooseStamps=falsefrm2000:optLooseStamps=</div>	
+            <div>frm2000:txtTax14=06/30/2026frm2000:txtTax14=</div>	
+            <div>frm2000:txtTax15A=0.00frm2000:txtTax15A=</div>	
+            <div>frm2000:txtTax15B=0.00frm2000:txtTax15B=</div>	
+            <div>frm2000:txtTax15C=06/30/2026frm2000:txtTax15C=</div>	
+            <div>frm2000:txtTax15D=0.00frm2000:txtTax15D=</div>	
+            <div>frm2000:txtTax16=0.00frm2000:txtTax16=</div>	
+            <div>frm2000:txtTax17A=0.00frm2000:txtTax17A=</div>	
+            <div>frm2000:txtTax17B=0.00frm2000:txtTax17B=</div>	
+            <div>frm2000:txtTax17C=0.00frm2000:txtTax17C=</div>	
+            <div>frm2000:txtTax17D=0.00frm2000:txtTax17D=</div>	
+            <div>frm2000:txtTax18=0.00frm2000:txtTax18=</div>	
+            <div>frm2000:txtTax19=06/30/2026frm2000:txtTax19=</div>	
+            <div>frm2000:txtAmount20=0.00frm2000:txtAmount20=</div>	
+            <div>frm2000:txtAmount21=0.00frm2000:txtAmount21=</div>	
+            <div>frm2000:txtAmount22=0.00frm2000:txtAmount22=</div>	
+            <div>frm2000:txtParticular23=frm2000:txtParticular23=</div>	
+            <div>frm2000:txtAmount23=0.00frm2000:txtAmount23=</div>	
+            <div>frm2000:sched1:txtATC1=WC160frm2000:sched1:txtATC1=</div>	
+            <div>frm2000:sched1:txtTaxBase1=0.00frm2000:sched1:txtTaxBase1=</div>	
+            <div>frm2000:sched1:txtTaxRate1=0.00frm2000:sched1:txtTaxRate1=</div>	
+            <div>frm2000:sched1:txtTaxDue1=0.00frm2000:sched1:txtTaxDue1=</div>	
+            <div>frm2000:sched1:txtTotalTaxDue=0.00frm2000:sched1:txtTotalTaxDue=</div>	
+            <div>frm2000:sched2:txtTotalPayments=0.00frm2000:sched2:txtTotalPayments=</div>	
+            <div>frm2000:sched3:txtTotalAdvancePayments=0.00frm2000:sched3:txtTotalAdvancePayments=</div>	
+            <div>frm2000:sched4:txtTotalRemittance=0.00frm2000:sched4:txtTotalRemittance=</div>	
+            All Rights Reserved BIR synthetic v2018

@@ -60,7 +60,21 @@ pub fn build_submission_package(
             reason: "must be between 1 and 12".to_string(),
         });
     }
-    let period_mm_yyyy = format!("{month:02}{year:04}");
+    let quarter = input
+        .pointer("/return/period/quarter")
+        .and_then(|v| v.as_u64())
+        .unwrap_or_else(|| ((month - 1) / 3) + 1);
+    if !(1..=4).contains(&quarter) {
+        return Err(PackageError::InvalidInput {
+            field: "return.period.quarter",
+            reason: "must be between 1 and 4".to_string(),
+        });
+    }
+    let period = match definition.metadata.period_format.as_str() {
+        "YYYYQn" => format!("{year:04}Q{quarter}"),
+        "MMYYYYQn" => format!("{month:02}{year:04}Q{quarter}"),
+        _ => format!("{month:02}{year:04}"),
+    };
     let amendment_suffix = input
         .pointer("/return/amendment_number")
         .and_then(|v| v.as_u64())
@@ -81,7 +95,8 @@ pub fn build_submission_package(
         .filename_pattern
         .replace("{tin}", &normalized_tin)
         .replace("{form_code}", &definition.metadata.code)
-        .replace("{period_mmYYYY}", &period_mm_yyyy)
+        .replace("{period_mmYYYY}", &period)
+        .replace("{period}", &period)
         .replace("{amendment_suffix}", &amendment_suffix)
         .replace("{email}", &email);
     let remote_path = format!("{}{}", definition.metadata.remote_directory, filename);
@@ -95,7 +110,7 @@ pub fn build_submission_package(
         plaintext_sha256: sha256_hex(&plaintext),
         payload_sha256: sha256_hex(&payload),
         payload_size: payload.len(),
-        period_mm_yyyy,
+        period_mm_yyyy: period,
         profile_id,
         generated_unix_seconds: SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -179,7 +194,7 @@ mod tests {
         );
         assert_eq!(
             package.manifest.remote_path,
-            format!("/1601C/{}", expected_filename.trim())
+            format!("/1601Cv2018/{}", expected_filename.trim())
         );
     }
 }
