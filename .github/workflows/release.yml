@@ -1,0 +1,293 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: Additional release notes appended to the generated notes
+        required: false
+        type: string
+      embed_production_sftp_defaults:
+        description: Embed production BIR SFTP defaults from the GitHub production environment into release binaries
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Bump patch version and tag
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bump patch version
+        id: bump
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_version="$(python3 - <<'PY'
+          import re
+          from pathlib import Path
+          text = Path('crates/ebirforms-cli/Cargo.toml').read_text()
+          match = re.search(r'^version\s*=\s*"(\d+)\.(\d+)\.(\d+)"', text, re.M)
+          if not match:
+              raise SystemExit('Could not find crates/ebirforms-cli package version')
+          print(match.group(1) + '.' + match.group(2) + '.' + match.group(3))
+          PY
+          )"
+
+          IFS=. read -r major minor patch <<<"$current_version"
+          next_version="$major.$minor.$((patch + 1))"
+          tag="v$next_version"
+
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "Tag $tag already exists" >&2
+            exit 1
+          fi
+
+          python3 - <<PY
+          import json
+          import re
+          from pathlib import Path
+
+          version = "$next_version"
+          toml_files = [
+              Path('crates/ebirforms-cli/Cargo.toml'),
+              Path('crates/ebirforms-core/Cargo.toml'),
+              Path('apps/desktop/src-tauri/Cargo.toml'),
+              Path('apps/desktop/frontend/Cargo.toml'),
+          ]
+          for path in toml_files:
+              text = path.read_text()
+              text, count = re.subn(r'(?m)^version\s*=\s*"\d+\.\d+\.\d+"', f'version = "{version}"', text, count=1)
+              if count != 1:
+                  raise SystemExit(f'Could not update version in {path}')
+              path.write_text(text)
+
+          json_files = [
+              Path('apps/desktop/package.json'),
+              Path('apps/desktop/frontend/package.json'),
+              Path('apps/desktop/src-tauri/tauri.conf.json'),
+          ]
+          for path in json_files:
+              data = json.loads(path.read_text())
+              if 'version' not in data:
+                  raise SystemExit(f'Could not update version in {path}')
+              data['version'] = version
+              path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+          cargo generate-lockfile
+          cargo generate-lockfile --manifest-path apps/desktop/src-tauri/Cargo.toml
+          cargo generate-lockfile --manifest-path apps/desktop/frontend/Cargo.toml
+          npm --prefix apps/desktop install --package-lock-only --ignore-scripts
+          npm --prefix apps/desktop/frontend install --package-lock-only --ignore-scripts
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            Cargo.lock \
+            crates/ebirforms-cli/Cargo.toml \
+            crates/ebirforms-core/Cargo.toml \
+            apps/desktop/package.json \
+            apps/desktop/package-lock.json \
+            apps/desktop/frontend/Cargo.toml \
+            apps/desktop/frontend/Cargo.lock \
+            apps/desktop/frontend/package.json \
+            apps/desktop/frontend/package-lock.json \
+            apps/desktop/src-tauri/Cargo.toml \
+            apps/desktop/src-tauri/Cargo.lock \
+            apps/desktop/src-tauri/tauri.conf.json
+
+          git commit -m "Release $tag"
+          git tag -a "$tag" -m "Release $tag"
+          git push origin HEAD:main
+          git push origin "$tag"
+
+          echo "version=$next_version" >>"$GITHUB_OUTPUT"
+          echo "tag=$tag" >>"$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.platform }} CLI and desktop app
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    environment: production
+    env:
+      BIR_PRODUCTION_SFTP_HOST: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_HOST || vars.BIR_SFTP_HOST || secrets.BIR_PRODUCTION_SFTP_HOST || secrets.BIR_SFTP_HOST) || '' }}
+      BIR_PRODUCTION_SFTP_PORT: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_PORT || vars.BIR_SFTP_PORT || secrets.BIR_PRODUCTION_SFTP_PORT || secrets.BIR_SFTP_PORT) || '' }}
+      BIR_PRODUCTION_SFTP_USERNAME: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_USERNAME || vars.BIR_SFTP_USERNAME || secrets.BIR_PRODUCTION_SFTP_USERNAME || secrets.BIR_SFTP_USERNAME) || '' }}
+      BIR_PRODUCTION_SFTP_PASSWORD: ${{ inputs.embed_production_sftp_defaults && (secrets.BIR_PRODUCTION_SFTP_PASSWORD || secrets.BIR_SFTP_PASSWORD) || '' }}
+      BIR_PRODUCTION_SFTP_PRIVATE_KEY: ${{ inputs.embed_production_sftp_defaults && (secrets.BIR_PRODUCTION_SFTP_PRIVATE_KEY || secrets.BIR_SFTP_PRIVATE_KEY) || '' }}
+      BIR_PRODUCTION_SFTP_KNOWN_HOSTS: ${{ inputs.embed_production_sftp_defaults && (vars.BIR_PRODUCTION_SFTP_KNOWN_HOSTS || vars.BIR_SFTP_KNOWN_HOSTS || secrets.BIR_PRODUCTION_SFTP_KNOWN_HOSTS || secrets.BIR_SFTP_KNOWN_HOSTS) || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x86_64
+            cli_binary: target/release/ebirforms-cli
+            cli_asset: ebirforms-cli-linux-x86_64
+          - os: windows-latest
+            platform: windows-x86_64
+            cli_binary: target/release/ebirforms-cli.exe
+            cli_asset: ebirforms-cli-windows-x86_64.exe
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            rpm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.88.0
+          targets: wasm32-unknown-unknown
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/desktop/package-lock.json
+            apps/desktop/frontend/package-lock.json
+
+      - name: Set up mise for desktop helper scripts
+        uses: jdx/mise-action@v2
+        with:
+          install: false
+          cache: true
+
+      - name: Build CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo build --release -p ebirforms-cli
+          mkdir -p dist
+          cp "${{ matrix.cli_binary }}" "dist/${{ matrix.cli_asset }}"
+
+      - name: Build desktop app
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd apps/desktop
+          npm ci
+          npm --prefix frontend ci
+          npx tauri build
+
+      - name: Collect desktop bundles
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist/desktop-${{ matrix.platform }}
+          bundle_dir="apps/desktop/src-tauri/target/release/bundle"
+          if [ ! -d "$bundle_dir" ]; then
+            echo "Expected bundle directory not found: $bundle_dir" >&2
+            exit 1
+          fi
+          find "$bundle_dir" -type f \( \
+            -name '*.AppImage' -o \
+            -name '*.deb' -o \
+            -name '*.rpm' -o \
+            -name '*.msi' -o \
+            -name '*.exe' -o \
+            -name '*.zip' \
+          \) -print -exec cp {} "dist/desktop-${{ matrix.platform }}/" \;
+          if ! find "dist/desktop-${{ matrix.platform }}" -type f | grep -q .; then
+            echo "No desktop bundle artifacts were collected" >&2
+            find "$bundle_dir" -maxdepth 5 -type f -print >&2
+            exit 1
+          fi
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum >"dist/SHA256SUMS-${{ matrix.platform }}.txt"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/**
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+          merge-multiple: true
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          NOTES: ${{ inputs.notes }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          body="Release $TAG"
+          body+=$'\n\nArtifacts include Windows and Linux CLI binaries plus Windows and Linux desktop app bundles. SHA-256 checksum files are attached.'
+          if [ -n "${NOTES:-}" ]; then
+            body+=$'\n\n'
+            body+="$NOTES"
+          fi
+          if [ "${{ inputs.embed_production_sftp_defaults }}" = "true" ]; then
+            body+=$'\n\nProduction BIR SFTP defaults were embedded at build time from the GitHub production environment.'
+          fi
+
+          mapfile -d '' assets < <(find release-artifacts -type f -print0 | sort -z)
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "No release assets found" >&2
+            exit 1
+          fi
+
+          gh release create "$TAG" \
+            "${assets[@]}" \
+            --verify-tag \
+            --title "$TAG" \
+            --notes "$body"
