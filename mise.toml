@@ -1,0 +1,39 @@
+[tools]
+rust = "1.75.0"
+node = "22"
+
+[tasks.test]
+description = "Run the Rust test suite"
+run = "cargo test"
+
+[tasks.build]
+description = "Build the eBIRForms CLI release binary"
+run = "cargo build --release -p ebirforms-cli"
+
+[tasks.clean]
+description = "Remove Cargo build outputs"
+run = "cargo clean"
+
+[tasks.render-sample]
+description = "Render the bundled synthetic 1601C fixture to /tmp/plaintext.xml"
+run = "cargo run -p ebirforms-cli -- render --form 1601C --input tests/fixtures/1601C/input.json --out /tmp/plaintext.xml"
+
+[tasks.package-sample]
+description = "Package the bundled synthetic 1601C fixture to /tmp/upload.xml and /tmp/manifest.json"
+run = "cargo run -p ebirforms-cli -- package --form 1601C --input tests/fixtures/1601C/input.json --out /tmp/upload.xml --manifest /tmp/manifest.json"
+
+[tasks.desktop-dev]
+description = "Run the Tauri + Leptos desktop app in development mode"
+run = "mise x rust@1.88.0 node@22 -- sh -lc 'cd apps/desktop && npm install && npm --prefix frontend install && npx tauri dev'"
+
+[tasks.desktop-check]
+description = "Check the Leptos frontend and Tauri desktop backend"
+run = [
+  "mise x node@22 -- npm --prefix apps/desktop/frontend install",
+  "mise x rust@1.88.0 node@22 -- sh -lc 'cd apps/desktop/frontend && ../scripts/ensure-trunk.sh build'",
+  "mise x rust@1.88.0 node@22 -- cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml",
+]
+
+[tasks.desktop-build]
+description = "Build the Tauri + Leptos desktop app"
+run = "mise x rust@1.88.0 node@22 -- sh -lc 'cd apps/desktop && npm install && npm --prefix frontend install && npx tauri build'"

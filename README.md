@@ -22,6 +22,28 @@ Implemented programmatic-submission MVP slices from `docs/architecture/optimized
 - `ebirforms-cli` commands: `encrypt`, `decrypt`, `render`, `package`, `diff-fixture`, safe-by-default `submit`, queue commands (`queue`, `run-queue`, `jobs`), local IPC server (`serve`), profile/settings commands, and receipt commands (`receipt-match`, `receipt-poll`).
 - Public redacted 1601C smoke fixtures under `tests/fixtures/1601C/` plus synthetic PDF-derived smoke fixtures for 1702Q, 0619E, 2000, 1601EQ, and 2550Q; private captured fixture tests remain local-only.
 
+## Desktop app
+
+A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the Rust core through Tauri commands and provides a focused sidebar with `Dashboard`, `Profiles`, and `Settings`. The dashboard contains a Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; it requires a saved active taxpayer profile before opening a form.
+
+![eBIRForms Desktop dashboard running on Linux](docs/assets/desktop-linux-dashboard.png)
+
+Build and check commands from the OSS desktop branch are preserved through `mise.toml`:
+
+```bash
+mise trust && mise install
+mise run desktop-check
+mise run desktop-build
+```
+
+Development command:
+
+```bash
+mise run desktop-dev
+```
+
+A fuller presenter walkthrough lives in [`docs/desktop-tax-form-flow-demo-script.md`](docs/desktop-tax-form-flow-demo-script.md).
+
 ## Knowledge handoff
 
 See:

@@ -5,3 +5,10 @@
 # Captured taxpayer fixtures may contain real PII. Keep them local/private.
 /fixtures/private/
 /.ebirforms/
+/dist/
+/release-artifacts/
+node_modules/
+apps/**/node_modules/
+apps/**/dist/
+apps/**/target/
+apps/desktop/src-tauri/target/

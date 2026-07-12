@@ -1,0 +1,15 @@
+{
+  "name": "ebirforms-desktop-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "trunk serve --address 127.0.0.1 --port 1420",
+    "build": "trunk build",
+    "check": "trunk build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0"
+  },
+  "devDependencies": {}
+}

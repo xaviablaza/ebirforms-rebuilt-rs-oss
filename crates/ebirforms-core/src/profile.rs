@@ -172,7 +172,7 @@ impl AppStateStore {
     }
 
     pub fn set_master_pin(&self, pin: &str) -> Result<AppSettings, ProfileError> {
-        if pin.len() < 4 {
+        if pin.len() != 4 || !pin.chars().all(|ch| ch.is_ascii_digit()) {
             return Err(ProfileError::InvalidPin);
         }
         let mut state = self.load()?;
