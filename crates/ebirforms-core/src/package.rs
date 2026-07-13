@@ -180,7 +180,8 @@ mod tests {
             fs::read_to_string(fixture_dir().join("synthetic_filename.txt")).unwrap();
 
         let package = build_submission_package("1601C", &input).expect("package fixture");
-        let decrypted = crate::crypto::decrypt_payload(&package.payload).expect("decrypt package payload");
+        let decrypted =
+            crate::crypto::decrypt_payload(&package.payload).expect("decrypt package payload");
 
         assert_eq!(decrypted, package.plaintext);
         assert!(String::from_utf8_lossy(&package.plaintext).contains("AUTHORIZED TEST TAXPAYER"));
