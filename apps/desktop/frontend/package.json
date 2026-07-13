@@ -1,7 +1,7 @@
 {
   "name": "ebirforms-desktop-frontend",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "scripts": {
     "dev": "trunk serve --address 127.0.0.1 --port 1420",
