@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TransportError {
-    #[error("live SFTP transport requires configured BIR_SFTP_* or FILING_SFTP_* environment variables, or embedded BIR_PRODUCTION_SFTP_* defaults")]
+    #[error("live SFTP transport requires configured BIR_SFTP_* or FILING_SFTP_* environment variables, or embedded build-time SFTP defaults")]
     MissingLiveConfig,
     #[error("submission with idempotency key `{0}` already exists; refusing duplicate upload")]
     DuplicateRisk(String),
@@ -118,24 +118,100 @@ impl SftpConfig {
     }
 
     fn from_build_time_defaults() -> Option<Self> {
-        let host = option_env!("BIR_PRODUCTION_SFTP_HOST")?;
-        let username = option_env!("BIR_PRODUCTION_SFTP_USERNAME")?;
-        let password = option_env!("BIR_PRODUCTION_SFTP_PASSWORD");
-        let private_key = option_env!("BIR_PRODUCTION_SFTP_PRIVATE_KEY").map(PathBuf::from);
+        let host = build_time_first(&[
+            "BIR_SFTP_HOST",
+            "FILING_SFTP_HOST",
+            "BIR_PRODUCTION_SFTP_HOST",
+        ])?;
+        let username = build_time_first(&[
+            "BIR_SFTP_USERNAME",
+            "FILING_SFTP_USERNAME",
+            "BIR_PRODUCTION_SFTP_USERNAME",
+        ])?;
+        let password = build_time_first(&[
+            "BIR_SFTP_PASSWORD",
+            "FILING_SFTP_PASSWORD",
+            "BIR_PRODUCTION_SFTP_PASSWORD",
+        ]);
+        let private_key = build_time_first(&[
+            "BIR_SFTP_PRIVATE_KEY",
+            "FILING_SFTP_PRIVATE_KEY",
+            "BIR_PRODUCTION_SFTP_PRIVATE_KEY",
+        ])
+        .map(PathBuf::from);
         if password.is_none() && private_key.is_none() {
             return None;
         }
         Some(Self {
-            host: host.to_string(),
-            port: option_env!("BIR_PRODUCTION_SFTP_PORT")
-                .and_then(|value| value.parse().ok())
-                .unwrap_or(23),
-            username: username.to_string(),
-            password: password.map(ToOwned::to_owned),
+            host,
+            port: build_time_first(&[
+                "BIR_SFTP_PORT",
+                "FILING_SFTP_PORT",
+                "BIR_PRODUCTION_SFTP_PORT",
+            ])
+            .as_deref()
+            .and_then(|value| value.parse().ok())
+            .unwrap_or(23),
+            username,
+            password,
             private_key,
-            known_hosts: option_env!("BIR_PRODUCTION_SFTP_KNOWN_HOSTS").map(PathBuf::from),
+            known_hosts: build_time_first(&[
+                "BIR_SFTP_KNOWN_HOSTS",
+                "FILING_SFTP_KNOWN_HOSTS",
+                "BIR_PRODUCTION_SFTP_KNOWN_HOSTS",
+            ])
+            .map(PathBuf::from),
         })
     }
+}
+
+fn build_time_first(names: &[&str]) -> Option<String> {
+    names
+        .iter()
+        .find_map(|name| embedded_build_time_env(name))
+        .filter(|value| !value.is_empty())
+}
+
+fn embedded_build_time_env(name: &str) -> Option<String> {
+    embedded_bir_sftp_env(name).or_else(|| embedded_production_sftp_env(name))
+}
+
+#[cfg(feature = "embed-bir-sftp-secrets")]
+fn embedded_bir_sftp_env(name: &str) -> Option<String> {
+    match name {
+        "BIR_SFTP_HOST" => option_env!("BIR_SFTP_HOST"),
+        "BIR_SFTP_PORT" => option_env!("BIR_SFTP_PORT"),
+        "BIR_SFTP_USERNAME" => option_env!("BIR_SFTP_USERNAME"),
+        "BIR_SFTP_PASSWORD" => option_env!("BIR_SFTP_PASSWORD"),
+        "BIR_SFTP_PRIVATE_KEY" => option_env!("BIR_SFTP_PRIVATE_KEY"),
+        "BIR_SFTP_KNOWN_HOSTS" => option_env!("BIR_SFTP_KNOWN_HOSTS"),
+        "FILING_SFTP_HOST" => option_env!("FILING_SFTP_HOST"),
+        "FILING_SFTP_PORT" => option_env!("FILING_SFTP_PORT"),
+        "FILING_SFTP_USERNAME" => option_env!("FILING_SFTP_USERNAME"),
+        "FILING_SFTP_PASSWORD" => option_env!("FILING_SFTP_PASSWORD"),
+        "FILING_SFTP_PRIVATE_KEY" => option_env!("FILING_SFTP_PRIVATE_KEY"),
+        "FILING_SFTP_KNOWN_HOSTS" => option_env!("FILING_SFTP_KNOWN_HOSTS"),
+        _ => None,
+    }
+    .map(str::to_owned)
+}
+
+#[cfg(not(feature = "embed-bir-sftp-secrets"))]
+fn embedded_bir_sftp_env(_name: &str) -> Option<String> {
+    None
+}
+
+fn embedded_production_sftp_env(name: &str) -> Option<String> {
+    match name {
+        "BIR_PRODUCTION_SFTP_HOST" => option_env!("BIR_PRODUCTION_SFTP_HOST"),
+        "BIR_PRODUCTION_SFTP_PORT" => option_env!("BIR_PRODUCTION_SFTP_PORT"),
+        "BIR_PRODUCTION_SFTP_USERNAME" => option_env!("BIR_PRODUCTION_SFTP_USERNAME"),
+        "BIR_PRODUCTION_SFTP_PASSWORD" => option_env!("BIR_PRODUCTION_SFTP_PASSWORD"),
+        "BIR_PRODUCTION_SFTP_PRIVATE_KEY" => option_env!("BIR_PRODUCTION_SFTP_PRIVATE_KEY"),
+        "BIR_PRODUCTION_SFTP_KNOWN_HOSTS" => option_env!("BIR_PRODUCTION_SFTP_KNOWN_HOSTS"),
+        _ => None,
+    }
+    .map(str::to_owned)
 }
 
 #[derive(Debug, Clone)]

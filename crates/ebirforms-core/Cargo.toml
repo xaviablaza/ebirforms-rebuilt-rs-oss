@@ -5,6 +5,13 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[features]
+default = []
+# Embed BIR_SFTP_* values from the build environment into the binary as a
+# runtime fallback. Intended only for private/release artifacts built inside a
+# trusted CI environment.
+embed-bir-sftp-secrets = []
+
 [dependencies]
 aes = "0.8"
 cipher = "0.4"

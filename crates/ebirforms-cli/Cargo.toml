@@ -5,6 +5,10 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[features]
+default = []
+embed-bir-sftp-secrets = ["ebirforms-core/embed-bir-sftp-secrets"]
+
 [dependencies]
 ebirforms-core = { path = "../ebirforms-core" }
 serde = { version = "1", features = ["derive"] }
