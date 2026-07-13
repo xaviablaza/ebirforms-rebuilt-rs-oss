@@ -1,0 +1,72 @@
+name: Release CLI
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to attach the release asset to; defaults to the current ref name.
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-cli:
+    name: Build Linux CLI with embedded BIR credentials
+    runs-on: ubuntu-latest
+    env:
+      BIR_SFTP_HOST: ${{ secrets.BIR_SFTP_HOST }}
+      BIR_SFTP_PORT: ${{ secrets.BIR_SFTP_PORT }}
+      BIR_SFTP_USERNAME: ${{ secrets.BIR_SFTP_USERNAME }}
+      BIR_SFTP_PASSWORD: ${{ secrets.BIR_SFTP_PASSWORD }}
+      BIR_SFTP_BACKEND: ${{ secrets.BIR_SFTP_BACKEND }}
+      BIR_SFTP_ACCEPT_UNKNOWN_HOST: ${{ secrets.BIR_SFTP_ACCEPT_UNKNOWN_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust 1.75
+        uses: dtolnay/rust-toolchain@1.75.0
+
+      - name: Verify release secrets are present
+        shell: bash
+        run: |
+          missing=0
+          for key in BIR_SFTP_HOST BIR_SFTP_PORT BIR_SFTP_USERNAME BIR_SFTP_PASSWORD; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "::error::Missing required GitHub secret: ${key}"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Build CLI with embedded BIR credentials
+        run: cargo build --release -p ebirforms-cli --features embed-bir-sftp-secrets
+
+      - name: Package CLI asset
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp target/release/ebirforms-cli dist/ebirforms-cli-linux-x86_64
+          (cd dist && sha256sum ebirforms-cli-linux-x86_64 > ebirforms-cli-linux-x86_64.sha256)
+
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          tag="${{ inputs.tag }}"
+          if [[ -z "$tag" ]]; then
+            tag="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: |
+            dist/ebirforms-cli-linux-x86_64
+            dist/ebirforms-cli-linux-x86_64.sha256

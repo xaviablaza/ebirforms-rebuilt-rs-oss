@@ -81,6 +81,20 @@ zip -r ph-tax-forms-desktop-macos.zip "apps/desktop/src-tauri/target/release/bun
 shasum -a 256 ph-tax-forms-desktop-macos.zip
 ```
 
+## Private CLI releases with embedded BIR credentials
+
+The normal CLI reads `BIR_SFTP_*` from the runtime environment. Private release artifacts can instead embed the GitHub Actions build-time values by building with the `embed-bir-sftp-secrets` feature:
+
+```bash
+BIR_SFTP_HOST=... \
+BIR_SFTP_PORT=23 \
+BIR_SFTP_USERNAME=... \
+BIR_SFTP_PASSWORD=*** \
+cargo build --release -p ebirforms-cli --features embed-bir-sftp-secrets
+```
+
+Runtime environment variables still override the embedded fallback if they are present. The `.github/workflows/release-cli.yml` release workflow uses GitHub Actions secrets with the same names and uploads `ebirforms-cli-linux-x86_64` plus its SHA-256 file to the selected release tag.
+
 Linux desktop builds require WebKitGTK/GTK development packages. Desktop and CLI tasks use Rust 1.88.0 via mise. macOS builds should be run on macOS with Xcode Command Line Tools installed.
 
 Windows desktop build requirements:
