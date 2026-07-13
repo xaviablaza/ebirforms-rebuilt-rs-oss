@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 #[derive(Debug, thiserror::Error)]
 pub enum TransportError {
-    #[error("live SFTP transport requires configured FILING_SFTP_* environment variables")]
+    #[error("live SFTP transport requires configured BIR_SFTP_* or FILING_SFTP_* environment variables, or embedded BIR_PRODUCTION_SFTP_* defaults")]
     MissingLiveConfig,
     #[error("submission with idempotency key `{0}` already exists; refusing duplicate upload")]
     DuplicateRisk(String),
@@ -96,19 +96,17 @@ impl SftpConfig {
     }
 
     fn from_runtime_env() -> Option<Self> {
-        let host = std::env::var("FILING_SFTP_HOST").ok()?;
-        let username = std::env::var("FILING_SFTP_USERNAME").ok()?;
-        let port = std::env::var("FILING_SFTP_PORT")
-            .ok()
+        let host = env_first(&["BIR_SFTP_HOST", "FILING_SFTP_HOST"])?;
+        let username = env_first(&["BIR_SFTP_USERNAME", "FILING_SFTP_USERNAME"])?;
+        let port = env_first(&["BIR_SFTP_PORT", "FILING_SFTP_PORT"])
+            .as_deref()
             .and_then(|value| value.parse().ok())
             .unwrap_or(23);
-        let password = std::env::var("FILING_SFTP_PASSWORD").ok();
-        let private_key = std::env::var("FILING_SFTP_PRIVATE_KEY")
-            .ok()
-            .map(PathBuf::from);
-        let known_hosts = std::env::var("FILING_SFTP_KNOWN_HOSTS")
-            .ok()
-            .map(PathBuf::from);
+        let password = env_first(&["BIR_SFTP_PASSWORD", "FILING_SFTP_PASSWORD"]);
+        let private_key =
+            env_first(&["BIR_SFTP_PRIVATE_KEY", "FILING_SFTP_PRIVATE_KEY"]).map(PathBuf::from);
+        let known_hosts =
+            env_first(&["BIR_SFTP_KNOWN_HOSTS", "FILING_SFTP_KNOWN_HOSTS"]).map(PathBuf::from);
         Some(Self {
             host,
             port,
@@ -236,6 +234,14 @@ fn upload_via_ssh2(config: &SftpConfig, package: &SubmissionPackage) -> Result<(
     Ok(())
 }
 
+fn env_first(names: &[&str]) -> Option<String> {
+    names.iter().find_map(|name| {
+        std::env::var(name)
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+    })
+}
+
 pub fn idempotency_key(package: &SubmissionPackage) -> String {
     format!(
         "{}:{}:{}",
@@ -282,5 +288,37 @@ mod tests {
             .submit(&package)
             .expect_err("duplicate should block");
         assert!(matches!(err, TransportError::DuplicateRisk(_)));
+    }
+
+    #[test]
+    fn bir_sftp_runtime_env_takes_precedence_over_legacy_filing_env() {
+        unsafe {
+            std::env::set_var("BIR_SFTP_HOST", "bir.example.test");
+            std::env::set_var("BIR_SFTP_PORT", "123");
+            std::env::set_var("BIR_SFTP_USERNAME", "bir-user");
+            std::env::set_var("BIR_SFTP_PASSWORD", "bir-pass");
+            std::env::set_var("FILING_SFTP_HOST", "legacy.example.test");
+            std::env::set_var("FILING_SFTP_USERNAME", "legacy-user");
+        }
+
+        let config = SftpConfig::from_env().unwrap();
+
+        assert_eq!(config.host, "bir.example.test");
+        assert_eq!(config.port, 123);
+        assert_eq!(config.username, "bir-user");
+        assert_eq!(config.password.as_deref(), Some("bir-pass"));
+
+        unsafe {
+            for key in [
+                "BIR_SFTP_HOST",
+                "BIR_SFTP_PORT",
+                "BIR_SFTP_USERNAME",
+                "BIR_SFTP_PASSWORD",
+                "FILING_SFTP_HOST",
+                "FILING_SFTP_USERNAME",
+            ] {
+                std::env::remove_var(key);
+            }
+        }
     }
 }
