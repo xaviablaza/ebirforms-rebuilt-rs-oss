@@ -967,6 +967,9 @@ fn render_human_tax_form_fields(
     if form_code == "1601C" {
         return render_1601c_physical_form(input, set_form_input_text, locked);
     }
+    if form_code == "1701Q" {
+        return render_1701q_physical_form(input, set_form_input_text, locked);
+    }
 
     render_pdf_physical_form(form_code, input, set_form_input_text, locked)
 }
@@ -1043,6 +1046,445 @@ fn render_pdf_physical_form(
             } else { view! {}.into_view() }}
         </div>
     }.into_view()
+}
+
+
+fn render_1701q_physical_form(
+    input: Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let taxpayer_estate_or_trust = field_bool(&input, "ui1701q:taxpayer_type_estate")
+        || field_bool(&input, "ui1701q:taxpayer_type_trust");
+    let taxpayer_8_percent = field_bool(&input, "ui1701q:taxpayer_atc_ii015")
+        || field_bool(&input, "ui1701q:taxpayer_atc_ii017")
+        || field_bool(&input, "ui1701q:taxpayer_atc_ii016");
+    let taxpayer_graduated = !taxpayer_8_percent;
+    let spouse_8_percent = field_bool(&input, "ui1701q:spouse_atc_ii015")
+        || field_bool(&input, "ui1701q:spouse_atc_ii017")
+        || field_bool(&input, "ui1701q:spouse_atc_ii016");
+
+    view! {
+        <div class="bir-paper form-1701q">
+            <div class="bir-title-grid multi-form-title">
+                <div class="bir-form-no"><span>"BIR Form No."</span><strong>"1701Q"</strong><small>"January 2018 (ENCS)"</small></div>
+                <div class="bir-title"><strong>"Quarterly Income Tax Return"</strong><span>"For Individuals, Estates and Trusts"</span></div>
+                <div class="bir-barcode">"1701Q 01/18ENCS P1"</div>
+            </div>
+            <div class="bir-grid physical-top-strip">
+                {render_1701q_digits_box("1", "For the Year", "frm1701q:txtYear", 4, &input, set_form_input_text, locked)}
+                {render_physical_choice_box("2", "Quarter", vec![("First", "frm1701q:DateQuarter_1"), ("Second", "frm1701q:DateQuarter_2"), ("Third", "frm1701q:DateQuarter_3")], &input, set_form_input_text, locked)}
+                {render_physical_pair_box("3", "Amended Return?", "frm1701q:AmendedRtn_1", "frm1701q:AmendedRtn_2", &input, set_form_input_text, locked)}
+                {render_1701q_digits_box("4", "Number of Sheet/s Attached", "frm1701q:txtSheets", 2, &input, set_form_input_text, locked)}
+            </div>
+
+            <div class="bir-section-title">"Part I – Background Information on Taxpayer/Filer"</div>
+            <div class="bir-grid physical-background-grid">
+                {render_1701q_readonly_box("5", "Taxpayer Identification Number (TIN)", "frm1701q:txt5TIN1", "frm1701q:txt5TIN2", "frm1701q:txt5TIN3", "frm1701q:txt5BranchCode", &input)}
+                {render_1701q_readonly_single("6", "RDO Code", "frm1701q:txt5RDOCode", &input)}
+                {render_1701q_choice_box("7", "Taxpayer/Filer Type", vec![("Single Proprietor", "ui1701q:taxpayer_type_single"), ("Professional", "ui1701q:taxpayer_type_professional"), ("Estate", "ui1701q:taxpayer_type_estate"), ("Trust", "ui1701q:taxpayer_type_trust")], &input, set_form_input_text, locked, Some("taxpayer_type"))}
+                {render_1701q_atc_box("8", false, taxpayer_estate_or_trust, &input, set_form_input_text, locked)}
+                {render_1701q_readonly_single("9", "Taxpayer/Filer's Name", "frm1701q:txtTaxPayername", &input)}
+                {render_1701q_text_box("10", "Registered Address", "frm1701q:txt11Address", &input, set_form_input_text, locked, false)}
+                {render_1701q_readonly_single("10A", "Zip Code", "frm1701q:txt14zip", &input)}
+                {render_1701q_date_box("11", "Date of Birth (MM/DD/YYYY)", "frm1701q:txt13BirthMonth", "frm1701q:txt13BirthDay", "frm1701q:txt13BirthYear", &input, set_form_input_text, locked)}
+                {render_1701q_readonly_single("12", "Email Address", "txtEmail", &input)}
+                {render_1701q_text_box("13", "Citizenship", "ui1701q:taxpayer_citizenship", &input, set_form_input_text, locked, false)}
+                {render_1701q_text_box("14", "Foreign Tax Number (if applicable)", "ui1701q:taxpayer_foreign_tax_number", &input, set_form_input_text, locked, false)}
+                {render_physical_pair_box("15", "Claiming Foreign Tax Credits?", "frm1701q:SelTreaty_1", "frm1701q:SelTreaty_2", &input, set_form_input_text, locked)}
+                {render_1701q_tax_rate_box("16", false, taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_method_box("16A", "Method of Deduction", "frm1701:optMethodOfDeduction23:_1", "frm1701:optMethodOfDeduction23:_2", taxpayer_8_percent, &input, set_form_input_text, locked)}
+            </div>
+
+            <div class="bir-section-title">"Part II – Background Information on Spouse (if applicable)"</div>
+            <div class="bir-grid physical-background-grid">
+                {render_1701q_text_box("17", "Spouse's TIN", "ui1701q:spouse_tin", &input, set_form_input_text, locked, false)}
+                {render_1701q_text_box("18", "RDO Code", "frm1701q:txt7RDOCode", &input, set_form_input_text, locked, false)}
+                {render_1701q_choice_box("19", "Filer's Spouse Type", vec![("Single Proprietor", "ui1701q:spouse_type_single"), ("Professional", "ui1701q:spouse_type_professional"), ("Compensation Earner", "ui1701q:spouse_type_compensation")], &input, set_form_input_text, locked, None)}
+                {render_1701q_atc_box("20", true, false, &input, set_form_input_text, locked)}
+                {render_1701q_text_box("21", "Spouse's Name", "frm1701q:txtSpousename", &input, set_form_input_text, locked, false)}
+                {render_1701q_text_box("22", "Citizenship", "ui1701q:spouse_citizenship", &input, set_form_input_text, locked, false)}
+                {render_1701q_text_box("23", "Foreign Tax Number, if applicable", "ui1701q:spouse_foreign_tax_number", &input, set_form_input_text, true, false)}
+                {render_1701q_choice_box("24", "Claiming Foreign Tax Credits?", vec![("Yes", "ui1701q:spouse_foreign_tax_credits_yes"), ("No", "ui1701q:spouse_foreign_tax_credits_no")], &input, set_form_input_text, locked, None)}
+                {render_1701q_tax_rate_box("25", true, spouse_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_method_box("25A", "Method of Deduction", "frm1701:optMethodOfDeduction24:_1", "frm1701:optMethodOfDeduction24:_2", spouse_8_percent, &input, set_form_input_text, locked)}
+            </div>
+
+            <div class="bir-section-title">"Part III – Total Tax Payable"</div>
+            <div class="bir-table computation-table">
+                <div class="bir-two-col-header"><span>"Particulars"</span><strong>"A) Taxpayer/Filer"</strong><strong>"B) Spouse"</strong></div>
+                {render_1701q_two_amount_row("26", "Tax Due (Form Part V, Schedule I-Item 46 OR Schedule II-Item 54)", "frm1701q:txt26A", "frm1701q:txt26B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("27", "Less: Tax Credits/Payments (From Part V, Schedule III-Item 62)", "frm1701q:txt27A", "frm1701q:txt27B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("28", "Tax Payable/(Overpayment) (Item 26 Less Item 27)(From Part V, Item 63)", "frm1701q:txt28A", "frm1701q:txt28B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("29", "Add: Total Penalties (From Part V, Schedule IV-Item 67)", "frm1701q:txt29A", "frm1701q:txt29B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("30", "Total Amount Payable/(Overpayment) (Sum of Items 28 and 29)(From Part V, Item 68)", "frm1701q:txt30A", "frm1701q:txt30B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("31", "Aggregate Amount Payable/(Overpayment) (Sum of Items 30A and 30B)", "frm1701q:txt31A", "frm1701q:txt31B", &input, set_form_input_text, locked)}
+            </div>
+
+            <div class="bir-section-title">"Part IV – Details of Payment"</div>
+            <div class="bir-payment-grid physical-payment-grid">
+                <div class="bir-subrow muted">"Boxes 32–35 are printed payment/receipt details and are not fillable in this desktop data-entry flow."</div>
+            </div>
+
+            <div class="bir-title-grid multi-form-title page-two-heading">
+                <div class="bir-form-no"><span>"BIR Form No."</span><strong>"1701Q"</strong><small>"Page 2"</small></div>
+                <div class="bir-title"><strong>"Part V – Computation of Tax Due"</strong><span>"If graduated rate, fill in items 36 to 46; if 8%, fill in items 47 to 54"</span></div>
+                <div class="bir-barcode">"1701Q 01/18ENCS P2"</div>
+            </div>
+            <div class="bir-table computation-table">
+                <div class="bir-section-title inline">"Schedule I – For Graduated IT Rate"</div>
+                {render_1701q_two_amount_row_disabled("36", "Sales/Revenues/Receipts/Fees (net of sales returns, allowances, and discounts)", "frm1701q:txt36A", "frm1701q:txt36B", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("37", "Less: Cost of Sales/Services (applicable only if availing Itemized Deductions)", "frm1701q:txt37A", "frm1701q:txt37B", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("38", "Gross Income/(Loss) from Operation (Item 36 Less Item 37)", "frm1701q:txt38A", "frm1701q:txt38B", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("39", "Total Allowable Itemized Deductions", "frm1701q:txt38C", "frm1701q:txt38D", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("40", "Optional Standard Deduction (OSD) (40% of Item 36)", "frm1701q:txt38E", "frm1701q:txt38F", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("41", "Net Income/(Loss) This Quarter (Item 38 Less Either Item 39 OR 40)", "frm1701q:txt38G", "frm1701q:txt38H", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("42", "Taxable Income/(Loss) Previous Quarter/s", "frm1701q:txt38I", "frm1701q:txt38J", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_specify_amount_row("43", "Non-Operating Income", "ui1701q:txt43Specify", "frm1701q:txt38K", "frm1701q:txt38L", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("44", "Amount Received/Share in Income by a Partner from General Professional Partnership (GPP)", "frm1701q:txt38M", "frm1701q:txt38N", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("45", "Total Taxable Income/(Loss) To Date (Sum of Items 41 to 44)", "frm1701q:txt39A", "frm1701q:txt39B", taxpayer_8_percent, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("46", "Tax Due (Item 45 x Applicable Tax Rate based on Tax Table below)(To Part III, Item 26)", "ui1701q:txt46A", "ui1701q:txt46B", taxpayer_8_percent, &input, set_form_input_text, locked)}
+
+                <div class="bir-section-title inline">"Schedule II – For 8% IT Rate"</div>
+                {render_1701q_two_amount_row_disabled("47", "Sales/Revenues/Receipts/Fees (net of sales returns, allowances and discounts)", "frm1701q:txt40A", "frm1701q:txt40B", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_specify_amount_row("48", "Add: Non-Operating Income", "ui1701q:txt48Specify", "frm1701q:txt40C", "frm1701q:txt40D", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("49", "Total Income for the quarter (Sum of Items 47 and 48)", "frm1701q:txt40E", "frm1701q:txt40F", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("50", "Add: Total Taxable Income/(Loss) Previous Quarter (Item 51 of previous quarter)", "frm1701q:txt40G", "frm1701q:txt40H", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("51", "Cumulative Taxable Income/(Loss) as of This Quarter (Sum of Items 49 and 50)", "frm1701q:txt41A", "frm1701q:txt41B", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("52", "Less: Allowable reduction from gross sales/receipts and other non-operating income of purely self-employed individuals and/or professionals in the amount of Php 250,000.00", "ui1701q:txt52A", "ui1701q:txt52B", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("53", "Taxable Income/(Loss) To Date (Items 51 Less Item 52)", "ui1701q:txt53A", "ui1701q:txt53B", taxpayer_graduated, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row_disabled("54", "Tax Due (Item 53 x 8% Tax Rate)(To Part III, Item 26)", "ui1701q:txt54A", "ui1701q:txt54B", taxpayer_graduated, &input, set_form_input_text, locked)}
+
+                <div class="bir-section-title inline">"Schedule III – Tax Credits/Payments"</div>
+                {render_1701q_two_amount_row("55", "Prior Year's Excess Credits", "ui1701q:txt55A", "ui1701q:txt55B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("56", "Tax Payment/s for the Previous Quarter/s", "ui1701q:txt56A", "ui1701q:txt56B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("57", "Creditable Tax Withheld for the Previous Quarter/s", "ui1701q:txt57A", "ui1701q:txt57B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("58", "Creditable Tax Withheld per BIR Form No. 2307 for this Quarter", "ui1701q:txt58A", "ui1701q:txt58B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("59", "Tax Paid in Return Previously Filed, if this is an Amended Return", "ui1701q:txt59A", "ui1701q:txt59B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("60", "Foreign Tax Credits, if applicable", "ui1701q:txt60A", "ui1701q:txt60B", &input, set_form_input_text, locked)}
+                {render_1701q_specify_amount_row("61", "Other Tax Credits/Payments", "ui1701q:txt61Specify", "ui1701q:txt61A", "ui1701q:txt61B", false, &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("62", "Total Tax Credits/Payments (Sum of Items 55 to 61)(To Part III, Item 27)", "ui1701q:txt62A", "ui1701q:txt62B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("63", "Tax Payable/(Overpayment)(Item 46 or 54, Less Item 62)(To Part III, Item 28)", "ui1701q:txt63A", "ui1701q:txt63B", &input, set_form_input_text, locked)}
+
+                <div class="bir-section-title inline">"Schedule IV – Penalties"</div>
+                {render_1701q_two_amount_row("64", "Surcharge", "ui1701q:txt64A", "ui1701q:txt64B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("65", "Interest", "ui1701q:txt65A", "ui1701q:txt65B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("66", "Compromise", "ui1701q:txt66A", "ui1701q:txt66B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("67", "Total Penalties (Sum of Items 64 to 66)(To Part III, Item 29)", "ui1701q:txt67A", "ui1701q:txt67B", &input, set_form_input_text, locked)}
+                {render_1701q_two_amount_row("68", "Total Amount Payable/(Overpayment) (Sum of Items 63 and 67)(To Part III, Item 30)", "ui1701q:txt68A", "ui1701q:txt68B", &input, set_form_input_text, locked)}
+            </div>
+        </div>
+    }.into_view()
+}
+
+fn render_1701q_digits_box(
+    item: &'static str,
+    label: &'static str,
+    key: &'static str,
+    max_digits: usize,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let value = field_value(input, key);
+    view! {
+        <label class="bir-box">{format!("{item} {label}")}
+            <input inputmode="numeric" maxlength=max_digits prop:value=value prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key, event_target_value(&ev), max_digits) />
+        </label>
+    }.into_view()
+}
+
+fn render_1701q_text_box(
+    item: &'static str,
+    label: &'static str,
+    key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+    disabled: bool,
+) -> View {
+    let value = field_value(input, key);
+    view! {
+        <label class="bir-box span-2">{format!("{item} {label}")}
+            <input prop:value=value prop:readonly=locked || disabled on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_1701q_readonly_single(item: &'static str, label: &'static str, key: &'static str, input: &Value) -> View {
+    let value = field_value(input, key);
+    view! { <label class="bir-box"><span>{format!("{item} {label}")}</span><input prop:value=value readonly /></label> }.into_view()
+}
+
+fn render_1701q_readonly_box(
+    item: &'static str,
+    label: &'static str,
+    key1: &'static str,
+    key2: &'static str,
+    key3: &'static str,
+    branch_key: &'static str,
+    input: &Value,
+) -> View {
+    let value = format!("{}-{}-{}-{}", field_value(input, key1), field_value(input, key2), field_value(input, key3), field_value(input, branch_key));
+    view! { <label class="bir-box span-2"><span>{format!("{item} {label}")}</span><input prop:value=value readonly /></label> }.into_view()
+}
+
+fn render_1701q_date_box(
+    item: &'static str,
+    label: &'static str,
+    month_key: &'static str,
+    day_key: &'static str,
+    year_key: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let month = field_value(input, month_key);
+    let day = field_value(input, day_key);
+    let year = field_value(input, year_key);
+    view! {
+        <label class="bir-box span-2">{format!("{item} {label}")}
+            <div class="date-inputs">
+                <input aria-label="Month" inputmode="numeric" maxlength="2" prop:value=month prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, month_key, event_target_value(&ev), 2) />
+                <span>"/"</span>
+                <input aria-label="Day" inputmode="numeric" maxlength="2" prop:value=day prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, day_key, event_target_value(&ev), 2) />
+                <span>"/"</span>
+                <input aria-label="Year" inputmode="numeric" maxlength="4" prop:value=year prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, year_key, event_target_value(&ev), 4) />
+            </div>
+        </label>
+    }.into_view()
+}
+
+fn render_1701q_choice_box(
+    item: &'static str,
+    label: &'static str,
+    choices: Vec<(&'static str, &'static str)>,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+    special_rule: Option<&'static str>,
+) -> View {
+    let keys: Vec<&'static str> = choices.iter().map(|(_, key)| *key).collect();
+    view! {
+        <div class="bir-box span-2 checkbox-pair">
+            <span>{format!("{item} {label}")}</span>
+            {choices.into_iter().map(|(choice_label, key)| {
+                let checked = field_bool(input, key);
+                let all_keys = keys.clone();
+                view! {
+                    <label><input type="checkbox" prop:checked=checked prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) {
+                        if special_rule == Some("taxpayer_type") { update_1701q_taxpayer_type(set_form_input_text, all_keys.clone(), key) } else { update_choice_fields(set_form_input_text, all_keys.clone(), key) }
+                    } />{choice_label}</label>
+                }
+            }).collect_view()}
+        </div>
+    }.into_view()
+}
+
+fn render_1701q_atc_box(
+    item: &'static str,
+    spouse: bool,
+    force_business_graduated: bool,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let choices = vec![
+        ("II012 Business Income-Graduated IT Rates", if spouse { "ui1701q:spouse_atc_ii012" } else { "ui1701q:taxpayer_atc_ii012" }, false),
+        ("II014 Income from Profession-Graduated IT Rates", if spouse { "ui1701q:spouse_atc_ii014" } else { "ui1701q:taxpayer_atc_ii014" }, force_business_graduated),
+        ("II013 Mixed Income-Graduated IT Rates", if spouse { "ui1701q:spouse_atc_ii013" } else { "ui1701q:taxpayer_atc_ii013" }, force_business_graduated),
+        ("II015 Business Income-8% IT Rate", if spouse { "ui1701q:spouse_atc_ii015" } else { "ui1701q:taxpayer_atc_ii015" }, force_business_graduated),
+        ("II017 Income from Profession-8% IT Rate", if spouse { "ui1701q:spouse_atc_ii017" } else { "ui1701q:taxpayer_atc_ii017" }, force_business_graduated),
+        ("II016 Mixed Income-8% IT Rate", if spouse { "ui1701q:spouse_atc_ii016" } else { "ui1701q:taxpayer_atc_ii016" }, force_business_graduated),
+    ];
+    view! {
+        <div class="bir-box span-2 checkbox-pair atc-choice-box">
+            <span>{format!("{item} Alphanumeric Tax Code (ATC)")}</span>
+            {choices.into_iter().map(|(choice_label, key, disabled)| {
+                let checked = field_bool(input, key) || (force_business_graduated && key.ends_with("ii012"));
+                view! {
+                    <label><input type="checkbox" prop:checked=checked prop:disabled=locked || disabled on:change=move |ev| if event_target_checked(&ev) { update_1701q_atc(set_form_input_text, spouse, key) } />{choice_label}</label>
+                }
+            }).collect_view()}
+        </div>
+    }.into_view()
+}
+
+fn render_1701q_tax_rate_box(
+    item: &'static str,
+    spouse: bool,
+    eight_percent: bool,
+    _input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    _locked: bool,
+) -> View {
+    let graduated_key = if spouse { "ui1701q:spouse_rate_graduated" } else { "ui1701q:taxpayer_rate_graduated" };
+    let eight_key = if spouse { "ui1701q:spouse_rate_8" } else { "ui1701q:taxpayer_rate_8" };
+    let graduated_checked = !eight_percent;
+    let eight_checked = eight_percent;
+    view! {
+        <div class="bir-box span-2 checkbox-pair rate-choice-box">
+            <span>{format!("{item} Tax Rate* (choose one, for income from business/profession)")}</span>
+            <label><input type="checkbox" prop:checked=graduated_checked prop:disabled=true on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec![graduated_key, eight_key], graduated_key) } />"Graduated Rates per Tax Table - page 2"</label>
+            <label><input type="checkbox" prop:checked=eight_checked prop:disabled=true on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec![graduated_key, eight_key], eight_key) } />"8% on gross sales/receipts & other non-operating income in lieu of Graduated Rates under Sec. 24(A)(2)(a) & Percentage Tax under Sec. 116"</label>
+        </div>
+    }.into_view()
+}
+
+fn render_1701q_method_box(
+    item: &'static str,
+    label: &'static str,
+    itemized_key: &'static str,
+    osd_key: &'static str,
+    disabled_by_rate: bool,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    view! {
+        <div class="bir-box span-2 checkbox-pair">
+            <span>{format!("{item} {label}")}</span>
+            <label><input type="checkbox" prop:checked=field_bool(input, itemized_key) prop:disabled=locked || disabled_by_rate on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec![itemized_key, osd_key], itemized_key) } />"Itemized Deduction [Sec. 34(A-J), NIRC]"</label>
+            <label><input type="checkbox" prop:checked=field_bool(input, osd_key) prop:disabled=locked || disabled_by_rate on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec![itemized_key, osd_key], osd_key) } />"Optional Standard Deduction (OSD) [40% of Gross Sales/Receipts/Revenues/Fees]"</label>
+        </div>
+    }.into_view()
+}
+
+fn render_1701q_two_amount_row(
+    item: &'static str,
+    label: &'static str,
+    key_a: &'static str,
+    key_b: &'static str,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    render_1701q_two_amount_row_disabled(item, label, key_a, key_b, false, input, set_form_input_text, locked)
+}
+
+fn render_1701q_two_amount_row_disabled(
+    item: &'static str,
+    label: &'static str,
+    key_a: &'static str,
+    key_b: &'static str,
+    disabled: bool,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let value_a = field_value(input, key_a);
+    let value_b = field_value(input, key_b);
+    view! {
+        <label class="bir-row bir-row-two-col">
+            <span class="item-no">{item}</span><span class="item-label">{label}</span>
+            <input class="amount-input" prop:value=value_a prop:readonly=locked || disabled on:input=move |ev| update_field_amount(set_form_input_text, key_a, event_target_value(&ev)) />
+            <input class="amount-input" prop:value=value_b prop:readonly=locked || disabled on:input=move |ev| update_field_amount(set_form_input_text, key_b, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn render_1701q_specify_amount_row(
+    item: &'static str,
+    label: &'static str,
+    specify_key: &'static str,
+    key_a: &'static str,
+    key_b: &'static str,
+    disabled: bool,
+    input: &Value,
+    set_form_input_text: WriteSignal<String>,
+    locked: bool,
+) -> View {
+    let specify = field_value(input, specify_key);
+    let value_a = field_value(input, key_a);
+    let value_b = field_value(input, key_b);
+    view! {
+        <label class="bir-row bir-row-two-col specify-row-1701q">
+            <span class="item-no">{item}</span><span class="item-label">{label}</span>
+            <input class="specify-input" placeholder="specify" prop:value=specify prop:readonly=locked || disabled on:input=move |ev| update_field_string(set_form_input_text, specify_key, event_target_value(&ev)) />
+            <input class="amount-input" prop:value=value_a prop:readonly=locked || disabled on:input=move |ev| update_field_amount(set_form_input_text, key_a, event_target_value(&ev)) />
+            <input class="amount-input" prop:value=value_b prop:readonly=locked || disabled on:input=move |ev| update_field_amount(set_form_input_text, key_b, event_target_value(&ev)) />
+        </label>
+    }.into_view()
+}
+
+fn update_field_digits(set_form_input_text: WriteSignal<String>, key: &str, value: String, max_digits: usize) {
+    let normalized: String = value.chars().filter(|ch| ch.is_ascii_digit()).take(max_digits).collect();
+    update_field_string(set_form_input_text, key, normalized);
+}
+
+fn update_field_amount(set_form_input_text: WriteSignal<String>, key: &str, value: String) {
+    let mut normalized = String::new();
+    let mut dot_seen = false;
+    for ch in value.chars() {
+        if ch.is_ascii_digit() || ch == ',' {
+            normalized.push(ch);
+        } else if ch == '.' && !dot_seen {
+            dot_seen = true;
+            normalized.push(ch);
+        } else if ch == '-' && normalized.is_empty() {
+            normalized.push(ch);
+        }
+    }
+    update_field_string(set_form_input_text, key, normalized);
+}
+
+fn update_1701q_taxpayer_type(set_form_input_text: WriteSignal<String>, keys: Vec<&str>, selected_key: &str) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                for key in &keys {
+                    fields.insert((*key).to_string(), Value::String((*key == selected_key).to_string()));
+                }
+                if selected_key.ends_with("estate") || selected_key.ends_with("trust") {
+                    apply_1701q_atc_fields(fields, false, "ui1701q:taxpayer_atc_ii012");
+                }
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
+}
+
+fn update_1701q_atc(set_form_input_text: WriteSignal<String>, spouse: bool, selected_key: &str) {
+    set_form_input_text.update(|text| {
+        if let Ok(mut root) = serde_json::from_str::<Value>(text) {
+            if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
+                apply_1701q_atc_fields(fields, spouse, selected_key);
+            }
+            *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
+        }
+    });
+}
+
+fn apply_1701q_atc_fields(fields: &mut serde_json::Map<String, Value>, spouse: bool, selected_key: &str) {
+    let prefix = if spouse { "ui1701q:spouse_atc_" } else { "ui1701q:taxpayer_atc_" };
+    for suffix in ["ii012", "ii014", "ii013", "ii015", "ii017", "ii016"] {
+        let key = format!("{prefix}{suffix}");
+        fields.insert(key.clone(), Value::String((key == selected_key).to_string()));
+    }
+    let selected_code = selected_key.rsplit('_').next().unwrap_or("ii012").to_ascii_uppercase();
+    let graduated = matches!(selected_code.as_str(), "II012" | "II014" | "II013");
+    let slot = match selected_code.as_str() {
+        "II014" | "II017" => 2,
+        "II013" | "II016" => 3,
+        _ => 1,
+    };
+    let (txt_a, opt_a, txt_b, opt_b, txt_c, opt_c, rate_grad, rate_8, method_1, method_2) = if spouse {
+        ("frm1701q:txt22A", "frm1701q:optATC22_1", "frm1701q:txt22B", "frm1701q:optATC22_2", "frm1701q:txt22C", "frm1701q:optATC22_3", "ui1701q:spouse_rate_graduated", "ui1701q:spouse_rate_8", "frm1701:optMethodOfDeduction24:_1", "frm1701:optMethodOfDeduction24:_2")
+    } else {
+        ("frm1701q:txt20A", "frm1701q:optATC20_1", "frm1701q:txt20B", "frm1701q:optATC20_2", "frm1701q:txt20C", "frm1701q:optATC20_3", "ui1701q:taxpayer_rate_graduated", "ui1701q:taxpayer_rate_8", "frm1701:optMethodOfDeduction23:_1", "frm1701:optMethodOfDeduction23:_2")
+    };
+    fields.insert(txt_a.to_string(), Value::String(if slot == 1 { selected_code.clone() } else { String::new() }));
+    fields.insert(txt_b.to_string(), Value::String(if slot == 2 { selected_code.clone() } else { String::new() }));
+    fields.insert(txt_c.to_string(), Value::String(if slot == 3 { selected_code.clone() } else { String::new() }));
+    fields.insert(opt_a.to_string(), Value::String((slot == 1).to_string()));
+    fields.insert(opt_b.to_string(), Value::String((slot == 2).to_string()));
+    fields.insert(opt_c.to_string(), Value::String((slot == 3).to_string()));
+    fields.insert(rate_grad.to_string(), Value::String(graduated.to_string()));
+    fields.insert(rate_8.to_string(), Value::String((!graduated).to_string()));
+    if !graduated {
+        fields.insert(method_1.to_string(), Value::String("false".to_string()));
+        fields.insert(method_2.to_string(), Value::String("false".to_string()));
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]

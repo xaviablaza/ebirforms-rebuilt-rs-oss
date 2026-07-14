@@ -175,8 +175,10 @@ Observed conventions to preserve until a later verified capture/PDF says otherwi
 - `filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}.xml"` — no version token and no `#email#` segment in the provided filename.
 - `remote_directory = "/1701Q/"` is a working placeholder and should be verified before any live claim.
 - The template mixes `frm1701q:*` and `frm1701:*` XML keys. Keep full XML keys as mapping keys/JSON field keys because stems like `_1` and `_2` collide.
-- Leave `pdf_url = ""` until the exact official PDF URL/revision is verified. Do not fabricate a PDF URL just to satisfy metadata checks.
-- The initial desktop labels are intentionally conservative. Replace them with Xavi's normalized form-label mapping once available, especially for ATC-locked boxes and computation rows.
+- The verified official PDF URL for the January 2018 ENCS revision is `https://bir-cdn.bir.gov.ph/local/pdf/1701Q%20Jan%202018%20final%20rev2_copy.pdf`; it has 2 pages and no PDF form fields, so use it for visual/layout guidance only.
+- Preserve the user-normalized label mapping in the 1701Q desktop renderer where the XML keys do not line up with PDF item numbers.
+- Desktop-specific `ui1701q:*` fields are acceptable for derived/visual-only controls, labels, and future XML crosswalk work, but only mapped XML keys in `mapping.toml` are serialized.
+- Implement ATC locking in the UI: Estate/Trust forces taxpayer ATC `II012`; graduated ATCs enable Schedule I and method-of-deduction, while 8% ATCs force the 8% rate and disable Schedule I/method-of-deduction.
 
 ## Pitfalls
 
