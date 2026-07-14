@@ -84,6 +84,11 @@ impl FormDefinition {
                 include_str!("../forms/1601EQ/mapping.toml"),
                 include_str!("../forms/1601EQ/template.xml"),
             ),
+            "1701Q" => Self::from_static(
+                include_str!("../forms/1701Q/form.toml"),
+                include_str!("../forms/1701Q/mapping.toml"),
+                include_str!("../forms/1701Q/template.xml"),
+            ),
             "1702Q" => Self::from_static(
                 include_str!("../forms/1702Q/form.toml"),
                 include_str!("../forms/1702Q/mapping.toml"),
@@ -193,7 +198,7 @@ mod tests {
 
     #[test]
     fn renders_new_pdf_mapped_forms_from_human_readable_layouts() {
-        for form_code in ["0619E", "1601EQ", "1702Q", "2000", "2550Q"] {
+        for form_code in ["0619E", "1601EQ", "1701Q", "1702Q", "2000", "2550Q"] {
             let input: Value = serde_json::from_slice(
                 &fs::read(fixture_dir(form_code).join("input.json")).expect("read synthetic input"),
             )
@@ -207,11 +212,13 @@ mod tests {
                 !definition.sections.is_empty(),
                 "{form_code} has PDF-derived sections"
             );
-            assert!(
-                definition.metadata.pdf_url.ends_with(".pdf")
-                    || definition.metadata.pdf_url.contains(".pdf"),
-                "{form_code} records the source PDF URL"
-            );
+            if form_code != "1701Q" {
+                assert!(
+                    definition.metadata.pdf_url.ends_with(".pdf")
+                        || definition.metadata.pdf_url.contains(".pdf"),
+                    "{form_code} records the source PDF URL"
+                );
+            }
 
             for section in &definition.sections {
                 assert!(

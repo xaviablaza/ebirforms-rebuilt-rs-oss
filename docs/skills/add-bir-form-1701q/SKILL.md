@@ -161,11 +161,29 @@ If a full desktop build is required for handoff:
 mise run desktop-build
 ```
 
+## Initial implementation notes from the first 1701Q XML template
+
+The first 1701Q slice was built from a sanitized eBIRForms plaintext XML template named like:
+
+```text
+<TIN>-1701Q-YYYYQn.xml
+```
+
+Observed conventions to preserve until a later verified capture/PDF says otherwise:
+
+- `period_format = "YYYYQn"`.
+- `filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}.xml"` — no version token and no `#email#` segment in the provided filename.
+- `remote_directory = "/1701Q/"` is a working placeholder and should be verified before any live claim.
+- The template mixes `frm1701q:*` and `frm1701:*` XML keys. Keep full XML keys as mapping keys/JSON field keys because stems like `_1` and `_2` collide.
+- Leave `pdf_url = ""` until the exact official PDF URL/revision is verified. Do not fabricate a PDF URL just to satisfy metadata checks.
+- The initial desktop labels are intentionally conservative. Replace them with Xavi's normalized form-label mapping once available, especially for ATC-locked boxes and computation rows.
+
 ## Pitfalls
 
 - Do not derive labels from XML keys alone. Use the official PDF and Xavi's normalized labels where available.
 - Do not expose internal XML state fields in the physical form renderer.
 - Do not assume 1701Q has the same period or filename shape as 1702Q just because both are quarterly income tax forms.
+- Do not collapse full XML keys to stems for 1701Q; `frm1701:optMethodOfDeduction23:_1` and `frm1701:optMethodOfDeduction24:_1` would collide.
 - Do not commit real taxpayer data from a capture. Redact/synthesize before fixtures land in the repo.
 - Do not fabricate official PDF URLs or remote directories. Leave them as researched TODOs in a branch if they have not been verified.
 - Do not treat dry-run packaging as live BIR acceptance.

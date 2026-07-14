@@ -20,6 +20,7 @@ const FORM_2550Q: &str = include_str!("../../../../tests/fixtures/2550Q/input.js
 const FORM_0619E: &str = include_str!("../../../../tests/fixtures/0619E/input.json");
 const FORM_1601EQ: &str = include_str!("../../../../tests/fixtures/1601EQ/input.json");
 const FORM_1702Q: &str = include_str!("../../../../tests/fixtures/1702Q/input.json");
+const FORM_1701Q: &str = include_str!("../../../../tests/fixtures/1701Q/input.json");
 
 #[derive(Clone, Copy, Debug)]
 struct TaxFormOption {
@@ -59,6 +60,12 @@ const TAX_FORMS: &[TaxFormOption] = &[
         name: "Quarterly Remittance Return of Creditable Income Taxes Withheld (Expanded)",
         frequency: "Quarterly",
         sample_input: FORM_1601EQ,
+    },
+    TaxFormOption {
+        code: "1701Q",
+        name: "Quarterly Income Tax Return for Individuals, Estates and Trusts",
+        frequency: "Quarterly",
+        sample_input: FORM_1701Q,
     },
     TaxFormOption {
         code: "1702Q",
@@ -1086,6 +1093,12 @@ fn render_pdf_header_controls(
             {render_physical_pair_box("4", "Any Taxes Withheld?", "frm1601EQ:optWithheld:Y", "frm1601EQ:optWithheld:N", input, set_form_input_text, locked)}
             {render_physical_field_box_dynamic("5", "No. of Sheet/s Attached", "frm1601EQ:txtNoSheets", input, set_form_input_text, locked)}
         }.into_view(),
+        "1701Q" => view! {
+            {render_physical_field_box_dynamic("1", "For the Year", "frm1701q:txtYear", input, set_form_input_text, locked)}
+            {render_physical_choice_box("2", "Quarter", vec![("1st", "frm1701q:DateQuarter_1"), ("2nd", "frm1701q:DateQuarter_2"), ("3rd", "frm1701q:DateQuarter_3")], input, set_form_input_text, locked)}
+            {render_physical_pair_box("3", "Amended Return?", "frm1701q:AmendedRtn_1", "frm1701q:AmendedRtn_2", input, set_form_input_text, locked)}
+            {render_physical_field_box_dynamic("4", "No. of Sheet/s Attached", "frm1701q:txtSheets", input, set_form_input_text, locked)}
+        }.into_view(),
         "1702Q" => view! {
             {render_physical_choice_box("1", "For", vec![("Calendar", "frm1702q:rbForClndrFscl_1"), ("Fiscal", "frm1702q:rbForClndrFscl_2")], input, set_form_input_text, locked)}
             {render_physical_month_year_box("2", "Year Ended", "frm1702q:rbYrEndMonth", "frm1702q:txtYrEndYear", false, input, set_form_input_text, locked)}
@@ -1391,6 +1404,12 @@ fn classify_physical_field(form_code: &str, key: &str) -> PhysicalSectionKind {
             Some(32..=35) => PhysicalSectionKind::Payment,
             _ => PhysicalSectionKind::Schedule,
         },
+        "1701Q" => match item {
+            Some(1..=4) | None => PhysicalSectionKind::Header,
+            Some(5..=25) => PhysicalSectionKind::Background,
+            Some(26..=41) => PhysicalSectionKind::Computation,
+            _ => PhysicalSectionKind::Schedule,
+        },
         "1702Q" => match item {
             Some(1..=12) | None => PhysicalSectionKind::Header,
             Some(13..=25) => PhysicalSectionKind::Background,
@@ -1564,6 +1583,23 @@ fn official_physical_section(form_code: &str, key: &str) -> Option<PhysicalSecti
                 None
             }
         }
+        "1701Q" => {
+            if matches!(stem, "txtYear" | "DateQuarter_1" | "DateQuarter_2" | "DateQuarter_3" | "AmendedRtn_1" | "AmendedRtn_2" | "txtSheets") {
+                Some(PhysicalSectionKind::Header)
+            } else if stem.starts_with("txt5")
+                || stem.starts_with("txt7")
+                || matches!(stem, "txtTaxPayername" | "txtSpousename" | "txt11Address" | "txt12Address" | "txt13BirthMonth" | "txt13BirthDay" | "txt13BirthYear" | "txt14zip" | "txt15Telno" | "txt16BirthMonth" | "txt16BirthDay" | "txt16BirthYear" | "txt17" | "txt18Telno" | "txt19" | "txt20A" | "txt20B" | "txt20C" | "txt21" | "txt22A" | "txt22B" | "txt22C" | "SelTreaty_1" | "SelTreaty_2" | "txtTaxRelief25")
+                || lower.contains("optatc20")
+                || lower.contains("optatc22")
+                || lower.contains("optmethodofdeduction")
+            {
+                Some(PhysicalSectionKind::Background)
+            } else if stem.starts_with("txt") {
+                Some(PhysicalSectionKind::Computation)
+            } else {
+                None
+            }
+        },
         "1702Q" => {
             if lower.contains("rbforclndrfscl")
                 || matches!(stem, "rbYrEndMonth" | "txtYrEndYear")
@@ -1909,6 +1945,34 @@ fn official_physical_label(form_code: &str, key: &str) -> Option<&'static str> {
             }
             _ => None,
         },
+        "1701Q" => match stem {
+            "txtYear" => Some("For the Year"),
+            "DateQuarter_1" | "DateQuarter_2" | "DateQuarter_3" => Some("Quarter"),
+            "AmendedRtn_1" | "AmendedRtn_2" => Some("Amended Return?"),
+            "txtSheets" => Some("No. of Sheet/s Attached"),
+            "txt5TIN1" | "txt5TIN2" | "txt5TIN3" | "txt5BranchCode" => Some("Taxpayer Identification Number (TIN)"),
+            "txt5RDOCode" => Some("RDO Code"),
+            "txt7TIN1" | "txt7TIN2" | "txt7TIN3" | "txt7BranchCode" => Some("Spouse TIN"),
+            "txt7RDOCode" => Some("Spouse RDO Code"),
+            "txtTaxPayername" => Some("Taxpayer Name"),
+            "txtSpousename" => Some("Spouse Name"),
+            "txt11Address" => Some("Registered Address"),
+            "txt12Address" => Some("Spouse Registered Address"),
+            "txt13BirthMonth" | "txt13BirthDay" | "txt13BirthYear" => Some("Taxpayer Date of Birth"),
+            "txt14zip" => Some("ZIP Code"),
+            "txt15Telno" => Some("Taxpayer Contact Number"),
+            "txt16BirthMonth" | "txt16BirthDay" | "txt16BirthYear" => Some("Spouse Date of Birth"),
+            "txt17" => Some("Spouse ZIP Code"),
+            "txt18Telno" => Some("Spouse Contact Number"),
+            "txt19" => Some("Registered Activity / Line of Business"),
+            "txt20A" | "txt20B" | "txt20C" | "optATC20_1" | "optATC20_2" | "optATC20_3" => Some("Taxpayer ATC"),
+            "txt21" => Some("Other ATC / Tax Rate Description"),
+            "txt22A" | "txt22B" | "txt22C" | "optATC22_1" | "optATC22_2" | "optATC22_3" => Some("Spouse ATC"),
+            "_1" | "_2" if key.contains("optMethodOfDeduction23") => Some("Taxpayer Method of Deduction"),
+            "_1" | "_2" if key.contains("optMethodOfDeduction24") => Some("Spouse Method of Deduction"),
+            "SelTreaty_1" | "SelTreaty_2" | "txtTaxRelief25" => Some("Tax Relief / Treaty Details"),
+            _ => None,
+        },
         "1702Q" => match stem {
             "rbForClndrFscl_1" | "rbForClndrFscl_2" => Some("For: Calendar / Fiscal"),
             "rbYrEndMonth" | "txtYrEndYear" => Some("Year Ended (MM/20YY)"),
@@ -2096,6 +2160,7 @@ fn physical_form_title(form_code: &str) -> &'static str {
     match form_code {
         "0619E" => "Monthly Remittance Form",
         "1601EQ" => "Quarterly Remittance Return",
+        "1701Q" => "Quarterly Income Tax Return",
         "1702Q" => "Quarterly Income Tax Return",
         "2000" => "Documentary Stamp Tax Declaration/Return",
         "2550Q" => "Quarterly Value-Added Tax Return",
@@ -2107,6 +2172,7 @@ fn physical_form_subtitle(form_code: &str) -> &'static str {
     match form_code {
         "0619E" => "Creditable Income Taxes Withheld (Expanded)",
         "1601EQ" => "Creditable Income Taxes Withheld (Expanded)",
+        "1701Q" => "For Individuals, Estates and Trusts",
         "1702Q" => "For Corporations, Partnerships and Other Non-Individual Taxpayers",
         "2000" => "Documentary Stamp Tax",
         "2550Q" => "Value-Added Tax",
@@ -2141,6 +2207,7 @@ fn physical_schedule_title(form_code: &str) -> &'static str {
     match form_code {
         "1601EQ" => "Page 2 – ATC / Tax Remittance Schedule",
         "2550Q" => "Part V – Schedules",
+        "1701Q" => "Schedules / Other Supporting Fields",
         "1702Q" => "Schedules / Other Supporting Fields",
         _ => "Schedules / Other Supporting Fields",
     }

@@ -310,7 +310,7 @@ struct BirConfirmationEmail {
 }
 
 fn parse_bir_confirmation_email(text: &str) -> Option<BirConfirmationEmail> {
-    let pattern = r#"(?is)this\s+confirms\s+receipt\s+of\s+your\s+submission\s+with\s+the\s+following\s+details\s+subject\s+to\s+validation\s+by\s+BIR:\s*File\s+name:\s*(?P<filename>\d{9,14}-(?P<form>1601C|1601EQ|2550Q|0619E|1702Q|2000)(?:v\d{4}[A-Z]?)?-(?P<period>\d{6}(?:Q[1-4])?|\d{4}Q[1-4])(?:V\d+)?(?:#[^#\r\n]+#)?\.xml)\s*\r?\n\s*Date\s+received\s+by\s+BIR:\s*(?P<date>[^\r\n]+?)\s*\r?\n\s*Time\s+received\s+by\s+BIR:\s*(?P<time>[^\r\n]+)"#;
+    let pattern = r#"(?is)this\s+confirms\s+receipt\s+of\s+your\s+submission\s+with\s+the\s+following\s+details\s+subject\s+to\s+validation\s+by\s+BIR:\s*File\s+name:\s*(?P<filename>\d{9,14}-(?P<form>1601C|1601EQ|1701Q|2550Q|0619E|1702Q|2000)(?:v\d{4}[A-Z]?)?-(?P<period>\d{6}(?:Q[1-4])?|\d{4}Q[1-4])(?:V\d+)?(?:#[^#\r\n]+#)?\.xml)\s*\r?\n\s*Date\s+received\s+by\s+BIR:\s*(?P<date>[^\r\n]+?)\s*\r?\n\s*Time\s+received\s+by\s+BIR:\s*(?P<time>[^\r\n]+)"#;
     let regex = Regex::new(pattern).expect("BIR receipt confirmation regex is valid");
     let captures = regex.captures(text)?;
     let filename = captures.name("filename")?.as_str().trim().to_string();
@@ -346,7 +346,9 @@ fn bir_received_at(fields: &BTreeMap<String, String>) -> Option<String> {
 }
 
 fn infer_form_code(filename: &str) -> Option<String> {
-    for form_code in ["1601EQ", "1601C", "2550Q", "0619E", "1702Q", "2000"] {
+    for form_code in [
+        "1601EQ", "1601C", "1701Q", "2550Q", "0619E", "1702Q", "2000",
+    ] {
         if filename
             .to_ascii_uppercase()
             .contains(&form_code.to_ascii_uppercase())
@@ -520,6 +522,7 @@ Bureau of Internal Revenue"#,
                 "1702Q",
                 "2026Q1",
             ),
+            ("12345678900000-1701Q-2026Q2.xml", "1701Q", "2026Q2"),
         ];
 
         for (filename, form_code, period) in cases {
@@ -587,6 +590,7 @@ This is a system-generated email. Please do not reply.
                 "1702Q",
                 "2026Q1",
             ),
+            ("12345678900000-1701Q-2026Q2.xml", "1701Q", "2026Q2"),
         ];
 
         for (filename, form_code, period) in cases {
