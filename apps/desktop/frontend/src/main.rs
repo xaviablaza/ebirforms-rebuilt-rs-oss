@@ -1231,7 +1231,7 @@ fn render_1701q_digits_box(
     let value = field_value(input, key);
     view! {
         <label class="bir-box">{format!("{item} {label}")}
-            <input inputmode="numeric" maxlength=max_digits prop:value=value prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key, event_target_value(&ev), max_digits) />
+            <input data-form-field=key inputmode="numeric" maxlength=max_digits prop:value=value prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key, event_target_value(&ev), max_digits) />
         </label>
     }.into_view()
 }
@@ -1288,7 +1288,7 @@ fn render_1701q_text_box(
     let value = display_1701q_field_value(key, field_value(input, key));
     view! {
         <label class="bir-box span-2">{format!("{item} {label}")}
-            <input prop:value=value prop:readonly=locked || disabled on:input=move |ev| {
+            <input data-form-field=key prop:value=value prop:readonly=locked || disabled on:input=move |ev| {
                 let value = event_target_value(&ev);
                 update_field_string(set_form_input_text, key, if encoded_text { encode_bir_text(&value) } else { value });
             } />
@@ -1314,10 +1314,10 @@ fn render_1701q_editable_tin_box(
     view! {
         <label class="bir-box span-2"><span>{format!("{item} {label}")}</span>
             <div class="split-inputs tin-inputs">
-                <input inputmode="numeric" maxlength=3 prop:value=value1 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key1, event_target_value(&ev), 3) /><span>"-"</span>
-                <input inputmode="numeric" maxlength=3 prop:value=value2 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key2, event_target_value(&ev), 3) /><span>"-"</span>
-                <input inputmode="numeric" maxlength=3 prop:value=value3 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key3, event_target_value(&ev), 3) /><span>"-"</span>
-                <input inputmode="numeric" maxlength=5 prop:value=value4 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key4, event_target_value(&ev), 5) />
+                <input data-form-field=key1 inputmode="numeric" maxlength=3 prop:value=value1 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key1, event_target_value(&ev), 3) /><span>"-"</span>
+                <input data-form-field=key2 inputmode="numeric" maxlength=3 prop:value=value2 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key2, event_target_value(&ev), 3) /><span>"-"</span>
+                <input data-form-field=key3 inputmode="numeric" maxlength=3 prop:value=value3 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key3, event_target_value(&ev), 3) /><span>"-"</span>
+                <input data-form-field=key4 inputmode="numeric" maxlength=5 prop:value=value4 prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, key4, event_target_value(&ev), 5) />
             </div>
         </label>
     }.into_view()
@@ -1357,11 +1357,11 @@ fn render_1701q_date_box(
     view! {
         <label class="bir-box span-2">{format!("{item} {label}")}
             <div class="date-inputs">
-                <input aria-label="Month" inputmode="numeric" maxlength="2" prop:value=month prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, month_key, event_target_value(&ev), 2) />
+                <input data-form-field=month_key aria-label="Month" inputmode="numeric" maxlength="2" prop:value=month prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, month_key, event_target_value(&ev), 2) />
                 <span>"/"</span>
-                <input aria-label="Day" inputmode="numeric" maxlength="2" prop:value=day prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, day_key, event_target_value(&ev), 2) />
+                <input data-form-field=day_key aria-label="Day" inputmode="numeric" maxlength="2" prop:value=day prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, day_key, event_target_value(&ev), 2) />
                 <span>"/"</span>
-                <input aria-label="Year" inputmode="numeric" maxlength="4" prop:value=year prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, year_key, event_target_value(&ev), 4) />
+                <input data-form-field=year_key aria-label="Year" inputmode="numeric" maxlength="4" prop:value=year prop:readonly=locked on:input=move |ev| update_field_digits(set_form_input_text, year_key, event_target_value(&ev), 4) />
             </div>
         </label>
     }.into_view()
@@ -1565,8 +1565,8 @@ fn render_1701q_two_amount_row_disabled(
     view! {
         <label class="bir-row bir-row-two-col">
             <span class="item-no">{item}</span><span class="item-label">{label}</span>
-            <input class="amount-input" class:rate-disabled=disabled_a class:calculated-amount=calculated prop:value=value_a prop:readonly=locked || calculated prop:disabled=disabled_a on:input=move |ev| update_field_amount(set_form_input_text, key_a, event_target_value(&ev)) />
-            <input class="amount-input" class:rate-disabled=disabled_b class:calculated-amount=calculated prop:value=value_b prop:readonly=locked || calculated prop:disabled=disabled_b on:input=move |ev| update_field_amount(set_form_input_text, key_b, event_target_value(&ev)) />
+            <input data-form-field=key_a class="amount-input" class:rate-disabled=disabled_a class:calculated-amount=calculated prop:value=value_a prop:readonly=locked || calculated prop:disabled=disabled_a on:input=move |ev| update_field_amount(set_form_input_text, key_a, event_target_value(&ev)) />
+            <input data-form-field=key_b class="amount-input" class:rate-disabled=disabled_b class:calculated-amount=calculated prop:value=value_b prop:readonly=locked || calculated prop:disabled=disabled_b on:input=move |ev| update_field_amount(set_form_input_text, key_b, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -1589,9 +1589,9 @@ fn render_1701q_specify_amount_row(
     view! {
         <label class="bir-row bir-row-two-col specify-row-1701q">
             <span class="item-no">{item}</span><span class="item-label">{label}</span>
-            <input class="specify-input" placeholder="specify" class:rate-disabled=disabled_a && disabled_b prop:value=specify prop:readonly=locked prop:disabled=disabled_a && disabled_b on:input=move |ev| update_field_string(set_form_input_text, specify_key, event_target_value(&ev)) />
-            <input class="amount-input" class:rate-disabled=disabled_a prop:value=value_a prop:readonly=locked prop:disabled=disabled_a on:input=move |ev| update_field_amount(set_form_input_text, key_a, event_target_value(&ev)) />
-            <input class="amount-input" class:rate-disabled=disabled_b prop:value=value_b prop:readonly=locked prop:disabled=disabled_b on:input=move |ev| update_field_amount(set_form_input_text, key_b, event_target_value(&ev)) />
+            <input data-form-field=specify_key class="specify-input" placeholder="specify" class:rate-disabled=disabled_a && disabled_b prop:value=specify prop:readonly=locked prop:disabled=disabled_a && disabled_b on:input=move |ev| update_field_string(set_form_input_text, specify_key, event_target_value(&ev)) />
+            <input data-form-field=key_a class="amount-input" class:rate-disabled=disabled_a prop:value=value_a prop:readonly=locked prop:disabled=disabled_a on:input=move |ev| update_field_amount(set_form_input_text, key_a, event_target_value(&ev)) />
+            <input data-form-field=key_b class="amount-input" class:rate-disabled=disabled_b prop:value=value_b prop:readonly=locked prop:disabled=disabled_b on:input=move |ev| update_field_amount(set_form_input_text, key_b, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -3017,7 +3017,72 @@ fn update_top_level_value(
     });
 }
 
+#[derive(Clone)]
+struct FormViewState {
+    field_key: String,
+    scroll_x: f64,
+    scroll_y: f64,
+    selection_start: Option<u32>,
+    selection_end: Option<u32>,
+}
+
+fn capture_form_view_state(field_key: &str) -> Option<FormViewState> {
+    let window = web_sys::window()?;
+    let active_input = window
+        .document()
+        .and_then(|document| document.active_element())
+        .and_then(|element| element.dyn_into::<web_sys::HtmlInputElement>().ok());
+    Some(FormViewState {
+        field_key: field_key.to_string(),
+        scroll_x: window.scroll_x().unwrap_or_default(),
+        scroll_y: window.scroll_y().unwrap_or_default(),
+        selection_start: active_input
+            .as_ref()
+            .and_then(|input| input.selection_start().ok().flatten()),
+        selection_end: active_input
+            .as_ref()
+            .and_then(|input| input.selection_end().ok().flatten()),
+    })
+}
+
+fn restore_form_view_state(state: &FormViewState) {
+    let Some(window) = web_sys::window() else {
+        return;
+    };
+    if let Some(document) = window.document() {
+        let selector = format!(r#"[data-form-field="{}"]"#, state.field_key);
+        if let Ok(Some(element)) = document.query_selector(&selector) {
+            if let Some(html_element) = element.dyn_ref::<web_sys::HtmlElement>() {
+                let _ = html_element.focus();
+            }
+            if let Some(input) = element.dyn_ref::<web_sys::HtmlInputElement>() {
+                if let (Some(start), Some(end)) = (state.selection_start, state.selection_end) {
+                    let _ = input.set_selection_range(start, end);
+                }
+            }
+        }
+    }
+    window.scroll_to_with_x_and_y(state.scroll_x, state.scroll_y);
+}
+
+fn preserve_form_view_after_update(state: Option<FormViewState>) {
+    let Some(state) = state else {
+        return;
+    };
+    restore_form_view_state(&state);
+    let Some(window) = web_sys::window() else {
+        return;
+    };
+    let callback = Closure::<dyn FnMut()>::once(move || restore_form_view_state(&state));
+    let _ = window.request_animation_frame(callback.as_ref().unchecked_ref());
+    callback.forget();
+}
+
 fn update_field_string(set_form_input_text: WriteSignal<String>, key: &str, value: String) {
+    // HumanTaxForm currently rebuilds its PDF-like subtree when the JSON signal changes.
+    // Preserve the active control and viewport so controlled numeric inputs do not throw
+    // the operator back to the top of a long form after every keystroke.
+    let view_state = capture_form_view_state(key);
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
@@ -3027,6 +3092,7 @@ fn update_field_string(set_form_input_text: WriteSignal<String>, key: &str, valu
             }
         }
     });
+    preserve_form_view_after_update(view_state);
 }
 
 fn update_period_component(
