@@ -1922,7 +1922,7 @@ fn render_physical_field_box_dynamic(
     let value = field_value(input, key);
     view! {
         <label class="bir-box">{format!("{item} {label}")}
-            <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+            <input data-form-field=key prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -1942,9 +1942,9 @@ fn render_physical_month_year_box(
     view! {
         <label class="bir-box">{format!("{item} {label} (MM/YYYY)")}
             <div class="split-inputs">
-                <input aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_period_component(set_form_input_text, month_key, "month", sync_return_period, event_target_value(&ev)) />
+                <input data-form-field=month_key aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_period_component(set_form_input_text, month_key, "month", sync_return_period, event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_period_component(set_form_input_text, year_key, "year", sync_return_period, event_target_value(&ev)) />
+                <input data-form-field=year_key aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_period_component(set_form_input_text, year_key, "year", sync_return_period, event_target_value(&ev)) />
             </div>
         </label>
     }.into_view()
@@ -1966,11 +1966,11 @@ fn render_physical_date_box(
     view! {
         <label class="bir-box span-2">{format!("{item} {label} (MM/DD/YYYY)")}
             <div class="date-inputs">
-                <input aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, month_key, event_target_value(&ev)) />
+                <input data-form-field=month_key aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, month_key, event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="Day" prop:value=day prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, day_key, event_target_value(&ev)) />
+                <input data-form-field=day_key aria-label="Day" prop:value=day prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, day_key, event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, year_key, event_target_value(&ev)) />
+                <input data-form-field=year_key aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, year_key, event_target_value(&ev)) />
             </div>
         </label>
     }.into_view()
@@ -1990,9 +1990,9 @@ fn render_physical_period_range_box(
     view! {
         <label class="bir-box span-2">{format!("{item} {label}")}
             <div class="period-range-inputs">
-                <input aria-label="From" placeholder="From MM/DD/YYYY" prop:value=from prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, from_key, event_target_value(&ev)) />
+                <input data-form-field=from_key aria-label="From" placeholder="From MM/DD/YYYY" prop:value=from prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, from_key, event_target_value(&ev)) />
                 <span>"to"</span>
-                <input aria-label="To" placeholder="To MM/DD/YYYY" prop:value=to prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, to_key, event_target_value(&ev)) />
+                <input data-form-field=to_key aria-label="To" placeholder="To MM/DD/YYYY" prop:value=to prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, to_key, event_target_value(&ev)) />
             </div>
         </label>
     }.into_view()
@@ -2054,9 +2054,9 @@ fn render_physical_atc_1702q_box(
         <div class="bir-box span-2 checkbox-pair atc-choice-box">
             <span>"5 Alphanumeric Tax Code (ATC)"</span>
             <label><input type="checkbox" prop:checked=regular prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec!["frm1702q:rbATC_1", "frm1702q:rbATC_2"], "frm1702q:rbATC_1") } />"Regular / Normal Rate"</label>
-            <input aria-label="Regular rate ATC" placeholder="ATC" prop:value=regular_code prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, "frm1702q:txtATC_1", event_target_value(&ev)) />
+            <input data-form-field="frm1702q:txtATC_1" aria-label="Regular rate ATC" placeholder="ATC" prop:value=regular_code prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, "frm1702q:txtATC_1", event_target_value(&ev)) />
             <label><input type="checkbox" prop:checked=special prop:disabled=locked on:change=move |ev| if event_target_checked(&ev) { update_choice_fields(set_form_input_text, vec!["frm1702q:rbATC_1", "frm1702q:rbATC_2"], "frm1702q:rbATC_2") } />"Special Rate"</label>
-            <input aria-label="Special rate ATC" placeholder="ATC" prop:value=special_code prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, "frm1702q:cbATC_2", event_target_value(&ev)) />
+            <input data-form-field="frm1702q:cbATC_2" aria-label="Special rate ATC" placeholder="ATC" prop:value=special_code prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, "frm1702q:cbATC_2", event_target_value(&ev)) />
         </div>
     }.into_view()
 }
@@ -2092,7 +2092,7 @@ fn render_physical_boxes(
         let class_name = if is_wide_physical_field(&key) { "bir-box span-2" } else { "bir-box" };
         view! {
             <label class=class_name>{label}
-                <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
+                <input data-form-field=input_key.clone() prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
             </label>
         }
     }).collect_view().into_view()
@@ -2114,7 +2114,7 @@ fn render_physical_rows(
         view! {
             <label class="bir-row">
                 <span class="item-no">{item}</span><span class="item-label">{label}</span>
-                <input class="amount-input" prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
+                <input data-form-field=input_key.clone() class="amount-input" prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
             </label>
         }
     }).collect_view().into_view()
@@ -2136,7 +2136,7 @@ fn render_physical_payment_rows(
         view! {
             <label class="bir-row payment-field-row">
                 <span class="item-no">{item}</span><span class="item-label">{label}</span>
-                <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
+                <input data-form-field=input_key.clone() prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, &input_key, event_target_value(&ev)) />
             </label>
         }
     }).collect_view().into_view()
@@ -3007,6 +3007,8 @@ fn update_top_level_value(
     key: &str,
     value: Value,
 ) {
+    let field_identity = format!("{section}:{key}");
+    let view_state = capture_form_view_state(&field_identity);
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             if let Some(obj) = root.get_mut(section).and_then(Value::as_object_mut) {
@@ -3015,6 +3017,7 @@ fn update_top_level_value(
             }
         }
     });
+    preserve_form_view_after_update(view_state);
 }
 
 #[derive(Clone)]
@@ -3102,6 +3105,7 @@ fn update_period_component(
     sync_return_period: bool,
     value: String,
 ) {
+    let view_state = capture_form_view_state(key);
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             let normalized = if part == "month" {
@@ -3127,6 +3131,7 @@ fn update_period_component(
             *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
         }
     });
+    preserve_form_view_after_update(view_state);
 }
 
 fn update_pair_fields(
@@ -3309,9 +3314,9 @@ fn render_1601c_period_box(
     view! {
         <label class="bir-box">"1 For the Month (MM/YYYY)"
             <div class="split-inputs">
-                <input aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_1601c_period(set_form_input_text, "month", event_target_value(&ev)) />
+                <input data-form-field="txtMonth" aria-label="Month" prop:value=month prop:readonly=locked on:input=move |ev| update_1601c_period(set_form_input_text, "month", event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_1601c_period(set_form_input_text, "year", event_target_value(&ev)) />
+                <input data-form-field="txtYear" aria-label="Year" prop:value=year prop:readonly=locked on:input=move |ev| update_1601c_period(set_form_input_text, "year", event_target_value(&ev)) />
             </div>
         </label>
     }.into_view()
@@ -3329,13 +3334,13 @@ fn render_1601c_tin_box(
     view! {
         <label class="bir-box span-2">"6 Taxpayer Identification Number (TIN)"
             <div class="split-inputs tin-inputs">
-                <input aria-label="TIN first block" prop:value=tin1 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN1", event_target_value(&ev)) />
+                <input data-form-field="txtTIN1" aria-label="TIN first block" prop:value=tin1 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN1", event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="TIN second block" prop:value=tin2 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN2", event_target_value(&ev)) />
+                <input data-form-field="txtTIN2" aria-label="TIN second block" prop:value=tin2 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN2", event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="TIN third block" prop:value=tin3 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN3", event_target_value(&ev)) />
+                <input data-form-field="txtTIN3" aria-label="TIN third block" prop:value=tin3 prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtTIN3", event_target_value(&ev)) />
                 <span>"/"</span>
-                <input aria-label="Branch code" prop:value=branch prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtBranchCode", event_target_value(&ev)) />
+                <input data-form-field="txtBranchCode" aria-label="Branch code" prop:value=branch prop:readonly=locked on:input=move |ev| update_1601c_tin(set_form_input_text, "txtBranchCode", event_target_value(&ev)) />
             </div>
         </label>
     }.into_view()
@@ -3353,7 +3358,7 @@ fn render_1601c_profile_email_box(
         .unwrap_or_default();
     view! {
         <label class="bir-box span-2">"12 Email Address"
-            <input prop:value=value prop:readonly=locked on:input=move |ev| update_top_level_value(set_form_input_text, "profile", "email", Value::String(event_target_value(&ev))) />
+            <input data-form-field="profile:email" prop:value=value prop:readonly=locked on:input=move |ev| update_top_level_value(set_form_input_text, "profile", "email", Value::String(event_target_value(&ev))) />
         </label>
     }.into_view()
 }
@@ -3369,7 +3374,7 @@ fn render_1601c_field_box(
     let value = field_value(input, key);
     view! {
         <label class="bir-box">{format!("{item} {label}")}
-            <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+            <input data-form-field=key prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -3385,7 +3390,7 @@ fn render_1601c_wide_field_box(
     let value = field_value(input, key);
     view! {
         <label class="bir-box span-2">{format!("{item} {label}")}
-            <input prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+            <input data-form-field=key prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -3422,7 +3427,7 @@ fn render_1601c_amount_row(
     view! {
         <label class="bir-row">
             <span class="item-no">{item}</span><span class="item-label">{label}</span>
-            <input class="amount-input" prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
+            <input data-form-field=key class="amount-input" prop:value=value prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, key, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -3441,8 +3446,8 @@ fn render_1601c_amount_row_with_specify(
     view! {
         <label class="bir-row specify-row">
             <span class="item-no">{item}</span><span class="item-label">{label}</span>
-            <input class="specify-input" placeholder="specify" prop:value=specify prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, specify_key, event_target_value(&ev)) />
-            <input class="amount-input" prop:value=amount prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, amount_key, event_target_value(&ev)) />
+            <input data-form-field=specify_key class="specify-input" placeholder="specify" prop:value=specify prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, specify_key, event_target_value(&ev)) />
+            <input data-form-field=amount_key class="amount-input" prop:value=amount prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, amount_key, event_target_value(&ev)) />
         </label>
     }.into_view()
 }
@@ -3467,10 +3472,10 @@ fn render_1601c_payment_row(
     view! {
         <div class="payment-row">
             <strong>{format!("{item} {label}")}</strong>
-            <input placeholder="Drawee Bank/Agency" prop:value=agency prop:readonly=locked on:input=move |ev| if let Some(key) = agency_key { update_field_string(set_form_input_text, key, event_target_value(&ev)) } />
-            <input placeholder="Number" prop:value=number prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, number_key, event_target_value(&ev)) />
-            <input placeholder="Date (MM/DD/YYYY)" prop:value=date prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, date_key, event_target_value(&ev)) />
-            <input class="amount-input" placeholder="Amount" prop:value=amount prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, amount_key, event_target_value(&ev)) />
+            <input data-form-field=agency_key.unwrap_or("") placeholder="Drawee Bank/Agency" prop:value=agency prop:readonly=locked on:input=move |ev| if let Some(key) = agency_key { update_field_string(set_form_input_text, key, event_target_value(&ev)) } />
+            <input data-form-field=number_key placeholder="Number" prop:value=number prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, number_key, event_target_value(&ev)) />
+            <input data-form-field=date_key placeholder="Date (MM/DD/YYYY)" prop:value=date prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, date_key, event_target_value(&ev)) />
+            <input data-form-field=amount_key class="amount-input" placeholder="Amount" prop:value=amount prop:readonly=locked on:input=move |ev| update_field_string(set_form_input_text, amount_key, event_target_value(&ev)) />
         </div>
     }.into_view()
 }
@@ -3484,17 +3489,18 @@ fn field_value(input: &Value, key: &str) -> String {
 }
 
 fn update_1601c_period(set_form_input_text: WriteSignal<String>, part: &str, value: String) {
+    let field_key = if part == "month" {
+        "txtMonth"
+    } else {
+        "txtYear"
+    };
+    let view_state = capture_form_view_state(field_key);
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             let normalized = if part == "month" {
                 format!("{:0>2}", value.trim())
             } else {
                 value.trim().to_string()
-            };
-            let field_key = if part == "month" {
-                "txtMonth"
-            } else {
-                "txtYear"
             };
             if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
                 fields.insert(field_key.to_string(), Value::String(normalized.clone()));
@@ -3512,9 +3518,11 @@ fn update_1601c_period(set_form_input_text: WriteSignal<String>, part: &str, val
             *text = serde_json::to_string_pretty(&root).unwrap_or_else(|_| text.clone());
         }
     });
+    preserve_form_view_after_update(view_state);
 }
 
 fn update_1601c_tin(set_form_input_text: WriteSignal<String>, key: &str, value: String) {
+    let view_state = capture_form_view_state(key);
     set_form_input_text.update(|text| {
         if let Ok(mut root) = serde_json::from_str::<Value>(text) {
             if let Some(fields) = root.get_mut("fields").and_then(Value::as_object_mut) {
@@ -3552,6 +3560,7 @@ fn update_1601c_tin(set_form_input_text: WriteSignal<String>, key: &str, value: 
             }
         }
     });
+    preserve_form_view_after_update(view_state);
 }
 
 fn update_checkbox_pair(
