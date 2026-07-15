@@ -1,4 +1,6 @@
 /target/
+.devenv*
+devenv.local.nix
 **/*.rs.bk
 .env
 .env.*
