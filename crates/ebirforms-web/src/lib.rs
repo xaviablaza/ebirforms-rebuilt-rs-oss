@@ -32,6 +32,7 @@ const SESSION_COOKIE: &str = "ebirforms_session";
 const SESSION_SECONDS: i64 = 60 * 60 * 12;
 const LOGIN_WINDOW_SECONDS: i64 = 15 * 60;
 const LOGIN_MAX_FAILURES: i64 = 5;
+const LOGIN_BLOCK_SECONDS: i64 = 60;
 
 #[derive(Clone)]
 pub struct Store(Arc<StoreInner>);
@@ -146,257 +147,6 @@ fn decrypt_payload(key: &[u8; 32], envelope: &str) -> Result<Value, String> {
         .decrypt(XNonce::from_slice(&nonce), ciphertext.as_ref())
         .map_err(|_| "payload authentication failed".to_string())?;
     serde_json::from_slice(&plaintext).map_err(|_| "decrypted payload is invalid JSON".into())
-}
-
-fn blank_payload(form_code: &str, email: &str, user_id: i64) -> Value {
-    let mut fields = serde_json::Map::new();
-    let keys: &[&str] = if form_code == "1701Q" {
-        &[
-            "frm1701q:txtYear",
-            "frm1701q:DateQuarter_1",
-            "frm1701q:DateQuarter_2",
-            "frm1701q:DateQuarter_3",
-            "frm1701q:txt5TIN1",
-            "frm1701q:txt5TIN2",
-            "frm1701q:txt5TIN3",
-            "frm1701q:txt5BranchCode",
-            "frm1701q:txt5RDOCode",
-            "frm1701q:txtTaxPayername",
-            "frm1701q:txt11Address",
-            "frm1701q:txt14zip",
-            "frm1701q:txt15Telno",
-            "frm1701q:txt13BirthMonth",
-            "frm1701q:txt13BirthDay",
-            "frm1701q:txt13BirthYear",
-            "ui1701q:taxpayer_citizenship",
-            "frm1701q:txt19",
-            "frm1701q:txt36A",
-            "frm1701q:txt38C",
-            "frm1701q:txt38E",
-            "frm1701q:txt38I",
-            "frm1701q:txt38K",
-            "ui1701q:txt55A",
-            "ui1701q:txt56A",
-            "ui1701q:txt58A",
-        ]
-    } else {
-        &[
-            "txtYearEnded",
-            "optQuarter1",
-            "optQuarter2",
-            "optQuarter3",
-            "txtTIN1",
-            "txtTIN2",
-            "txtTIN3",
-            "txtBranchCode",
-            "txtRDOCode",
-            "txtTaxpayerName",
-            "txtAddress",
-            "txtZipCode",
-            "txtTelNum",
-            "txtEmail",
-            "txtATC",
-            "sched1_txtSales1",
-            "sched1_txtCost2",
-            "sched1_txtOtherIncome4",
-            "sched1_txtDeductions6",
-            "sched1_txtPrevious8",
-            "sched4_txtPriorYearCredits1",
-            "sched4_txtPreviousPayments2",
-            "sched4_txtCwtCurrent5",
-        ]
-    };
-    for key in keys {
-        fields.insert((*key).into(), Value::String(String::new()));
-    }
-    json!({"profile":{"tin":"","email":email,"profile_id":format!("web-customer-{user_id}")},"return":{"period":{"year":0,"quarter":0},"is_amended":false,"amendment_number":0},"fields":fields})
-}
-
-fn required_string<'a>(
-    payload: &'a Value,
-    pointer: &str,
-    label: &str,
-    errors: &mut Vec<String>,
-) -> Option<&'a str> {
-    let value = payload
-        .pointer(pointer)
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .trim();
-    if value.is_empty() {
-        errors.push(format!("{label} is required"));
-        None
-    } else {
-        Some(value)
-    }
-}
-
-fn validate_guided_payload(form_code: &str, payload: &Value) -> Result<(), Vec<String>> {
-    let mut errors = Vec::new();
-    required_string(payload, "/profile/tin", "TIN", &mut errors);
-    let year = payload
-        .pointer("/return/period/year")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-    let quarter = payload
-        .pointer("/return/period/quarter")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-    if !(2000..=2100).contains(&year) {
-        errors.push("Tax year must be between 2000 and 2100".into());
-    }
-    if !(1..=3).contains(&quarter) {
-        errors.push("Quarter must be first, second, or third".into());
-    }
-    let (name, address, rdo) = if form_code == "1701Q" {
-        (
-            "/fields/frm1701q:txtTaxPayername",
-            "/fields/frm1701q:txt11Address",
-            "/fields/frm1701q:txt5RDOCode",
-        )
-    } else {
-        (
-            "/fields/txtTaxpayerName",
-            "/fields/txtAddress",
-            "/fields/txtRDOCode",
-        )
-    };
-    required_string(payload, name, "Registered taxpayer name", &mut errors);
-    required_string(payload, address, "Registered address", &mut errors);
-    required_string(payload, rdo, "RDO code", &mut errors);
-    if errors.is_empty() {
-        Ok(())
-    } else {
-        Err(errors)
-    }
-}
-
-fn money(payload: &Value, key: &str) -> f64 {
-    payload
-        .pointer(&format!("/fields/{key}"))
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .replace(',', "")
-        .parse()
-        .unwrap_or(0.0)
-}
-
-fn set_field(payload: &mut Value, key: &str, value: impl Into<String>) {
-    if let Some(fields) = payload.get_mut("fields").and_then(Value::as_object_mut) {
-        fields.insert(key.into(), Value::String(value.into()));
-    }
-}
-
-fn normalize_payload(form_code: &str, payload: &mut Value) {
-    let tin = payload
-        .pointer("/profile/tin")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .chars()
-        .filter(char::is_ascii_digit)
-        .collect::<String>();
-    let year = payload
-        .pointer("/return/period/year")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-    let quarter = payload
-        .pointer("/return/period/quarter")
-        .and_then(Value::as_i64)
-        .unwrap_or_default();
-    let email = payload
-        .pointer("/profile/email")
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string();
-    let segments = (
-        tin.get(0..3).unwrap_or_default(),
-        tin.get(3..6).unwrap_or_default(),
-        tin.get(6..9).unwrap_or_default(),
-        tin.get(9..14).unwrap_or_default(),
-    );
-    if form_code == "1701Q" {
-        set_field(payload, "frm1701q:txtYear", year.to_string());
-        set_field(
-            payload,
-            "frm1701q:DateQuarter_1",
-            (quarter == 1).to_string(),
-        );
-        set_field(
-            payload,
-            "frm1701q:DateQuarter_2",
-            (quarter == 2).to_string(),
-        );
-        set_field(
-            payload,
-            "frm1701q:DateQuarter_3",
-            (quarter == 3).to_string(),
-        );
-        set_field(payload, "frm1701q:txt5TIN1", segments.0);
-        set_field(payload, "frm1701q:txt5TIN2", segments.1);
-        set_field(payload, "frm1701q:txt5TIN3", segments.2);
-        set_field(payload, "frm1701q:txt5BranchCode", segments.3);
-        set_field(payload, "txtEmail", email);
-        let sales = money(payload, "frm1701q:txt36A");
-        let deductions = money(payload, "frm1701q:txt38C");
-        let osd = money(payload, "frm1701q:txt38E");
-        let prior = money(payload, "frm1701q:txt38I");
-        let other = money(payload, "frm1701q:txt38K");
-        set_field(
-            payload,
-            "frm1701q:txt38G",
-            format!("{:.2}", sales - deductions.max(osd)),
-        );
-        set_field(
-            payload,
-            "frm1701q:txt39A",
-            format!("{:.2}", sales - deductions.max(osd) + prior + other),
-        );
-        let credits = ["ui1701q:txt55A", "ui1701q:txt56A", "ui1701q:txt58A"]
-            .iter()
-            .map(|key| money(payload, key))
-            .sum::<f64>();
-        set_field(payload, "ui1701q:txt62A", format!("{credits:.2}"));
-    } else {
-        let month_day = match quarter {
-            1 => "03/31",
-            2 => "06/30",
-            3 => "09/30",
-            _ => "",
-        };
-        set_field(
-            payload,
-            "txtYearEnded",
-            if month_day.is_empty() {
-                String::new()
-            } else {
-                format!("{month_day}/{year}")
-            },
-        );
-        set_field(payload, "txtTIN1", segments.0);
-        set_field(payload, "txtTIN2", segments.1);
-        set_field(payload, "txtTIN3", segments.2);
-        set_field(payload, "txtBranchCode", segments.3);
-        set_field(payload, "txtEmail", email);
-        set_field(payload, "optQuarter1", (quarter == 1).to_string());
-        set_field(payload, "optQuarter2", (quarter == 2).to_string());
-        set_field(payload, "optQuarter3", (quarter == 3).to_string());
-        let sales = money(payload, "sched1_txtSales1");
-        let cost = money(payload, "sched1_txtCost2");
-        let other = money(payload, "sched1_txtOtherIncome4");
-        let deductions = money(payload, "sched1_txtDeductions6");
-        let prior = money(payload, "sched1_txtPrevious8");
-        let gross = sales - cost;
-        let total = gross + other;
-        let taxable = total - deductions;
-        set_field(payload, "sched1_txtGross3", format!("{gross:.2}"));
-        set_field(payload, "sched1_txtTotalGross5", format!("{total:.2}"));
-        set_field(payload, "sched1_txtTaxable7", format!("{taxable:.2}"));
-        set_field(
-            payload,
-            "sched1_txtTotalTaxable9",
-            format!("{:.2}", taxable + prior),
-        );
-    }
 }
 
 impl Store {
@@ -580,7 +330,7 @@ impl Store {
             _ => (1, now()),
         };
         let blocked_until = if failures >= LOGIN_MAX_FAILURES {
-            now() + LOGIN_WINDOW_SECONDS
+            now() + LOGIN_BLOCK_SECONDS
         } else {
             0
         };
@@ -707,24 +457,31 @@ fn csrf_headers(headers: &HeaderMap, actor: &Actor) -> ApiResult<()> {
 }
 
 fn form_code_for_intake(store: &Store, id: i64, user_id: i64) -> ApiResult<String> {
-    store
+    let record: Option<(String, String)> = store
         .0
         .connection
         .lock()
         .unwrap()
         .query_row(
-            "SELECT form_code FROM intakes WHERE id=?1 AND user_id=?2 AND state='draft'",
+            "SELECT form_code,payload FROM intakes WHERE id=?1 AND user_id=?2 AND state='draft'",
             params![id, user_id],
-            |row| row.get(0),
+            |row| Ok((row.get(0)?, row.get(1)?)),
         )
         .optional()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .ok_or_else(|| {
-            error(
-                StatusCode::CONFLICT,
-                "draft is unavailable or already submitted",
-            )
-        })
+        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
+    let (code, encrypted) = record.ok_or_else(|| {
+        error(
+            StatusCode::CONFLICT,
+            "draft is unavailable or already submitted",
+        )
+    })?;
+    decrypt_payload(&store.0.encryption_key, &encrypted).map_err(|_| {
+        error(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "stored payload failed authentication; refusing overwrite",
+        )
+    })?;
+    Ok(code)
 }
 
 #[derive(Deserialize)]
@@ -834,12 +591,22 @@ struct Intake {
 }
 fn row_intake(r: &rusqlite::Row<'_>, key: &[u8; 32]) -> rusqlite::Result<Intake> {
     let raw: String = r.get(4)?;
+    let payload = decrypt_payload(key, &raw).map_err(|message| {
+        rusqlite::Error::FromSqlConversionFailure(
+            4,
+            rusqlite::types::Type::Text,
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                message,
+            )),
+        )
+    })?;
     Ok(Intake {
         id: r.get(0)?,
         user_id: r.get(1)?,
         owner_email: r.get(2)?,
         form_code: r.get(3)?,
-        payload: decrypt_payload(key, &raw).unwrap_or(Value::Null),
+        payload,
         revision: r.get(5)?,
         state: r.get(6)?,
         workflow_status: r.get(7)?,
@@ -866,8 +633,13 @@ async fn list_my_intakes(
     let rows = q
         .query_map([a.id], |row| row_intake(row, &key))
         .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .filter_map(Result::ok)
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| {
+            error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "stored payload could not be decrypted",
+            )
+        })?;
     Ok(Json(rows))
 }
 #[derive(Deserialize)]
@@ -891,7 +663,13 @@ async fn create_intake(
             "web intake supports only 1701Q and 1702Q",
         ));
     }
-    let payload = blank_payload(&i.form_code, &a.email, a.id);
+    let payload =
+        ebirforms_web_schema::blank_payload(&i.form_code, &a.email, a.id).map_err(|_| {
+            error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "blank form template is invalid",
+            )
+        })?;
     let encrypted = encrypt_payload(&s.store.0.encryption_key, &payload).map_err(|_| {
         error(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -939,7 +717,7 @@ async fn save_intake(
     let a = extension_actor(actor)?;
     csrf_headers(&headers, &a)?;
     let mut payload = i.payload;
-    normalize_payload(&form_code_for_intake(&s.store, id, a.id)?, &mut payload);
+    ebirforms_web_schema::normalize(&form_code_for_intake(&s.store, id, a.id)?, &mut payload);
     let encrypted = encrypt_payload(&s.store.0.encryption_key, &payload).map_err(|_| {
         error(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -983,7 +761,7 @@ async fn submit_intake(
             "stored payload could not be decrypted",
         )
     })?;
-    if let Err(errors) = validate_guided_payload(&code, &payload) {
+    if let Err(errors) = ebirforms_web_schema::validate(&code, &payload) {
         return Err(error(StatusCode::UNPROCESSABLE_ENTITY, errors.join(". ")));
     }
     ebirforms_core::render_form(&code, &payload).map_err(|e| {
@@ -1014,8 +792,13 @@ async fn operator_list(
     let rows = q
         .query_map([], |row| row_intake(row, &key))
         .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .filter_map(Result::ok)
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| {
+            error(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "stored payload could not be decrypted",
+            )
+        })?;
     Ok(Json(rows))
 }
 async fn operator_get(
@@ -1329,15 +1112,16 @@ mod tests {
             .unwrap();
         assert_eq!(forbidden.status(), StatusCode::NOT_FOUND);
 
-        let fixture: Value =
-            serde_json::from_str(include_str!("../../../tests/fixtures/1701Q/input.json")).unwrap();
+        let mut guided_1701 =
+            ebirforms_web_schema::blank_payload("1701Q", "one@example.test", 1).unwrap();
+        ebirforms_web_schema::fill_with_schema_samples("1701Q", &mut guided_1701);
         let saved = json_request(
             &router,
             "PATCH",
             &format!("/api/intakes/{id}"),
             &one_cookie,
             &one_csrf,
-            json!({"payload":fixture,"revision":1}),
+            json!({"payload":guided_1701,"revision":1}),
         )
         .await;
         assert_eq!(saved.status(), StatusCode::OK);
@@ -1350,7 +1134,7 @@ mod tests {
                 row.get(0)
             })
             .unwrap();
-        assert!(!encrypted_at_rest.contains("AUTHORIZED TEST TAXPAYER"));
+        assert!(!encrypted_at_rest.contains("JUAN DELA CRUZ"));
         let submitted = json_request(
             &router,
             "POST",
@@ -1361,6 +1145,30 @@ mod tests {
         )
         .await;
         assert_eq!(submitted.status(), StatusCode::OK);
+
+        let mut guided_1702 =
+            ebirforms_web_schema::blank_payload("1702Q", "one@example.test", 1).unwrap();
+        ebirforms_web_schema::fill_with_schema_samples("1702Q", &mut guided_1702);
+        let saved_1702 = json_request(
+            &router,
+            "PATCH",
+            &format!("/api/intakes/{second_id}"),
+            &one_cookie,
+            &one_csrf,
+            json!({"payload":guided_1702,"revision":1}),
+        )
+        .await;
+        assert_eq!(saved_1702.status(), StatusCode::OK);
+        let submitted_1702 = json_request(
+            &router,
+            "POST",
+            &format!("/api/intakes/{second_id}/submit"),
+            &one_cookie,
+            &one_csrf,
+            json!({}),
+        )
+        .await;
+        assert_eq!(submitted_1702.status(), StatusCode::OK);
 
         let customer_cannot_operate = router
             .clone()
@@ -1527,5 +1335,73 @@ mod tests {
             .set_user_disabled("managed@example.test", false)
             .unwrap();
         assert!(!store.list_users().unwrap()[0].3);
+    }
+
+    #[tokio::test]
+    async fn authenticated_encryption_failure_is_reported_and_never_overwritten() {
+        let store = Store::in_memory().unwrap();
+        store
+            .create_user(
+                "crypto@example.test",
+                "correct horse battery staple",
+                "customer",
+            )
+            .unwrap();
+        let router = app(store.clone(), "/tmp/ebirforms-web-test-assets");
+        let (cookie, csrf) = login_as(&router, "crypto@example.test").await;
+        let created = json_request(
+            &router,
+            "POST",
+            "/api/intakes",
+            &cookie,
+            &csrf,
+            json!({"form_code":"1701Q"}),
+        )
+        .await;
+        let body = to_bytes(created.into_body(), usize::MAX).await.unwrap();
+        let id = serde_json::from_slice::<Value>(&body).unwrap()["id"]
+            .as_i64()
+            .unwrap();
+        store
+            .0
+            .connection
+            .lock()
+            .unwrap()
+            .execute(
+                "UPDATE intakes SET payload='v1.invalid.invalid' WHERE id=?1",
+                [id],
+            )
+            .unwrap();
+        let read = router
+            .clone()
+            .oneshot(
+                Request::get(format!("/api/intakes/{id}"))
+                    .header(header::COOKIE, &cookie)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(read.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let overwrite = json_request(
+            &router,
+            "PATCH",
+            &format!("/api/intakes/{id}"),
+            &cookie,
+            &csrf,
+            json!({"payload":{},"revision":1}),
+        )
+        .await;
+        assert_eq!(overwrite.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let stored: String = store
+            .0
+            .connection
+            .lock()
+            .unwrap()
+            .query_row("SELECT payload FROM intakes WHERE id=?1", [id], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(stored, "v1.invalid.invalid");
     }
 }

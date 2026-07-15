@@ -1,3 +1,4 @@
+use ebirforms_web_schema::{fields_for, set_value, value_at, GuidedField, COMMON_FIELDS};
 use leptos::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -140,261 +141,6 @@ fn Customer(
     <section class="card editor">{move||selected.get().map(|i|view!{<IntakeEditor intake=i set_selected=set_selected set_items=set_items set_message=set_message/>}).unwrap_or_else(||view!{<div class="empty"><h2>"Choose or start an intake"</h2><p>"During your guided call, complete the return data and save as you go."</p></div>}.into_view())}</section></div><p class="error">{move||message.get()}</p> }
 }
 
-#[derive(Clone, Copy)]
-struct GuidedField {
-    label: &'static str,
-    path: &'static str,
-    input_type: &'static str,
-    hint: &'static str,
-}
-
-const COMMON_FIELDS: &[GuidedField] = &[
-    GuidedField {
-        label: "Taxpayer identification number (TIN)",
-        path: "profile.tin",
-        input_type: "text",
-        hint: "Enter the 9-digit TIN and 5-digit branch code",
-    },
-    GuidedField {
-        label: "Tax year",
-        path: "period.year",
-        input_type: "number",
-        hint: "Example: 2026",
-    },
-];
-const FIELDS_1701Q: &[GuidedField] = &[
-    GuidedField {
-        label: "Registered taxpayer name",
-        path: "field:frm1701q:txtTaxPayername",
-        input_type: "text",
-        hint: "As shown on the BIR registration",
-    },
-    GuidedField {
-        label: "RDO code",
-        path: "field:frm1701q:txt5RDOCode",
-        input_type: "text",
-        hint: "Three-digit Revenue District Office code",
-    },
-    GuidedField {
-        label: "Registered address",
-        path: "field:frm1701q:txt11Address",
-        input_type: "text",
-        hint: "Complete registered address",
-    },
-    GuidedField {
-        label: "ZIP code",
-        path: "field:frm1701q:txt14zip",
-        input_type: "text",
-        hint: "Four digits",
-    },
-    GuidedField {
-        label: "Telephone number",
-        path: "field:frm1701q:txt15Telno",
-        input_type: "tel",
-        hint: "Optional",
-    },
-    GuidedField {
-        label: "Birth month",
-        path: "field:frm1701q:txt13BirthMonth",
-        input_type: "number",
-        hint: "1 to 12",
-    },
-    GuidedField {
-        label: "Birth day",
-        path: "field:frm1701q:txt13BirthDay",
-        input_type: "number",
-        hint: "1 to 31",
-    },
-    GuidedField {
-        label: "Birth year",
-        path: "field:frm1701q:txt13BirthYear",
-        input_type: "number",
-        hint: "Four digits",
-    },
-    GuidedField {
-        label: "Citizenship",
-        path: "field:ui1701q:taxpayer_citizenship",
-        input_type: "text",
-        hint: "Example: Filipino",
-    },
-    GuidedField {
-        label: "Line of business or profession",
-        path: "field:frm1701q:txt19",
-        input_type: "text",
-        hint: "Primary trade or profession",
-    },
-    GuidedField {
-        label: "Sales, revenues, receipts or fees",
-        path: "field:frm1701q:txt36A",
-        input_type: "number",
-        hint: "Amount for this quarter",
-    },
-    GuidedField {
-        label: "Itemized deductions",
-        path: "field:frm1701q:txt38C",
-        input_type: "number",
-        hint: "Enter 0 if not used",
-    },
-    GuidedField {
-        label: "Optional standard deduction",
-        path: "field:frm1701q:txt38E",
-        input_type: "number",
-        hint: "Enter 0 if not used",
-    },
-    GuidedField {
-        label: "Taxable income from previous quarters",
-        path: "field:frm1701q:txt38I",
-        input_type: "number",
-        hint: "Year-to-date prior quarter amount",
-    },
-    GuidedField {
-        label: "Other non-operating income",
-        path: "field:frm1701q:txt38K",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Prior-year excess credits",
-        path: "field:ui1701q:txt55A",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Previous-quarter tax payments",
-        path: "field:ui1701q:txt56A",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Creditable tax withheld this quarter",
-        path: "field:ui1701q:txt58A",
-        input_type: "number",
-        hint: "From BIR Form 2307",
-    },
-];
-const FIELDS_1702Q: &[GuidedField] = &[
-    GuidedField {
-        label: "Registered corporate name",
-        path: "field:txtTaxpayerName",
-        input_type: "text",
-        hint: "As shown on the BIR registration",
-    },
-    GuidedField {
-        label: "RDO code",
-        path: "field:txtRDOCode",
-        input_type: "text",
-        hint: "Three-digit Revenue District Office code",
-    },
-    GuidedField {
-        label: "Registered address",
-        path: "field:txtAddress",
-        input_type: "text",
-        hint: "Complete registered address",
-    },
-    GuidedField {
-        label: "ZIP code",
-        path: "field:txtZipCode",
-        input_type: "text",
-        hint: "Four digits",
-    },
-    GuidedField {
-        label: "Telephone number",
-        path: "field:txtTelNum",
-        input_type: "tel",
-        hint: "Optional",
-    },
-    GuidedField {
-        label: "Alphanumeric tax code (ATC)",
-        path: "field:txtATC",
-        input_type: "text",
-        hint: "Confirm with the filing adviser",
-    },
-    GuidedField {
-        label: "Gross sales or receipts",
-        path: "field:sched1_txtSales1",
-        input_type: "number",
-        hint: "Amount for this quarter",
-    },
-    GuidedField {
-        label: "Cost of sales or services",
-        path: "field:sched1_txtCost2",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Other income",
-        path: "field:sched1_txtOtherIncome4",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Allowable deductions",
-        path: "field:sched1_txtDeductions6",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Taxable income from previous quarters",
-        path: "field:sched1_txtPrevious8",
-        input_type: "number",
-        hint: "Year-to-date prior quarter amount",
-    },
-    GuidedField {
-        label: "Prior-year excess credits",
-        path: "field:sched4_txtPriorYearCredits1",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Previous-quarter income tax payments",
-        path: "field:sched4_txtPreviousPayments2",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-    GuidedField {
-        label: "Creditable tax withheld this quarter",
-        path: "field:sched4_txtCwtCurrent5",
-        input_type: "number",
-        hint: "Enter 0 if none",
-    },
-];
-
-fn guided_value(payload: &Value, path: &str) -> String {
-    if let Some(key) = path.strip_prefix("field:") {
-        payload
-            .get("fields")
-            .and_then(|v| v.get(key))
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .into()
-    } else if path == "profile.tin" {
-        payload
-            .pointer("/profile/tin")
-            .and_then(Value::as_str)
-            .unwrap_or_default()
-            .into()
-    } else {
-        payload
-            .pointer("/return/period/year")
-            .and_then(Value::as_i64)
-            .filter(|v| *v > 0)
-            .map(|v| v.to_string())
-            .unwrap_or_default()
-    }
-}
-fn set_guided_value(payload: &mut Value, path: &str, value: String) {
-    if let Some(key) = path.strip_prefix("field:") {
-        if let Some(fields) = payload.get_mut("fields").and_then(Value::as_object_mut) {
-            fields.insert(key.into(), Value::String(value));
-        }
-    } else if path == "profile.tin" {
-        payload["profile"]["tin"] = Value::String(value)
-    } else {
-        payload["return"]["period"]["year"] =
-            Value::Number(value.parse::<i64>().unwrap_or_default().into())
-    }
-}
-
 async fn save_until_clean(
     id: i64,
     payload: RwSignal<Value>,
@@ -439,9 +185,8 @@ fn GuidedInput(
     id: i64,
     set_message: WriteSignal<String>,
 ) -> impl IntoView {
-    let update = move |event| {
-        let value = event_target_value(&event);
-        payload.update(|data| set_guided_value(data, field.path, value));
+    let update = move |value: String| {
+        payload.update(|data| set_value(data, field.path, &value));
         generation.update(|value| *value += 1);
         let expected = generation.get_untracked();
         spawn_local(async move {
@@ -455,7 +200,60 @@ fn GuidedInput(
             }
         })
     };
-    view! {<label class="guided-field"><span>{field.label}</span><input type=field.input_type disabled=move||submitting.get() prop:value=move||guided_value(&payload.get(),field.path) on:input=update/><small>{field.hint}</small></label>}
+    let choices: &[(&str, &str)] = match field.input_type {
+        "quarter" => &[
+            ("", "Select a quarter"),
+            ("1", "First quarter"),
+            ("2", "Second quarter"),
+            ("3", "Third quarter"),
+        ],
+        "yes_no" => &[("", "Select an answer"), ("no", "No"), ("yes", "Yes")],
+        "taxpayer_type" => &[
+            ("", "Select taxpayer type"),
+            ("single", "Single proprietor"),
+            ("professional", "Professional"),
+            ("estate", "Estate"),
+            ("trust", "Trust"),
+        ],
+        "atc_1701" => &[
+            ("", "Select ATC"),
+            ("II012", "II012"),
+            ("II014", "II014"),
+            ("II013", "II013"),
+            ("II015", "II015"),
+            ("II017", "II017"),
+            ("II016", "II016"),
+        ],
+        "atc_1702" => &[
+            ("", "Select ATC"),
+            ("WC160", "WC160"),
+            ("WC170", "WC170"),
+            ("WC180", "WC180"),
+        ],
+        "tax_regime" => &[
+            ("", "Select tax regime"),
+            ("graduated", "Graduated income tax rates"),
+            ("eight_percent", "8% income tax rate"),
+        ],
+        "deduction_method" => &[
+            ("", "Select deduction method"),
+            ("itemized", "Itemized deductions"),
+            ("osd", "Optional standard deduction"),
+        ],
+        "entity_type" => &[
+            ("", "Select entity type"),
+            ("domestic", "Domestic corporation"),
+            ("resident_foreign", "Resident foreign corporation"),
+            ("nonresident_foreign", "Non-resident foreign corporation"),
+        ],
+        _ => &[],
+    };
+    let control = if choices.is_empty() {
+        view!{<input type=field.input_type disabled=move||submitting.get() prop:value=move||value_at(&payload.get(),field.path) on:input=move|event|update(event_target_value(&event))/>}.into_view()
+    } else {
+        view!{<select disabled=move||submitting.get() prop:value=move||value_at(&payload.get(),field.path) on:change=move|event|update(event_target_value(&event))>{choices.iter().map(|(value,label)|view!{<option value=*value>{*label}</option>}).collect_view()}</select>}.into_view()
+    };
+    view! {<label class="guided-field"><span>{field.label}</span>{control}<small>{field.hint}</small></label>}
 }
 
 #[component]
@@ -472,29 +270,7 @@ fn IntakeEditor(
     let submitting = create_rw_signal(false);
     let id = intake.id;
     let locked = intake.state != "draft";
-    let fields = if intake.form_code == "1701Q" {
-        FIELDS_1701Q
-    } else {
-        FIELDS_1702Q
-    };
-    let set_quarter = move |event| {
-        let value = event_target_value(&event)
-            .parse::<i64>()
-            .unwrap_or_default();
-        payload.update(|data| data["return"]["period"]["quarter"] = Value::Number(value.into()));
-        generation.update(|value| *value += 1);
-        let expected = generation.get_untracked();
-        spawn_local(async move {
-            gloo_timers::future::TimeoutFuture::new(650).await;
-            if generation.get_untracked() == expected {
-                if let Err(error) =
-                    save_until_clean(id, payload, revision, generation, saving).await
-                {
-                    set_message.set(error)
-                }
-            }
-        });
-    };
+    let fields = fields_for(&intake.form_code);
     let save = move |_| {
         spawn_local(async move {
             match save_until_clean(id, payload, revision, generation, saving).await {
@@ -532,7 +308,7 @@ fn IntakeEditor(
             }
         })
     };
-    view! {<div><p class="eyebrow">{format!("{} guided intake",intake.form_code)}</p><h2>{intake.reference.clone().unwrap_or_else(||"Draft return".into())}</h2>{if locked{view!{<div class="success"><h3>"Information received"</h3><p>"Our team will review and file this return. The official receipt will follow after filing."</p></div>}.into_view()}else{view!{<><p>"Complete each section with your filing adviser. Changes are saved securely after a short pause."</p><section class="form-section"><h3>"Filing period and taxpayer"</h3><div class="form-fields">{COMMON_FIELDS.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id set_message=set_message/>}).collect_view()}<label class="guided-field"><span>"Quarter"</span><select disabled=move||submitting.get() on:change=set_quarter prop:value=move||payload.get().pointer("/return/period/quarter").and_then(Value::as_i64).unwrap_or_default().to_string()><option value="0">"Select a quarter"</option><option value="1">"First quarter"</option><option value="2">"Second quarter"</option><option value="3">"Third quarter"</option></select><small>"BIR quarterly returns use the first three quarters"</small></label></div></section><section class="form-section"><h3>"Registered details and quarterly figures"</h3><div class="form-fields">{fields.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id set_message=set_message/>}).collect_view()}</div></section><div class="actions"><span class="save-state">{move||if saving.get(){"Saving…"}else{"All changes saved"}}</span><button class="secondary" disabled=move||submitting.get() on:click=save>"Save now"</button><button disabled=move||submitting.get() on:click=submit>"Send for review"</button></div></>}.into_view()}}</div>}
+    view! {<div><p class="eyebrow">{format!("{} guided intake",intake.form_code)}</p><h2>{intake.reference.clone().unwrap_or_else(||"Draft return".into())}</h2>{if locked{view!{<div class="success"><h3>"Information received"</h3><p>"Our team will review and file this return. The official receipt will follow after filing."</p></div>}.into_view()}else{view!{<><p>"Complete each section with your filing adviser. Changes are saved securely after a short pause."</p><section class="form-section"><h3>"Filing period and taxpayer"</h3><div class="form-fields">{COMMON_FIELDS.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id set_message=set_message/>}).collect_view()}</div></section><section class="form-section"><h3>"Registered details, filing choices, and quarterly figures"</h3><div class="form-fields">{fields.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id set_message=set_message/>}).collect_view()}</div></section><div class="actions"><span class="save-state">{move||if saving.get(){"Saving…"}else{"All changes saved"}}</span><button class="secondary" disabled=move||submitting.get() on:click=save>"Save now"</button><button disabled=move||submitting.get() on:click=submit>"Send for review"</button></div></>}.into_view()}}</div>}
 }
 
 #[component]
@@ -599,7 +375,21 @@ fn OperatorDetail(
             )
             .await
             {
-                Ok(_) => set_message.set(format!("Marked {status}.")),
+                Ok(_) => {
+                    set_items.update(|items| {
+                        if let Some(item) = items.iter_mut().find(|item| item.id == id) {
+                            item.workflow_status = Some(status.into())
+                        }
+                    });
+                    set_selected.update(|item| {
+                        if let Some(item) = item.as_mut() {
+                            if item.id == id {
+                                item.workflow_status = Some(status.into())
+                            }
+                        }
+                    });
+                    set_message.set(format!("Marked {status}."));
+                }
                 Err(e) => set_message.set(e),
             }
         })

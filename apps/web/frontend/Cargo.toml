@@ -9,6 +9,7 @@ rust-version = "1.75"
 
 [dependencies]
 console_error_panic_hook = "0.1"
+ebirforms-web-schema = { path = "../../../crates/ebirforms-web-schema" }
 gloo-timers = { version = "0.3", features = ["futures"] }
 js-sys = "0.3"
 leptos = { version = "0.6", features = ["csr"] }

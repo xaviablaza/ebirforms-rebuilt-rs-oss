@@ -309,6 +309,7 @@ dependencies = [
  "base64",
  "chacha20poly1305",
  "ebirforms-core",
+ "ebirforms-web-schema",
  "http-body-util",
  "rand",
  "rusqlite",
@@ -319,6 +320,14 @@ dependencies = [
  "tokio",
  "tower",
  "tower-http",
+]
+
+[[package]]
+name = "ebirforms-web-schema"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
