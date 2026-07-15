@@ -34,9 +34,11 @@ async fn request<T: for<'de> Deserialize<'de>>(
     method: &str,
     body: Value,
 ) -> Result<T, String> {
-    let value = api(path, method, serde_wasm_bindgen::to_value(&body).unwrap())
-        .await
-        .map_err(js_error)?;
+    let serializer = serde_wasm_bindgen::Serializer::json_compatible();
+    let body = body
+        .serialize(&serializer)
+        .map_err(|error| format!("Could not encode request: {error}"))?;
+    let value = api(path, method, body).await.map_err(js_error)?;
     serde_wasm_bindgen::from_value(value).map_err(|e| e.to_string())
 }
 fn js_error(value: JsValue) -> String {

@@ -52,6 +52,44 @@ in
     '';
   };
 
+  scripts.web-create-operator = {
+    description = "Create the local web encryption key and an operator account";
+    exec = ''
+      if [ "$#" -ne 1 ]; then
+        echo "Usage: web-create-operator EMAIL" >&2
+        exit 2
+      fi
+
+      email="$1"
+      state_dir="$PWD/.devenv/state"
+      key_file="$state_dir/web-intake.key"
+      export EBIRFORMS_WEB_DB="''${EBIRFORMS_WEB_DB:-$state_dir/web-intake.sqlite3}"
+
+      mkdir -p "$state_dir"
+      if [ ! -f "$key_file" ]; then
+        umask 077
+        openssl rand -base64 32 > "$key_file"
+      fi
+      chmod 600 "$key_file"
+      export EBIRFORMS_WEB_ENCRYPTION_KEY="$(cat "$key_file")"
+
+      if [ -z "''${EBIRFORMS_NEW_USER_PASSWORD:-}" ]; then
+        printf "Operator password (at least 12 characters): "
+        IFS= read -r -s EBIRFORMS_NEW_USER_PASSWORD
+        printf "\nConfirm password: "
+        IFS= read -r -s password_confirmation
+        printf "\n"
+        if [ "$EBIRFORMS_NEW_USER_PASSWORD" != "$password_confirmation" ]; then
+          echo "Passwords do not match." >&2
+          exit 2
+        fi
+        export EBIRFORMS_NEW_USER_PASSWORD
+      fi
+
+      cargo run -p ebirforms-web -- create-user "$email" operator
+    '';
+  };
+
   scripts.web-dev = {
     description = "Run the hosted intake API and Leptos frontend with hot reload";
     exec = ''
