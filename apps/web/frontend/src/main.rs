@@ -186,7 +186,29 @@ fn GuidedInput(
     set_message: WriteSignal<String>,
 ) -> impl IntoView {
     let update = move |value: String| {
-        payload.update(|data| set_value(data, field.path, &value));
+        payload.update(|data| {
+            set_value(data, field.path, &value);
+            if field.input_type == "atc_1701" {
+                let eight_percent = matches!(value.as_str(), "II015" | "II017" | "II016");
+                set_value(
+                    data,
+                    "guided.tax_regime",
+                    if eight_percent {
+                        "eight_percent"
+                    } else {
+                        "graduated"
+                    },
+                );
+                if eight_percent {
+                    set_value(data, "guided.deduction_method", "");
+                    set_value(data, "guided.cost", "0");
+                    set_value(data, "guided.itemized_deductions", "0");
+                }
+            } else if field.path == "guided.deduction_method" && value == "osd" {
+                set_value(data, "guided.cost", "0");
+                set_value(data, "guided.itemized_deductions", "0");
+            }
+        });
         generation.update(|value| *value += 1);
         let expected = generation.get_untracked();
         spawn_local(async move {
@@ -199,6 +221,20 @@ fn GuidedInput(
                 }
             }
         })
+    };
+    let disabled = move || {
+        if submitting.get() {
+            return true;
+        }
+        let data = payload.get();
+        let eight_percent = matches!(
+            value_at(&data, "guided.atc").as_str(),
+            "II015" | "II017" | "II016"
+        );
+        field.input_type == "tax_regime"
+            || (field.path == "guided.deduction_method" && eight_percent)
+            || (matches!(field.path, "guided.cost" | "guided.itemized_deductions")
+                && (eight_percent || value_at(&data, "guided.deduction_method") == "osd"))
     };
     let choices: &[(&str, &str)] = match field.input_type {
         "quarter" => &[
@@ -249,9 +285,9 @@ fn GuidedInput(
         _ => &[],
     };
     let control = if choices.is_empty() {
-        view!{<input type=field.input_type disabled=move||submitting.get() prop:value=move||value_at(&payload.get(),field.path) on:input=move|event|update(event_target_value(&event))/>}.into_view()
+        view!{<input type=field.input_type disabled=disabled prop:value=move||value_at(&payload.get(),field.path) on:input=move|event|update(event_target_value(&event))/>}.into_view()
     } else {
-        view!{<select disabled=move||submitting.get() prop:value=move||value_at(&payload.get(),field.path) on:change=move|event|update(event_target_value(&event))>{choices.iter().map(|(value,label)|view!{<option value=*value>{*label}</option>}).collect_view()}</select>}.into_view()
+        view!{<select disabled=disabled prop:value=move||value_at(&payload.get(),field.path) on:change=move|event|update(event_target_value(&event))>{choices.iter().map(|(value,label)|view!{<option value=*value>{*label}</option>}).collect_view()}</select>}.into_view()
     };
     view! {<label class="guided-field"><span>{field.label}</span>{control}<small>{field.hint}</small></label>}
 }
