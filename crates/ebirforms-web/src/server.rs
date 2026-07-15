@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{
     path::Path,
     sync::{Arc, Mutex},
@@ -11,7 +9,7 @@ use argon2::{
     Argon2,
 };
 use axum::{
-    extract::{Extension, Path as AxumPath, Request, State},
+    extract::{Path as AxumPath, Request, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
     middleware::{self, Next},
     response::{IntoResponse, Response},
@@ -25,8 +23,8 @@ use chacha20poly1305::{
 };
 use rand::{distributions::Alphanumeric, Rng};
 use rusqlite::{params, Connection, OptionalExtension};
-use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde::Serialize;
+use serde_json::Value;
 use sha2::{Digest, Sha256};
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -50,6 +48,7 @@ struct StoreInner {
 #[derive(Clone)]
 struct AppState {
     store: Store,
+    content_security_policy: HeaderValue,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -352,7 +351,10 @@ impl Store {
 }
 
 pub fn app(store: Store, static_dir: impl AsRef<Path>) -> Router {
-    let state = AppState { store };
+    let state = AppState {
+        store,
+        content_security_policy: content_security_policy(static_dir.as_ref()),
+    };
     let index = static_dir.as_ref().join("index.html");
     Router::new()
         .route("/api/healthz", get(|| async { StatusCode::NO_CONTENT }))
@@ -361,6 +363,32 @@ pub fn app(store: Store, static_dir: impl AsRef<Path>) -> Router {
         .fallback_service(ServeDir::new(static_dir).not_found_service(ServeFile::new(index)))
         .layer(middleware::from_fn_with_state(state.clone(), load_actor))
         .with_state(state)
+}
+
+fn content_security_policy(static_dir: &Path) -> HeaderValue {
+    let index = std::fs::read_to_string(static_dir.join("index.html")).unwrap_or_default();
+    let mut hashes = Vec::new();
+    let mut remaining = index.as_str();
+    while let Some(start) = remaining.find("<script") {
+        remaining = &remaining[start..];
+        let Some(tag_end) = remaining.find('>') else {
+            break;
+        };
+        let tag = &remaining[..=tag_end];
+        let after = &remaining[tag_end + 1..];
+        let Some(close) = after.find("</script>") else {
+            break;
+        };
+        if !tag.contains(" src=") && !tag.contains("src=") {
+            let digest = Sha256::digest(after[..close].as_bytes());
+            hashes.push(format!("'sha256-{}'", BASE64.encode(digest)));
+        }
+        remaining = &after[close + "</script>".len()..];
+    }
+    let script_hashes = hashes.join(" ");
+    HeaderValue::from_str(&format!(
+        "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' {script_hashes}; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+    )).expect("generated CSP is a valid header")
 }
 
 async fn server_fn_handler(State(state): State<AppState>, request: Request) -> impl IntoResponse {
@@ -383,7 +411,10 @@ async fn load_actor(State(state): State<AppState>, mut request: Request, next: N
         }
     }
     let mut response = next.run(request).await;
-    response.headers_mut().insert("content-security-policy", HeaderValue::from_static("default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"));
+    response.headers_mut().insert(
+        "content-security-policy",
+        state.content_security_policy.clone(),
+    );
     response
         .headers_mut()
         .insert("x-frame-options", HeaderValue::from_static("DENY"));
@@ -420,159 +451,6 @@ fn operator(request: &Request) -> ApiResult<Actor> {
     }
     Ok(actor)
 }
-#[allow(dead_code)]
-fn csrf(request: &Request, actor: &Actor) -> ApiResult<()> {
-    if request
-        .headers()
-        .get("x-csrf-token")
-        .and_then(|v| v.to_str().ok())
-        != Some(actor.csrf_token.as_str())
-    {
-        return Err(error(StatusCode::FORBIDDEN, "invalid CSRF token"));
-    }
-    Ok(())
-}
-#[allow(dead_code)]
-fn extension_actor(actor: Option<Extension<Actor>>) -> ApiResult<Actor> {
-    actor
-        .map(|Extension(actor)| actor)
-        .ok_or_else(|| error(StatusCode::UNAUTHORIZED, "authentication required"))
-}
-#[allow(dead_code)]
-fn extension_operator(actor: Option<Extension<Actor>>) -> ApiResult<Actor> {
-    let actor = extension_actor(actor)?;
-    if actor.role != "operator" {
-        return Err(error(StatusCode::FORBIDDEN, "operator access required"));
-    }
-    Ok(actor)
-}
-#[allow(dead_code)]
-fn csrf_headers(headers: &HeaderMap, actor: &Actor) -> ApiResult<()> {
-    if headers.get("x-csrf-token").and_then(|v| v.to_str().ok()) != Some(actor.csrf_token.as_str())
-    {
-        return Err(error(StatusCode::FORBIDDEN, "invalid CSRF token"));
-    }
-    Ok(())
-}
-fn form_code_for_intake(store: &Store, id: i64, user_id: i64) -> ApiResult<String> {
-    let record: Option<(String, String)> = store
-        .0
-        .connection
-        .lock()
-        .unwrap()
-        .query_row(
-            "SELECT form_code,payload FROM intakes WHERE id=?1 AND user_id=?2 AND state='draft'",
-            params![id, user_id],
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )
-        .optional()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    let (code, encrypted) = record.ok_or_else(|| {
-        error(
-            StatusCode::CONFLICT,
-            "draft is unavailable or already submitted",
-        )
-    })?;
-    decrypt_payload(&store.0.encryption_key, &encrypted).map_err(|_| {
-        error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "stored payload failed authentication; refusing overwrite",
-        )
-    })?;
-    Ok(code)
-}
-
-/* Portal operations below are Leptos server functions. Axum-specific endpoints are
- * intentionally limited to health and authenticated export. */
-#[cfg(any())]
-async fn removed_legacy_login(
-    State(state): State<AppState>,
-    Json(input): Json<Value>,
-) -> ApiResult<Response> {
-    let normalized_email = input.email.trim().to_ascii_lowercase();
-    if state.store.is_login_throttled(&normalized_email) {
-        return Err(error(
-            StatusCode::TOO_MANY_REQUESTS,
-            "too many failed sign-in attempts; try again later",
-        ));
-    }
-    let user = {
-        let conn = state.store.0.connection.lock().unwrap();
-        conn.query_row("SELECT id,email,password_hash,role FROM users WHERE email=?1 COLLATE NOCASE AND disabled=0", [&normalized_email], |r| Ok((r.get::<_,i64>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,String>(3)?))).optional().map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR,"database error"))?
-    };
-    let Some((id, email, hash, role)) = user else {
-        state
-            .store
-            .record_login_failure(&normalized_email)
-            .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-        return Err(error(StatusCode::UNAUTHORIZED, "invalid email or password"));
-    };
-    let parsed = PasswordHash::new(&hash)
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "invalid password record"))?;
-    if Argon2::default()
-        .verify_password(input.password.as_bytes(), &parsed)
-        .is_err()
-    {
-        state
-            .store
-            .record_login_failure(&normalized_email)
-            .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-        return Err(error(StatusCode::UNAUTHORIZED, "invalid email or password"));
-    }
-    state.store.clear_login_failures(&normalized_email);
-    let raw = token();
-    let csrf_token = token();
-    state
-        .store
-        .0
-        .connection
-        .lock()
-        .unwrap()
-        .execute(
-            "INSERT INTO sessions(token_hash,user_id,csrf_token,expires_at) VALUES(?1,?2,?3,?4)",
-            params![session_hash(&raw), id, csrf_token, now() + SESSION_SECONDS],
-        )
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    let secure = std::env::var("EBIRFORMS_WEB_INSECURE_COOKIE")
-        .ok()
-        .as_deref()
-        != Some("1");
-    let cookie = format!(
-        "{SESSION_COOKIE}={raw}; Path=/; HttpOnly; SameSite=Strict; Max-Age={SESSION_SECONDS}{}",
-        if secure { "; Secure" } else { "" }
-    );
-    let mut response =
-        Json(json!({"id":id,"email":email,"role":role,"csrf_token":csrf_token})).into_response();
-    response
-        .headers_mut()
-        .insert(header::SET_COOKIE, HeaderValue::from_str(&cookie).unwrap());
-    Ok(response)
-}
-async fn logout(State(state): State<AppState>, request: Request) -> ApiResult<Response> {
-    let current = actor(&request)?;
-    csrf(&request, &current)?;
-    if let Some(raw) = cookie(request.headers(), SESSION_COOKIE) {
-        let _ = state.store.0.connection.lock().unwrap().execute(
-            "DELETE FROM sessions WHERE token_hash=?1",
-            [session_hash(&raw)],
-        );
-    }
-    let mut response = StatusCode::NO_CONTENT.into_response();
-    response.headers_mut().insert(
-        header::SET_COOKIE,
-        HeaderValue::from_static(
-            "ebirforms_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
-        ),
-    );
-    Ok(response)
-}
-async fn me(request: Request) -> ApiResult<Json<Value>> {
-    let a = actor(&request)?;
-    Ok(Json(
-        json!({"id":a.id,"email":a.email,"role":a.role,"csrf_token":a.csrf_token}),
-    ))
-}
-
 fn row_intake(r: &rusqlite::Row<'_>, key: &[u8; 32]) -> rusqlite::Result<Intake> {
     let raw: String = r.get(4)?;
     let payload = decrypt_payload(key, &raw).map_err(|message| {
@@ -602,208 +480,6 @@ fn row_intake(r: &rusqlite::Row<'_>, key: &[u8; 32]) -> rusqlite::Result<Intake>
 }
 const INTAKE_SELECT:&str="SELECT intakes.id,intakes.user_id,users.email,intakes.form_code,intakes.payload,intakes.revision,intakes.state,intakes.workflow_status,intakes.reference,intakes.created_at,intakes.updated_at,intakes.submitted_at FROM intakes JOIN users ON users.id=intakes.user_id";
 
-async fn list_my_intakes(
-    State(s): State<AppState>,
-    request: Request,
-) -> ApiResult<Json<Vec<Intake>>> {
-    let a = actor(&request)?;
-    let c = s.store.0.connection.lock().unwrap();
-    let key = s.store.0.encryption_key;
-    let mut q = c
-        .prepare(&format!(
-            "{INTAKE_SELECT} WHERE intakes.user_id=?1 ORDER BY intakes.updated_at DESC"
-        ))
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    let rows = q
-        .query_map([a.id], |row| row_intake(row, &key))
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| {
-            error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "stored payload could not be decrypted",
-            )
-        })?;
-    Ok(Json(rows))
-}
-#[derive(Deserialize)]
-struct NewIntake {
-    form_code: String,
-}
-async fn create_intake(
-    State(s): State<AppState>,
-    actor: Option<Extension<Actor>>,
-    headers: HeaderMap,
-    Json(i): Json<NewIntake>,
-) -> ApiResult<(StatusCode, Json<Value>)> {
-    let a = extension_actor(actor)?;
-    csrf_headers(&headers, &a)?;
-    if a.role != "customer" {
-        return Err(error(StatusCode::FORBIDDEN, "customer access required"));
-    }
-    if !matches!(i.form_code.as_str(), "1701Q" | "1702Q") {
-        return Err(error(
-            StatusCode::BAD_REQUEST,
-            "web intake supports only 1701Q and 1702Q",
-        ));
-    }
-    let payload =
-        ebirforms_web_schema::blank_payload(&i.form_code, &a.email, a.id).map_err(|_| {
-            error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "blank form template is invalid",
-            )
-        })?;
-    let encrypted = encrypt_payload(&s.store.0.encryption_key, &payload).map_err(|_| {
-        error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "payload encryption failed",
-        )
-    })?;
-    let c = s.store.0.connection.lock().unwrap();
-    c.execute("INSERT INTO intakes(user_id,form_code,payload,created_at,updated_at) VALUES(?1,?2,?3,?4,?4)",params![a.id,i.form_code,encrypted,now()]).map_err(|_|error(StatusCode::INTERNAL_SERVER_ERROR,"database error"))?;
-    Ok((
-        StatusCode::CREATED,
-        Json(json!({"id":c.last_insert_rowid(),"revision":1})),
-    ))
-}
-async fn get_intake(
-    State(s): State<AppState>,
-    AxumPath(id): AxumPath<i64>,
-    request: Request,
-) -> ApiResult<Json<Intake>> {
-    let a = actor(&request)?;
-    let c = s.store.0.connection.lock().unwrap();
-    let key = s.store.0.encryption_key;
-    let item = c
-        .query_row(
-            &format!("{INTAKE_SELECT} WHERE intakes.id=?1 AND intakes.user_id=?2"),
-            params![id, a.id],
-            |row| row_intake(row, &key),
-        )
-        .optional()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .ok_or_else(|| error(StatusCode::NOT_FOUND, "intake not found"))?;
-    Ok(Json(item))
-}
-#[derive(Deserialize)]
-struct SaveIntake {
-    payload: Value,
-    revision: i64,
-}
-async fn save_intake(
-    State(s): State<AppState>,
-    AxumPath(id): AxumPath<i64>,
-    actor: Option<Extension<Actor>>,
-    headers: HeaderMap,
-    Json(i): Json<SaveIntake>,
-) -> ApiResult<Json<Value>> {
-    let a = extension_actor(actor)?;
-    csrf_headers(&headers, &a)?;
-    let mut payload = i.payload;
-    ebirforms_web_schema::normalize(&form_code_for_intake(&s.store, id, a.id)?, &mut payload);
-    let encrypted = encrypt_payload(&s.store.0.encryption_key, &payload).map_err(|_| {
-        error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "payload encryption failed",
-        )
-    })?;
-    let changed=s.store.0.connection.lock().unwrap().execute("UPDATE intakes SET payload=?1,revision=revision+1,updated_at=?2 WHERE id=?3 AND user_id=?4 AND revision=?5 AND state='draft'",params![encrypted,now(),id,a.id,i.revision]).map_err(|_|error(StatusCode::INTERNAL_SERVER_ERROR,"database error"))?;
-    if changed == 0 {
-        return Err(error(
-            StatusCode::CONFLICT,
-            "draft changed elsewhere, was submitted, or does not exist",
-        ));
-    }
-    Ok(Json(json!({"revision":i.revision+1,"updated_at":now()})))
-}
-async fn submit_intake(
-    State(s): State<AppState>,
-    AxumPath(id): AxumPath<i64>,
-    request: Request,
-) -> ApiResult<Json<Value>> {
-    let a = actor(&request)?;
-    csrf(&request, &a)?;
-    let c = s.store.0.connection.lock().unwrap();
-    let (code, raw): (String, String) = c
-        .query_row(
-            "SELECT form_code,payload FROM intakes WHERE id=?1 AND user_id=?2 AND state='draft'",
-            params![id, a.id],
-            |r| Ok((r.get(0)?, r.get(1)?)),
-        )
-        .optional()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .ok_or_else(|| {
-            error(
-                StatusCode::CONFLICT,
-                "draft is unavailable or already submitted",
-            )
-        })?;
-    let payload = decrypt_payload(&s.store.0.encryption_key, &raw).map_err(|_| {
-        error(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "stored payload could not be decrypted",
-        )
-    })?;
-    if let Err(errors) = ebirforms_web_schema::validate(&code, &payload) {
-        return Err(error(StatusCode::UNPROCESSABLE_ENTITY, errors.join(". ")));
-    }
-    ebirforms_core::render_form(&code, &payload).map_err(|e| {
-        error(
-            StatusCode::UNPROCESSABLE_ENTITY,
-            format!("form validation failed: {e}"),
-        )
-    })?;
-    let reference = reference();
-    c.execute("UPDATE intakes SET state='received',workflow_status='Received',reference=?1,submitted_at=?2,updated_at=?2 WHERE id=?3",params![reference,now(),id]).map_err(|_|error(StatusCode::INTERNAL_SERVER_ERROR,"database error"))?;
-    Ok(Json(
-        json!({"reference":reference,"message":"We received your information. Our team will review it and file the return through the official eBIRForms process. Your official receipt will follow after filing."}),
-    ))
-}
-
-async fn operator_list(
-    State(s): State<AppState>,
-    request: Request,
-) -> ApiResult<Json<Vec<Intake>>> {
-    operator(&request)?;
-    let c = s.store.0.connection.lock().unwrap();
-    let key = s.store.0.encryption_key;
-    let mut q = c
-        .prepare(&format!(
-            "{INTAKE_SELECT} WHERE intakes.state='received' ORDER BY intakes.updated_at DESC"
-        ))
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    let rows = q
-        .query_map([], |row| row_intake(row, &key))
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| {
-            error(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "stored payload could not be decrypted",
-            )
-        })?;
-    Ok(Json(rows))
-}
-async fn operator_get(
-    State(s): State<AppState>,
-    AxumPath(id): AxumPath<i64>,
-    request: Request,
-) -> ApiResult<Json<Intake>> {
-    operator(&request)?;
-    let c = s.store.0.connection.lock().unwrap();
-    let key = s.store.0.encryption_key;
-    let item = c
-        .query_row(
-            &format!("{INTAKE_SELECT} WHERE intakes.id=?1"),
-            [id],
-            |row| row_intake(row, &key),
-        )
-        .optional()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?
-        .ok_or_else(|| error(StatusCode::NOT_FOUND, "intake not found"))?;
-    Ok(Json(item))
-}
 async fn operator_export(
     State(s): State<AppState>,
     AxumPath(id): AxumPath<i64>,
@@ -836,105 +512,6 @@ async fn operator_export(
     );
     Ok(res)
 }
-#[derive(Deserialize)]
-struct NewStatus {
-    status: String,
-}
-async fn operator_status(
-    State(s): State<AppState>,
-    AxumPath(id): AxumPath<i64>,
-    actor: Option<Extension<Actor>>,
-    headers: HeaderMap,
-    Json(i): Json<NewStatus>,
-) -> ApiResult<Json<Value>> {
-    let a = extension_operator(actor)?;
-    csrf_headers(&headers, &a)?;
-    if !matches!(i.status.as_str(), "Received" | "Filed" | "Receipt sent") {
-        return Err(error(StatusCode::BAD_REQUEST, "invalid status"));
-    }
-    let expected = match i.status.as_str() {
-        "Received" => "Received",
-        "Filed" => "Received",
-        "Receipt sent" => "Filed",
-        _ => unreachable!(),
-    };
-    let changed = s.store.0.connection.lock().unwrap().execute(
-        "UPDATE intakes SET workflow_status=?1,updated_at=?2 WHERE id=?3 AND state='received' AND workflow_status=?4",
-        params![i.status, now(), id, expected],
-    ).map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    if changed == 0 {
-        return Err(error(StatusCode::CONFLICT, "status can only move forward"));
-    }
-    Ok(Json(json!({"status":i.status})))
-}
-
-#[derive(Deserialize)]
-struct DeleteConfirmation {
-    confirm: bool,
-}
-
-async fn operator_delete(
-    State(s): State<AppState>,
-    AxumPath(id): AxumPath<i64>,
-    actor: Option<Extension<Actor>>,
-    headers: HeaderMap,
-    Json(confirmation): Json<DeleteConfirmation>,
-) -> ApiResult<StatusCode> {
-    let a = extension_operator(actor)?;
-    csrf_headers(&headers, &a)?;
-    if !confirmation.confirm {
-        return Err(error(
-            StatusCode::BAD_REQUEST,
-            "explicit deletion confirmation is required",
-        ));
-    }
-    let mut conn = s.store.0.connection.lock().unwrap();
-    let tx = conn
-        .transaction()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    let record: Option<(String, Option<String>, Option<String>)> = tx
-        .query_row(
-            "SELECT form_code,workflow_status,reference FROM intakes WHERE id=?1",
-            [id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-        )
-        .optional()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    let Some((form_code, status, reference)) = record else {
-        return Err(error(StatusCode::NOT_FOUND, "intake not found"));
-    };
-    let reference_hash = reference.map(|value| session_hash(&value));
-    tx.execute("INSERT INTO deletion_tombstones(deleted_at,form_code,prior_workflow_status,reference_hash) VALUES(?1,?2,?3,?4)", params![now(),form_code,status,reference_hash]).map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    tx.execute("DELETE FROM intakes WHERE id=?1", [id])
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    tx.commit()
-        .map_err(|_| error(StatusCode::INTERNAL_SERVER_ERROR, "database error"))?;
-    Ok(StatusCode::NO_CONTENT)
-}
-#[derive(Deserialize)]
-struct NewUser {
-    email: String,
-    password: String,
-    role: String,
-}
-async fn operator_create_user(
-    State(s): State<AppState>,
-    actor: Option<Extension<Actor>>,
-    headers: HeaderMap,
-    Json(i): Json<NewUser>,
-) -> ApiResult<(StatusCode, Json<Value>)> {
-    let a = extension_operator(actor)?;
-    csrf_headers(&headers, &a)?;
-    let id = s
-        .store
-        .create_user(&i.email, &i.password, &i.role)
-        .map_err(|e| error(StatusCode::BAD_REQUEST, e))?;
-    Ok((
-        StatusCode::CREATED,
-        Json(json!({"id":id,"email":i.email,"role":i.role})),
-    ))
-}
-
 fn portal_error(error: PortalError) -> PortalError {
     let status = match &error {
         PortalError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
@@ -1196,8 +773,25 @@ pub async fn save_intake_impl(
 ) -> Result<SaveResult, PortalError> {
     let actor = authorized(&csrf_token, Some("customer")).await?;
     let store = expect_context::<Store>();
-    let code = form_code_for_intake(&store, id, actor.id)
-        .map_err(|(_, body)| portal_error(PortalError::Conflict(body.0.error)))?;
+    let record: Option<(String, String)> = store
+        .0
+        .connection
+        .lock()
+        .unwrap()
+        .query_row(
+            "SELECT form_code,payload FROM intakes WHERE id=?1 AND user_id=?2 AND state='draft'",
+            params![id, actor.id],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .optional()
+        .map_err(|_| internal("database error"))?;
+    let (code, stored_payload) = record.ok_or_else(|| {
+        portal_error(PortalError::Conflict(
+            "draft is unavailable or already submitted".into(),
+        ))
+    })?;
+    decrypt_payload(&store.0.encryption_key, &stored_payload)
+        .map_err(|_| internal("stored payload failed authentication; refusing overwrite"))?;
     ebirforms_web_schema::normalize(&code, &mut payload);
     let encrypted = encrypt_payload(&store.0.encryption_key, &payload)
         .map_err(|_| internal("payload encryption failed"))?;
@@ -1251,10 +845,15 @@ pub async fn submit_intake_impl(
         )))
     })?;
     let reference = reference();
-    store.0.connection.lock().unwrap().execute(
+    let changed = store.0.connection.lock().unwrap().execute(
         "UPDATE intakes SET state='received',workflow_status='Received',reference=?1,submitted_at=?2,updated_at=?2 WHERE id=?3 AND user_id=?4 AND state='draft'",
         params![reference, now(), id, actor.id],
     ).map_err(|_| internal("database error"))?;
+    if changed == 0 {
+        return Err(portal_error(PortalError::Conflict(
+            "draft was submitted by another request".into(),
+        )));
+    }
     Ok(SubmissionResult {
         reference,
         message: "We received your information. Our team will review it and file the return through the official eBIRForms process. Your official receipt will follow after filing.".into(),
@@ -1362,462 +961,6 @@ pub async fn operator_delete_intake_impl(
     tx.commit().map_err(|_| internal("database error"))
 }
 
-#[cfg(any())]
-mod legacy_tests {
-    use super::*;
-    use axum::{
-        body::{to_bytes, Body},
-        http::Request,
-    };
-    use tower::ServiceExt;
-
-    async fn login_as(router: &Router, email: &str) -> (String, String) {
-        let response = router
-            .clone()
-            .oneshot(
-                Request::post("/api/auth/login")
-                    .header(header::CONTENT_TYPE, "application/json")
-                    .body(Body::from(
-                        json!({"email":email,"password":"correct horse battery staple"})
-                            .to_string(),
-                    ))
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(response.status(), StatusCode::OK);
-        let cookie = response.headers()[header::SET_COOKIE]
-            .to_str()
-            .unwrap()
-            .split(';')
-            .next()
-            .unwrap()
-            .to_string();
-        let bytes = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-        let json: Value = serde_json::from_slice(&bytes).unwrap();
-        (cookie, json["csrf_token"].as_str().unwrap().to_string())
-    }
-
-    async fn json_request(
-        router: &Router,
-        method: &str,
-        path: &str,
-        cookie: &str,
-        csrf: &str,
-        body: Value,
-    ) -> Response {
-        router
-            .clone()
-            .oneshot(
-                Request::builder()
-                    .method(method)
-                    .uri(path)
-                    .header(header::CONTENT_TYPE, "application/json")
-                    .header(header::COOKIE, cookie)
-                    .header("x-csrf-token", csrf)
-                    .body(Body::from(body.to_string()))
-                    .unwrap(),
-            )
-            .await
-            .unwrap()
-    }
-
-    #[tokio::test]
-    async fn authenticated_customer_and_operator_lifecycle_is_isolated() {
-        let store = Store::in_memory().unwrap();
-        store
-            .create_user(
-                "one@example.test",
-                "correct horse battery staple",
-                "customer",
-            )
-            .unwrap();
-        store
-            .create_user(
-                "two@example.test",
-                "correct horse battery staple",
-                "customer",
-            )
-            .unwrap();
-        store
-            .create_user(
-                "ops@example.test",
-                "correct horse battery staple",
-                "operator",
-            )
-            .unwrap();
-        let router = app(store.clone(), "/tmp/ebirforms-web-test-assets");
-        let (one_cookie, one_csrf) = login_as(&router, "one@example.test").await;
-        let (two_cookie, _) = login_as(&router, "two@example.test").await;
-        let (ops_cookie, ops_csrf) = login_as(&router, "ops@example.test").await;
-
-        let created = json_request(
-            &router,
-            "POST",
-            "/api/intakes",
-            &one_cookie,
-            &one_csrf,
-            json!({"form_code":"1701Q"}),
-        )
-        .await;
-        assert_eq!(created.status(), StatusCode::CREATED);
-        let body = to_bytes(created.into_body(), usize::MAX).await.unwrap();
-        let id = serde_json::from_slice::<Value>(&body).unwrap()["id"]
-            .as_i64()
-            .unwrap();
-
-        let fresh_submit = json_request(
-            &router,
-            "POST",
-            &format!("/api/intakes/{id}/submit"),
-            &one_cookie,
-            &one_csrf,
-            json!({"confirm":true}),
-        )
-        .await;
-        assert_eq!(fresh_submit.status(), StatusCode::UNPROCESSABLE_ENTITY);
-        let second = json_request(
-            &router,
-            "POST",
-            "/api/intakes",
-            &one_cookie,
-            &one_csrf,
-            json!({"form_code":"1702Q"}),
-        )
-        .await;
-        let second_body = to_bytes(second.into_body(), usize::MAX).await.unwrap();
-        let second_id = serde_json::from_slice::<Value>(&second_body).unwrap()["id"]
-            .as_i64()
-            .unwrap();
-        let fresh_1702_submit = json_request(
-            &router,
-            "POST",
-            &format!("/api/intakes/{second_id}/submit"),
-            &one_cookie,
-            &one_csrf,
-            json!({}),
-        )
-        .await;
-        assert_eq!(fresh_1702_submit.status(), StatusCode::UNPROCESSABLE_ENTITY);
-        let encrypted_at_rest: String = store
-            .0
-            .connection
-            .lock()
-            .unwrap()
-            .query_row("SELECT payload FROM intakes WHERE id=?1", [id], |row| {
-                row.get(0)
-            })
-            .unwrap();
-        assert!(encrypted_at_rest.starts_with("v1."));
-        assert!(!encrypted_at_rest.contains("123-456-789"));
-
-        let forbidden = router
-            .clone()
-            .oneshot(
-                Request::get(format!("/api/intakes/{id}"))
-                    .header(header::COOKIE, &two_cookie)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(forbidden.status(), StatusCode::NOT_FOUND);
-
-        let mut guided_1701 =
-            ebirforms_web_schema::blank_payload("1701Q", "one@example.test", 1).unwrap();
-        ebirforms_web_schema::fill_with_schema_samples("1701Q", &mut guided_1701);
-        let saved = json_request(
-            &router,
-            "PATCH",
-            &format!("/api/intakes/{id}"),
-            &one_cookie,
-            &one_csrf,
-            json!({"payload":guided_1701,"revision":1}),
-        )
-        .await;
-        assert_eq!(saved.status(), StatusCode::OK);
-        let encrypted_at_rest: String = store
-            .0
-            .connection
-            .lock()
-            .unwrap()
-            .query_row("SELECT payload FROM intakes WHERE id=?1", [id], |row| {
-                row.get(0)
-            })
-            .unwrap();
-        assert!(!encrypted_at_rest.contains("JUAN DELA CRUZ"));
-        let submitted = json_request(
-            &router,
-            "POST",
-            &format!("/api/intakes/{id}/submit"),
-            &one_cookie,
-            &one_csrf,
-            json!({"confirm":true}),
-        )
-        .await;
-        assert_eq!(submitted.status(), StatusCode::OK);
-
-        let mut guided_1702 =
-            ebirforms_web_schema::blank_payload("1702Q", "one@example.test", 1).unwrap();
-        ebirforms_web_schema::fill_with_schema_samples("1702Q", &mut guided_1702);
-        let saved_1702 = json_request(
-            &router,
-            "PATCH",
-            &format!("/api/intakes/{second_id}"),
-            &one_cookie,
-            &one_csrf,
-            json!({"payload":guided_1702,"revision":1}),
-        )
-        .await;
-        assert_eq!(saved_1702.status(), StatusCode::OK);
-        let submitted_1702 = json_request(
-            &router,
-            "POST",
-            &format!("/api/intakes/{second_id}/submit"),
-            &one_cookie,
-            &one_csrf,
-            json!({}),
-        )
-        .await;
-        assert_eq!(submitted_1702.status(), StatusCode::OK);
-
-        let customer_cannot_operate = router
-            .clone()
-            .oneshot(
-                Request::get("/api/operator/intakes")
-                    .header(header::COOKIE, &one_cookie)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(customer_cannot_operate.status(), StatusCode::FORBIDDEN);
-
-        let export = router
-            .clone()
-            .oneshot(
-                Request::get(format!("/api/operator/intakes/{id}/export"))
-                    .header(header::COOKIE, &ops_cookie)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(export.status(), StatusCode::OK);
-        assert_eq!(export.headers()[header::CONTENT_TYPE], "application/json");
-
-        for status in ["Filed", "Receipt sent"] {
-            let response = json_request(
-                &router,
-                "PATCH",
-                &format!("/api/operator/intakes/{id}/status"),
-                &ops_cookie,
-                &ops_csrf,
-                json!({"status":status}),
-            )
-            .await;
-            assert_eq!(response.status(), StatusCode::OK);
-        }
-        let cannot_move_back = json_request(
-            &router,
-            "PATCH",
-            &format!("/api/operator/intakes/{id}/status"),
-            &ops_cookie,
-            &ops_csrf,
-            json!({"status":"Filed"}),
-        )
-        .await;
-        assert_eq!(cannot_move_back.status(), StatusCode::CONFLICT);
-
-        let deleted = json_request(
-            &router,
-            "DELETE",
-            &format!("/api/operator/intakes/{id}"),
-            &ops_cookie,
-            &ops_csrf,
-            json!({"confirm":true}),
-        )
-        .await;
-        assert_eq!(deleted.status(), StatusCode::NO_CONTENT);
-        let tombstone: (String, Option<String>, Option<String>) = store
-            .0
-            .connection
-            .lock()
-            .unwrap()
-            .query_row(
-                "SELECT form_code,prior_workflow_status,reference_hash FROM deletion_tombstones",
-                [],
-                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
-            )
-            .unwrap();
-        assert_eq!(tombstone.0, "1701Q");
-        assert_eq!(tombstone.1.as_deref(), Some("Receipt sent"));
-        assert!(tombstone.2.unwrap().len() == 64);
-    }
-
-    #[tokio::test]
-    async fn login_is_bounded_and_web_has_no_live_submission_surface() {
-        let store = Store::in_memory().unwrap();
-        store
-            .create_user(
-                "bounded@example.test",
-                "correct horse battery staple",
-                "customer",
-            )
-            .unwrap();
-        let inspect_store = store.clone();
-        let router = app(store, "/tmp/ebirforms-web-test-assets");
-        for attempt in 1..=LOGIN_MAX_FAILURES {
-            let response = router
-                .clone()
-                .oneshot(
-                    Request::post("/api/auth/login")
-                        .header(header::CONTENT_TYPE, "application/json")
-                        .body(Body::from(
-                            json!({"email":"bounded@example.test","password":"wrong password"})
-                                .to_string(),
-                        ))
-                        .unwrap(),
-                )
-                .await
-                .unwrap();
-            assert_eq!(
-                response.status(),
-                StatusCode::UNAUTHORIZED,
-                "attempt {attempt}"
-            );
-        }
-        let blocked=router.clone().oneshot(Request::post("/api/auth/login").header(header::CONTENT_TYPE,"application/json").body(Body::from(json!({"email":"bounded@example.test","password":"correct horse battery staple"}).to_string())).unwrap()).await.unwrap();
-        assert_eq!(blocked.status(), StatusCode::TOO_MANY_REQUESTS);
-        for path in [
-            "/api/live",
-            "/api/queue",
-            "/api/himalaya",
-            "/api/receipts",
-            "/api/sftp",
-        ] {
-            let response = router
-                .clone()
-                .oneshot(Request::get(path).body(Body::empty()).unwrap())
-                .await
-                .unwrap();
-            assert_eq!(
-                response.status(),
-                StatusCode::NOT_FOUND,
-                "{path} must not exist"
-            );
-        }
-    }
-
-    #[test]
-    fn account_admin_commands_revoke_sessions() {
-        let store = Store::in_memory().unwrap();
-        let id = store
-            .create_user(
-                "managed@example.test",
-                "correct horse battery staple",
-                "customer",
-            )
-            .unwrap();
-        store.0.connection.lock().unwrap().execute("INSERT INTO sessions(token_hash,user_id,csrf_token,expires_at) VALUES('token',?1,'csrf',?2)",params![id,now()+1000]).unwrap();
-        store
-            .reset_password("managed@example.test", "a different secure password")
-            .unwrap();
-        let sessions: i64 = store
-            .0
-            .connection
-            .lock()
-            .unwrap()
-            .query_row(
-                "SELECT count(*) FROM sessions WHERE user_id=?1",
-                [id],
-                |row| row.get(0),
-            )
-            .unwrap();
-        assert_eq!(sessions, 0);
-        store
-            .set_user_disabled("managed@example.test", true)
-            .unwrap();
-        let users = store.list_users().unwrap();
-        assert_eq!(
-            users,
-            vec![(id, "managed@example.test".into(), "customer".into(), true)]
-        );
-        store
-            .set_user_disabled("managed@example.test", false)
-            .unwrap();
-        assert!(!store.list_users().unwrap()[0].3);
-    }
-
-    #[tokio::test]
-    async fn authenticated_encryption_failure_is_reported_and_never_overwritten() {
-        let store = Store::in_memory().unwrap();
-        store
-            .create_user(
-                "crypto@example.test",
-                "correct horse battery staple",
-                "customer",
-            )
-            .unwrap();
-        let router = app(store.clone(), "/tmp/ebirforms-web-test-assets");
-        let (cookie, csrf) = login_as(&router, "crypto@example.test").await;
-        let created = json_request(
-            &router,
-            "POST",
-            "/api/intakes",
-            &cookie,
-            &csrf,
-            json!({"form_code":"1701Q"}),
-        )
-        .await;
-        let body = to_bytes(created.into_body(), usize::MAX).await.unwrap();
-        let id = serde_json::from_slice::<Value>(&body).unwrap()["id"]
-            .as_i64()
-            .unwrap();
-        store
-            .0
-            .connection
-            .lock()
-            .unwrap()
-            .execute(
-                "UPDATE intakes SET payload='v1.invalid.invalid' WHERE id=?1",
-                [id],
-            )
-            .unwrap();
-        let read = router
-            .clone()
-            .oneshot(
-                Request::get(format!("/api/intakes/{id}"))
-                    .header(header::COOKIE, &cookie)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(read.status(), StatusCode::INTERNAL_SERVER_ERROR);
-        let overwrite = json_request(
-            &router,
-            "PATCH",
-            &format!("/api/intakes/{id}"),
-            &cookie,
-            &csrf,
-            json!({"payload":{},"revision":1}),
-        )
-        .await;
-        assert_eq!(overwrite.status(), StatusCode::INTERNAL_SERVER_ERROR);
-        let stored: String = store
-            .0
-            .connection
-            .lock()
-            .unwrap()
-            .query_row("SELECT payload FROM intakes WHERE id=?1", [id], |row| {
-                row.get(0)
-            })
-            .unwrap();
-        assert_eq!(stored, "v1.invalid.invalid");
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1826,6 +969,7 @@ mod tests {
         http::Request,
     };
     use leptos::server_fn::ServerFn;
+    use serde_json::json;
     use tower::ServiceExt;
 
     async fn post_json(router: &Router, path: &str, cookie: Option<&str>, body: Value) -> Response {
@@ -1838,6 +982,26 @@ mod tests {
             .oneshot(request.body(Body::from(body.to_string())).unwrap())
             .await
             .unwrap()
+    }
+
+    async fn login_user(router: &Router, email: &str, password: &str) -> (String, Session) {
+        let response = post_json(
+            router,
+            <crate::Login as ServerFn>::PATH,
+            None,
+            json!({"email":email,"password":password}),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let cookie = response.headers()[header::SET_COOKIE]
+            .to_str()
+            .unwrap()
+            .split(';')
+            .next()
+            .unwrap()
+            .to_string();
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        (cookie, serde_json::from_slice(&body).unwrap())
     }
 
     #[tokio::test]
@@ -1948,5 +1112,308 @@ mod tests {
             .unwrap();
         assert!(encrypted.starts_with("v1."));
         assert!(!encrypted.contains("customer@example.test"));
+    }
+
+    #[tokio::test]
+    async fn axum_static_shell_allows_only_the_built_trunk_bootstrap() {
+        let assets = tempfile::tempdir().unwrap();
+        std::fs::write(
+            assets.path().join("index.html"),
+            "<!doctype html><main id=app></main><script type=module>import init from '/app.js';init();</script>",
+        )
+        .unwrap();
+        let router = app(Store::in_memory().unwrap(), assets.path());
+        let response = router
+            .oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let csp = response.headers()["content-security-policy"]
+            .to_str()
+            .unwrap();
+        let expected = BASE64.encode(Sha256::digest(b"import init from '/app.js';init();"));
+        assert!(csp.contains(&format!("'sha256-{expected}'")));
+        assert!(!csp.contains("script-src 'self' 'unsafe-inline'"));
+        let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        assert!(String::from_utf8_lossy(&body).contains("<main id=app>"));
+    }
+
+    #[tokio::test]
+    async fn full_server_function_lifecycle_enforces_security_and_state() {
+        let store = Store::in_memory().unwrap();
+        for (email, role) in [
+            ("one@example.test", "customer"),
+            ("two@example.test", "customer"),
+            ("ops@example.test", "operator"),
+        ] {
+            store
+                .create_user(email, "correct horse battery staple", role)
+                .unwrap();
+        }
+        let router = app(store.clone(), "/tmp/ebirforms-web-test-assets");
+        let (one_cookie, one) =
+            login_user(&router, "one@example.test", "correct horse battery staple").await;
+        let (two_cookie, _) =
+            login_user(&router, "two@example.test", "correct horse battery staple").await;
+        let (ops_cookie, ops) =
+            login_user(&router, "ops@example.test", "correct horse battery staple").await;
+
+        let created = post_json(
+            &router,
+            <crate::CreateIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"form_code":"1701Q","csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(created.status(), StatusCode::OK);
+        let id = serde_json::from_slice::<Intake>(
+            &to_bytes(created.into_body(), usize::MAX).await.unwrap(),
+        )
+        .unwrap()
+        .id;
+
+        let isolated = post_json(
+            &router,
+            <crate::GetIntake as ServerFn>::PATH,
+            Some(&two_cookie),
+            json!({"id":id}),
+        )
+        .await;
+        assert_eq!(isolated.status(), StatusCode::NOT_FOUND);
+        let wrong_role = post_json(
+            &router,
+            <crate::OperatorListIntakes as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({}),
+        )
+        .await;
+        assert_eq!(wrong_role.status(), StatusCode::FORBIDDEN);
+        let account = post_json(&router, <crate::OperatorCreateAccount as ServerFn>::PATH, Some(&ops_cookie), json!({"email":"new@example.test","password":"another correct horse","role":"customer","csrf_token":ops.csrf_token})).await;
+        assert_eq!(account.status(), StatusCode::OK);
+        let blank = post_json(
+            &router,
+            <crate::CreateIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"form_code":"1702Q","csrf_token":one.csrf_token}),
+        )
+        .await;
+        let blank_id = serde_json::from_slice::<Intake>(
+            &to_bytes(blank.into_body(), usize::MAX).await.unwrap(),
+        )
+        .unwrap()
+        .id;
+        let invalid_submit = post_json(
+            &router,
+            <crate::SubmitIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"id":blank_id,"csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(invalid_submit.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+        let mut payload =
+            ebirforms_web_schema::blank_payload("1701Q", "one@example.test", one.id).unwrap();
+        ebirforms_web_schema::fill_with_schema_samples("1701Q", &mut payload);
+        let saved = post_json(
+            &router,
+            <crate::SaveIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"id":id,"payload":payload,"revision":1,"csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(saved.status(), StatusCode::OK);
+        let stale = post_json(
+            &router,
+            <crate::SaveIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"id":id,"payload":{},"revision":1,"csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(stale.status(), StatusCode::CONFLICT);
+        let submitted = post_json(
+            &router,
+            <crate::SubmitIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"id":id,"csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(submitted.status(), StatusCode::OK);
+        let duplicate = post_json(
+            &router,
+            <crate::SubmitIntake as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"id":id,"csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(duplicate.status(), StatusCode::CONFLICT);
+
+        let listed = post_json(
+            &router,
+            <crate::OperatorListIntakes as ServerFn>::PATH,
+            Some(&ops_cookie),
+            json!({}),
+        )
+        .await;
+        assert_eq!(listed.status(), StatusCode::OK);
+        assert_eq!(
+            serde_json::from_slice::<Vec<Intake>>(
+                &to_bytes(listed.into_body(), usize::MAX).await.unwrap()
+            )
+            .unwrap()
+            .len(),
+            1
+        );
+        let export = router
+            .clone()
+            .oneshot(
+                Request::get(format!("/api/operator/intakes/{id}/export"))
+                    .header(header::COOKIE, &ops_cookie)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(export.status(), StatusCode::OK);
+        for status in ["Filed", "Receipt sent"] {
+            let moved = post_json(
+                &router,
+                <crate::OperatorUpdateStatus as ServerFn>::PATH,
+                Some(&ops_cookie),
+                json!({"id":id,"status":status,"csrf_token":ops.csrf_token}),
+            )
+            .await;
+            assert_eq!(moved.status(), StatusCode::OK);
+        }
+        let backwards = post_json(
+            &router,
+            <crate::OperatorUpdateStatus as ServerFn>::PATH,
+            Some(&ops_cookie),
+            json!({"id":id,"status":"Filed","csrf_token":ops.csrf_token}),
+        )
+        .await;
+        assert_eq!(backwards.status(), StatusCode::CONFLICT);
+        let unconfirmed = post_json(
+            &router,
+            <crate::OperatorDeleteIntake as ServerFn>::PATH,
+            Some(&ops_cookie),
+            json!({"id":id,"confirm":false,"csrf_token":ops.csrf_token}),
+        )
+        .await;
+        assert_eq!(unconfirmed.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        let deleted = post_json(
+            &router,
+            <crate::OperatorDeleteIntake as ServerFn>::PATH,
+            Some(&ops_cookie),
+            json!({"id":id,"confirm":true,"csrf_token":ops.csrf_token}),
+        )
+        .await;
+        assert_eq!(deleted.status(), StatusCode::OK);
+        let tombstones: i64 = store
+            .0
+            .connection
+            .lock()
+            .unwrap()
+            .query_row("SELECT COUNT(*) FROM deletion_tombstones", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(tombstones, 1);
+
+        let logged_out = post_json(
+            &router,
+            <crate::Logout as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({"csrf_token":one.csrf_token}),
+        )
+        .await;
+        assert_eq!(logged_out.status(), StatusCode::OK);
+        assert!(logged_out.headers()[header::SET_COOKIE]
+            .to_str()
+            .unwrap()
+            .contains("Max-Age=0"));
+        let revoked = post_json(
+            &router,
+            <crate::GetSession as ServerFn>::PATH,
+            Some(&one_cookie),
+            json!({}),
+        )
+        .await;
+        assert_eq!(revoked.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn corrupted_ciphertext_refuses_overwrite_and_login_is_bounded() {
+        let store = Store::in_memory().unwrap();
+        store
+            .create_user(
+                "bounded@example.test",
+                "correct horse battery staple",
+                "customer",
+            )
+            .unwrap();
+        let router = app(store.clone(), "/tmp/ebirforms-web-test-assets");
+        let (cookie, session) = login_user(
+            &router,
+            "bounded@example.test",
+            "correct horse battery staple",
+        )
+        .await;
+        let created = post_json(
+            &router,
+            <crate::CreateIntake as ServerFn>::PATH,
+            Some(&cookie),
+            json!({"form_code":"1701Q","csrf_token":session.csrf_token}),
+        )
+        .await;
+        let id = serde_json::from_slice::<Intake>(
+            &to_bytes(created.into_body(), usize::MAX).await.unwrap(),
+        )
+        .unwrap()
+        .id;
+        store
+            .0
+            .connection
+            .lock()
+            .unwrap()
+            .execute(
+                "UPDATE intakes SET payload='v1.invalid.invalid' WHERE id=?1",
+                [id],
+            )
+            .unwrap();
+        let overwrite = post_json(
+            &router,
+            <crate::SaveIntake as ServerFn>::PATH,
+            Some(&cookie),
+            json!({"id":id,"payload":{},"revision":1,"csrf_token":session.csrf_token}),
+        )
+        .await;
+        assert_eq!(overwrite.status(), StatusCode::INTERNAL_SERVER_ERROR);
+        let stored: String = store
+            .0
+            .connection
+            .lock()
+            .unwrap()
+            .query_row("SELECT payload FROM intakes WHERE id=?1", [id], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(stored, "v1.invalid.invalid");
+
+        for _ in 0..LOGIN_MAX_FAILURES {
+            let failed = post_json(
+                &router,
+                <crate::Login as ServerFn>::PATH,
+                None,
+                json!({"email":"bounded@example.test","password":"wrong"}),
+            )
+            .await;
+            assert_eq!(failed.status(), StatusCode::UNAUTHORIZED);
+        }
+        let blocked = post_json(
+            &router,
+            <crate::Login as ServerFn>::PATH,
+            None,
+            json!({"email":"bounded@example.test","password":"correct horse battery staple"}),
+        )
+        .await;
+        assert_eq!(blocked.status(), StatusCode::TOO_MANY_REQUESTS);
     }
 }
