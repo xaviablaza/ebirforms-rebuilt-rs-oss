@@ -7,16 +7,11 @@ The hosted app is deliberately separate from the Tauri desktop application. It s
 Enter `devenv shell`, create the first operator, then start both hot-reloading processes:
 
 ```console
-export EBIRFORMS_WEB_DB="$PWD/.devenv/state/web-intake.sqlite3"
-mkdir -p "$PWD/.devenv/state"
-test -f "$PWD/.devenv/state/web-intake.key" || (umask 077 && openssl rand -base64 32 > "$PWD/.devenv/state/web-intake.key")
-export EBIRFORMS_WEB_ENCRYPTION_KEY="$(cat "$PWD/.devenv/state/web-intake.key")"
-export EBIRFORMS_NEW_USER_PASSWORD='use-a-long-local-password'
-cargo run -p ebirforms-web -- create-user operator@example.test operator
+web-create-operator operator@example.test
 web-dev
 ```
 
-Open <http://127.0.0.1:1421>. Trunk hot-reloads the Leptos/WASM frontend and proxies `/api` to Axum on port 3001. Set `EBIRFORMS_WEB_FRONTEND_PORT` or `EBIRFORMS_WEB_API_PORT` to override these distinct web ports. `desktop-dev` remains unchanged on port 1420 and can be run independently.
+Open <http://127.0.0.1:1421>. Trunk hot-reloads the Leptos/WASM frontend and proxies `/api` to Axum on port 3001. Portal operations use typed Leptos server functions; Axum remains the host for those functions, health checks, static assets, security middleware, and authenticated JSON export. Set `EBIRFORMS_WEB_FRONTEND_PORT` or `EBIRFORMS_WEB_API_PORT` to override these distinct web ports. `desktop-dev` remains unchanged on port 1420 and can be run independently on its Leptos 0.6 frontend.
 
 Operators create customer accounts from their workspace or with the same CLI command using the `customer` role. Passwords must be at least 12 characters. The production cookie is `Secure`, `HttpOnly`, and `SameSite=Strict`; `web-dev` alone opts out of `Secure` for plain localhost.
 

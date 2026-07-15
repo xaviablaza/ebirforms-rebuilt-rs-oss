@@ -5,22 +5,41 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 
+[features]
+default = ["ssr"]
+ssr = [
+    "dep:argon2", "dep:axum", "dep:base64", "dep:chacha20poly1305",
+    "dep:ebirforms-core", "dep:leptos_axum", "dep:rand", "dep:rusqlite",
+    "dep:sha2", "dep:tokio", "dep:tower-http",
+]
+csr = ["leptos/csr", "dep:console_error_panic_hook", "dep:gloo-timers", "dep:web-sys"]
+
 [dependencies]
-argon2 = "0.5"
-axum = "0.7"
-base64 = "0.22"
-chacha20poly1305 = "0.10"
-ebirforms-core = { path = "../ebirforms-core" }
+argon2 = { version = "0.5", optional = true }
+axum = { version = "0.8", optional = true }
+base64 = { version = "0.22", optional = true }
+chacha20poly1305 = { version = "0.10", optional = true }
+console_error_panic_hook = { version = "0.1", optional = true }
+ebirforms-core = { path = "../ebirforms-core", optional = true }
 ebirforms-web-schema = { path = "../ebirforms-web-schema" }
-rand = "0.8"
-rusqlite = { version = "0.30", features = ["bundled"] }
+gloo-timers = { version = "0.3", features = ["futures"], optional = true }
+leptos = { version = "=0.8.20" }
+leptos_axum = { version = "=0.8.10", optional = true }
+rand = { version = "0.8", optional = true }
+rusqlite = { version = "0.30", features = ["bundled"], optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sha2 = "0.10"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
-tower-http = { version = "0.5", features = ["fs", "trace"] }
+sha2 = { version = "0.10", optional = true }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"], optional = true }
+tower-http = { version = "0.6", features = ["fs", "trace"], optional = true }
+web-sys = { version = "0.3", features = ["HtmlInputElement", "HtmlSelectElement", "HtmlTextAreaElement", "Window"], optional = true }
 
 [dev-dependencies]
 http-body-util = "0.1"
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
+
+[[bin]]
+name = "ebirforms-web"
+path = "src/main.rs"
+required-features = ["ssr"]
