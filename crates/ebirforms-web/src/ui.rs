@@ -320,6 +320,33 @@ fn IntakeEditor(
     set_items: WriteSignal<Vec<Intake>>,
     set_message: WriteSignal<String>,
 ) -> impl IntoView {
+    let id = intake.id;
+    let detail = Resource::new(move || id, get_intake);
+    let error_detail = detail;
+    Effect::new(move || {
+        if let Some(Err(error)) = error_detail.get() {
+            set_message.set(error_text(error));
+        }
+    });
+    view! {
+        <Transition fallback=move || view! { <p>"Loading intake…"</p> }>
+            {move || match detail.get() {
+                Some(Ok(fresh)) => view! { <IntakeEditorLoaded intake=fresh csrf_token=csrf_token.clone() set_selected=set_selected set_items=set_items set_message=set_message/> }.into_any(),
+                Some(Err(error)) => view! { <p class="error">{error_text(error)}</p> }.into_any(),
+                None => ().into_any(),
+            }}
+        </Transition>
+    }
+}
+
+#[component]
+fn IntakeEditorLoaded(
+    intake: Intake,
+    csrf_token: String,
+    set_selected: WriteSignal<Option<Intake>>,
+    set_items: WriteSignal<Vec<Intake>>,
+    set_message: WriteSignal<String>,
+) -> impl IntoView {
     let payload = RwSignal::new(intake.payload.clone());
     let revision = RwSignal::new(intake.revision);
     let generation = RwSignal::new(0_u64);
@@ -328,7 +355,6 @@ fn IntakeEditor(
     let save_action = ServerAction::<SaveIntake>::new();
     let submit_action = ServerAction::<SubmitIntake>::new();
     let id = intake.id;
-    let detail = Resource::new(move || id, get_intake);
     let locked = intake.state != "draft";
     let fields = fields_for(&intake.form_code);
     let save_csrf = csrf_token.clone();
@@ -391,7 +417,7 @@ fn IntakeEditor(
     };
     let common_csrf = csrf_token.clone();
     let fields_csrf = csrf_token;
-    view! {<><Transition fallback=move || view!{<p>"Loading intake…"</p>}>{move || detail.get().map(|_| ())}</Transition><div><p class="eyebrow">{format!("{} guided intake",intake.form_code)}</p><h2>{intake.reference.clone().unwrap_or_else(||"Draft return".into())}</h2>{if locked{view!{<div class="success"><h3>"Information received"</h3><p>"Our team will review and file this return. The official receipt will follow after filing."</p></div>}.into_any()}else{view!{<><p>"Complete each section with your filing adviser. Changes are saved securely after a short pause."</p><section class="form-section"><h3>"Filing period and taxpayer"</h3><div class="form-fields">{COMMON_FIELDS.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id csrf_token=common_csrf.clone() save_action=save_action set_message=set_message/>}).collect_view()}</div></section><section class="form-section"><h3>"Registered details, filing choices, and quarterly figures"</h3><div class="form-fields">{fields.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id csrf_token=fields_csrf.clone() save_action=save_action set_message=set_message/>}).collect_view()}</div></section><div class="actions"><span class="save-state">{move||if saving.get(){"Saving…"}else{"All changes saved"}}</span><button class="secondary" disabled=move||submitting.get() on:click=save>"Save now"</button><button disabled=move||submitting.get() on:click=submit>"Send for review"</button></div></>}.into_any()}}</div></>}
+    view! {<div><p class="eyebrow">{format!("{} guided intake",intake.form_code)}</p><h2>{intake.reference.clone().unwrap_or_else(||"Draft return".into())}</h2>{if locked{view!{<div class="success"><h3>"Information received"</h3><p>"Our team will review and file this return. The official receipt will follow after filing."</p></div>}.into_any()}else{view!{<><p>"Complete each section with your filing adviser. Changes are saved securely after a short pause."</p><section class="form-section"><h3>"Filing period and taxpayer"</h3><div class="form-fields">{COMMON_FIELDS.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id csrf_token=common_csrf.clone() save_action=save_action set_message=set_message/>}).collect_view()}</div></section><section class="form-section"><h3>"Registered details, filing choices, and quarterly figures"</h3><div class="form-fields">{fields.iter().copied().map(|field|view!{<GuidedInput field=field payload=payload generation=generation revision=revision saving=saving submitting=submitting id=id csrf_token=fields_csrf.clone() save_action=save_action set_message=set_message/>}).collect_view()}</div></section><div class="actions"><span class="save-state">{move||if saving.get(){"Saving…"}else{"All changes saved"}}</span><button class="secondary" disabled=move||submitting.get() on:click=save>"Save now"</button><button disabled=move||submitting.get() on:click=submit>"Send for review"</button></div></>}.into_any()}}</div>}
 }
 
 #[component]
@@ -465,9 +491,35 @@ fn OperatorDetail(
     set_message: WriteSignal<String>,
 ) -> impl IntoView {
     let id = intake.id;
+    let detail = Resource::new(move || id, operator_get_intake);
+    let error_detail = detail;
+    Effect::new(move || {
+        if let Some(Err(error)) = error_detail.get() {
+            set_message.set(error_text(error));
+        }
+    });
+    view! {
+        <Transition fallback=move || view! { <p>"Loading intake…"</p> }>
+            {move || match detail.get() {
+                Some(Ok(fresh)) => view! { <OperatorDetailLoaded intake=fresh csrf_token=csrf_token.clone() set_selected=set_selected set_items=set_items set_message=set_message/> }.into_any(),
+                Some(Err(error)) => view! { <p class="error">{error_text(error)}</p> }.into_any(),
+                None => ().into_any(),
+            }}
+        </Transition>
+    }
+}
+
+#[component]
+fn OperatorDetailLoaded(
+    intake: Intake,
+    csrf_token: String,
+    set_selected: WriteSignal<Option<Intake>>,
+    set_items: WriteSignal<Vec<Intake>>,
+    set_message: WriteSignal<String>,
+) -> impl IntoView {
+    let id = intake.id;
     let status_action = ServerAction::<OperatorUpdateStatus>::new();
     let delete_action = ServerAction::<OperatorDeleteIntake>::new();
-    let detail = Resource::new(move || id, operator_get_intake);
     let status_csrf = csrf_token.clone();
     let change = Arc::new(move |status: &'static str| {
         let csrf = status_csrf.clone();
@@ -545,5 +597,5 @@ fn OperatorDetail(
     };
     let mark_filed = Arc::clone(&change);
     let mark_receipt = change;
-    view! {<><Transition fallback=move || view!{<p>"Loading intake…"</p>}>{move || detail.get().map(|_| ())}</Transition><article class="review"><p class="eyebrow">{intake.workflow_status.unwrap_or_default()}</p><h2>{intake.reference.unwrap_or_default()}</h2><p>{format!("{} · {}",intake.form_code,intake.owner_email)}</p><div class="actions no-print"><a class="button secondary" href=format!("/api/operator/intakes/{id}/export")>"Export JSON"</a><button class="secondary" on:click=move |_|{let _=web_sys::window().unwrap().print();}>"Print review"</button><button on:click=move |_|mark_filed("Filed")>"Mark filed"</button><button on:click=move |_|mark_receipt("Receipt sent")>"Mark receipt sent"</button><button class="danger" on:click=delete>"Delete"</button></div><pre>{serde_json::to_string_pretty(&intake.payload).unwrap()}</pre></article></>}
+    view! {<article class="review"><p class="eyebrow">{intake.workflow_status.unwrap_or_default()}</p><h2>{intake.reference.unwrap_or_default()}</h2><p>{format!("{} · {}",intake.form_code,intake.owner_email)}</p><div class="actions no-print"><a class="button secondary" href=format!("/api/operator/intakes/{id}/export")>"Export JSON"</a><button class="secondary" on:click=move |_|{let _=web_sys::window().unwrap().print();}>"Print review"</button><button on:click=move |_|mark_filed("Filed")>"Mark filed"</button><button on:click=move |_|mark_receipt("Receipt sent")>"Mark receipt sent"</button><button class="danger" on:click=delete>"Delete"</button></div><pre>{serde_json::to_string_pretty(&intake.payload).unwrap()}</pre></article>}
 }
