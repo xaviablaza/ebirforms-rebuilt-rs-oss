@@ -8,6 +8,8 @@ rust-version.workspace = true
 [dependencies]
 argon2 = "0.5"
 axum = "0.7"
+base64 = "0.22"
+chacha20poly1305 = "0.10"
 ebirforms-core = { path = "../ebirforms-core" }
 rand = "0.8"
 rusqlite = { version = "0.30", features = ["bundled"] }

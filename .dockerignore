@@ -1,0 +1,17 @@
+**
+!Cargo.toml
+!Cargo.lock
+!LICENSE.md
+!crates/
+!crates/**
+!apps/
+!apps/web/
+!apps/web/frontend/
+!apps/web/frontend/Cargo.toml
+!apps/web/frontend/Cargo.lock
+!apps/web/frontend/index.html
+!apps/web/frontend/src/
+!apps/web/frontend/src/**
+!tests/
+!tests/fixtures/
+!tests/fixtures/**

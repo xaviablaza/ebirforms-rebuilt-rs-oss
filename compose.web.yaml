@@ -8,6 +8,8 @@ services:
       - web-data:/app/data
     expose:
       - "3000"
+    environment:
+      EBIRFORMS_WEB_ENCRYPTION_KEY: ${EBIRFORMS_WEB_ENCRYPTION_KEY:?set a persistent base64 32-byte encryption key}
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:3000/api/healthz"]
       interval: 30s
