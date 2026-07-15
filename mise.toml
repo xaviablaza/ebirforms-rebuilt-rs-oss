@@ -37,3 +37,7 @@ run = [
 [tasks.desktop-build]
 description = "Build the Tauri + Leptos desktop app"
 run = "mise x rust@1.88.0 node@22 -- sh -lc 'cd apps/desktop && npm install && npm --prefix frontend install && npx tauri build'"
+
+[tasks.web-dev]
+description = "Run the hosted intake API and Leptos frontend with hot reload"
+run = "mise x rust@1.88.0 -- bash apps/web/scripts/web-dev.sh"
