@@ -2,6 +2,8 @@
 members = [
     "crates/ebirforms-core",
     "crates/ebirforms-cli",
+    "crates/ebirforms-web",
+    "crates/ebirforms-web-schema",
 ]
 resolver = "2"
 

@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    volumes:
+      - web-data:/app/data
+    expose:
+      - "3000"
+    environment:
+      EBIRFORMS_WEB_ENCRYPTION_KEY: ${EBIRFORMS_WEB_ENCRYPTION_KEY:?set a persistent base64 32-byte encryption key}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:3000/api/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS to the public hostname}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  web-data:
+  caddy-data:
+  caddy-config:

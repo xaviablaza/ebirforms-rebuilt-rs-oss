@@ -51,4 +51,27 @@ in
       exec npx tauri dev --config '{"build":{"beforeDevCommand":"cd frontend && NO_COLOR=false trunk serve --address 127.0.0.1 --port 1420"},"bundle":{"active":false,"resources":[],"externalBin":[]}}'
     '';
   };
+
+  scripts.web-dev = {
+    description = "Run the hosted intake API and Leptos frontend with hot reload";
+    exec = ''
+      export EBIRFORMS_WEB_INSECURE_COOKIE=1
+      export EBIRFORMS_WEB_DB="''${EBIRFORMS_WEB_DB:-$PWD/.devenv/state/web-intake.sqlite3}"
+      export EBIRFORMS_WEB_FRONTEND_PORT="''${EBIRFORMS_WEB_FRONTEND_PORT:-1421}"
+      export EBIRFORMS_WEB_API_PORT="''${EBIRFORMS_WEB_API_PORT:-3001}"
+      export EBIRFORMS_WEB_BIND="127.0.0.1:$EBIRFORMS_WEB_API_PORT"
+      key_file="$PWD/.devenv/state/web-intake.key"
+      if [ ! -f "$key_file" ]; then
+        umask 077
+        mkdir -p "$(dirname "$key_file")"
+        openssl rand -base64 32 > "$key_file"
+      fi
+      export EBIRFORMS_WEB_ENCRYPTION_KEY="$(cat "$key_file")"
+      cargo run -p ebirforms-web &
+      api_pid=$!
+      trap 'kill "$api_pid" 2>/dev/null || true' EXIT INT TERM
+      cd apps/web/frontend
+      NO_COLOR=false trunk serve --address 127.0.0.1 --port "$EBIRFORMS_WEB_FRONTEND_PORT" --proxy-backend="http://127.0.0.1:$EBIRFORMS_WEB_API_PORT/api/"
+    '';
+  };
 }
