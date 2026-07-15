@@ -51,4 +51,17 @@ in
       exec npx tauri dev --config '{"build":{"beforeDevCommand":"cd frontend && NO_COLOR=false trunk serve --address 127.0.0.1 --port 1420"},"bundle":{"active":false,"resources":[],"externalBin":[]}}'
     '';
   };
+
+  scripts.web-dev = {
+    description = "Run the hosted intake API and Leptos frontend with hot reload";
+    exec = ''
+      export EBIRFORMS_WEB_INSECURE_COOKIE=1
+      export EBIRFORMS_WEB_DB="''${EBIRFORMS_WEB_DB:-$PWD/.devenv/state/web-intake.sqlite3}"
+      cargo run -p ebirforms-web &
+      api_pid=$!
+      trap 'kill "$api_pid" 2>/dev/null || true' EXIT INT TERM
+      cd apps/web/frontend
+      exec trunk serve --address 127.0.0.1 --port 1420 --proxy-backend=http://127.0.0.1:3000/api/
+    '';
+  };
 }
