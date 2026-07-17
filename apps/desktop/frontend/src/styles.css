@@ -118,7 +118,7 @@ h2 { margin-top: 24px; }
 .split-inputs { display: grid; grid-template-columns: 1fr auto 1.4fr; gap: 6px; align-items: center; }
 .date-inputs { display: grid; grid-template-columns: 1fr auto 1fr auto 1.4fr; gap: 6px; align-items: center; }
 .period-range-inputs { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
-.atc-choice-box { display: grid; grid-template-columns: auto minmax(100px, 1fr) auto minmax(100px, 1fr); align-items: center; }
+.atc-choice-box { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; column-gap: 14px; row-gap: 8px; }
 .atc-choice-box > span { grid-column: 1 / -1; }
 .tin-inputs { grid-template-columns: 1fr auto 1fr auto 1fr auto 1.2fr; }
 .bir-table { display: grid; }
@@ -135,7 +135,46 @@ h2 { margin-top: 24px; }
 .payment-field-row { grid-template-columns: 54px minmax(260px, 1fr) 220px; }
 .muted-empty { color: #444; font-style: italic; }
 .amount-input { font-variant-numeric: tabular-nums; text-align: right; }
-@media (max-width: 1180px) { .bir-title-grid, .top-strip, .physical-top-strip, .background-grid, .physical-background-grid, .physical-schedule-grid, .payment-row { grid-template-columns: 1fr; } .bir-box.span-2 { grid-column: span 1; } .bir-row, .bir-row.specify-row, .payment-field-row { grid-template-columns: 48px 1fr; } .bir-row input, .bir-row .specify-input { grid-column: 1 / -1; } }
+.form-1701q-pages { display: grid; gap: 28px; }
+.form-1701q.bir-page { box-shadow: 0 14px 34px rgba(0,0,0,.14); }
+.form-1701q .physical-top-strip { grid-template-columns: 1.2fr 1.6fr 1.5fr 1.1fr; }
+.form-1701q .physical-background-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-1701q .bir-box input[readonly] { background: #f3f4f6; color: #374151; }
+.form-1701q fieldset.bir-box { min-width: 0; border-top: 0; border-left: 0; }
+.form-1701q fieldset.bir-box legend { display: block; width: 100%; padding: 0; margin: 0 0 6px; font-weight: 800; color: #111; }
+.form-1701q .radio-group-1701q input[type="radio"] { accent-color: #111; }
+.form-1701q .atc-choice-box legend { grid-column: 1 / -1; }
+.date-inputs { display: grid; grid-template-columns: 1fr auto 1fr auto 1.5fr; gap: 6px; align-items: center; }
+.bir-two-col-header, .bir-row-two-col { display: grid; grid-template-columns: 54px minmax(320px, 1fr) 180px 180px; }
+.bir-two-col-header { border-bottom: 1px solid #111; background: #d8d8d8; color: #111; font-weight: 800; }
+.bir-two-col-header span { grid-column: 1 / span 2; padding: 7px 8px; border-right: 1px solid #111; text-align: center; }
+.bir-two-col-header strong { padding: 7px 8px; border-right: 1px solid #111; text-align: center; }
+.bir-row-two-col { grid-template-columns: 54px minmax(320px, 1fr) 180px 180px; }
+.bir-row-two-col .item-label { font-weight: 650; }
+.bir-row-two-col input:read-only, .bir-row-two-col input.rate-disabled { background: #d9d9d9; color: #777; cursor: not-allowed; }
+.bir-row-two-col.specify-row-1701q { grid-template-columns: 54px minmax(220px, .8fr) minmax(160px, .55fr) 180px 180px; }
+.rate-disabled { background: #e5e7eb !important; color: #6b7280 !important; cursor: not-allowed; }
+.calculated-amount { background: #e8f1fb !important; color: #17324d !important; font-weight: 700; cursor: default; }
+.aggregate-row-1701q .aggregate-amount { grid-column: 3 / 5; }
+.bir-section-title.inline { border-top: 2px solid #111; text-align: left; padding-left: 8px; }
+.bir-subrow.centered { text-align: center; padding-left: 0; }
+.page-two-heading { margin-top: 0; }
+.page-two-identity-strip { display: grid; grid-template-columns: 1fr 2fr; border-bottom: 2px solid #111; }
+.page-two-identity-strip label { margin: 0; padding: 5px 8px; color: #111; border-right: 1px solid #111; }
+.page-two-identity-strip input { margin: 4px 0 0; border: 0; border-top: 1px solid #999; }
+.schedule-instruction { padding: 5px 8px; text-align: center; background: #d8d8d8; border-bottom: 2px solid #111; font-style: italic; font-weight: 800; }
+.payment-table-1701q { display: grid; }
+.payment-header, .payment-table-1701q .payment-row { display: grid; grid-template-columns: 1.2fr 1fr 1.4fr 1fr 1fr; }
+.payment-header { background: #d8d8d8; border-bottom: 1px solid #111; }
+.payment-header strong { padding: 6px 8px; text-align: center; border-right: 1px solid #111; }
+.disabled-payment-row input:disabled { background: #d9d9d9; cursor: not-allowed; opacity: 1; }
+.tax-rate-tables-1701q { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: 10px 0 0; }
+.tax-rate-table-1701q { border: 2px solid #111; background: #f8f8f8; }
+.tax-rate-table-1701q > strong { display: block; padding: 4px 7px; background: #d8d8d8; border-bottom: 1px solid #111; }
+.tax-rate-head, .tax-rate-row { display: grid; grid-template-columns: 1fr 1.2fr; }
+.tax-rate-head { font-weight: 800; text-align: center; background: #e3e3e3; }
+.tax-rate-head span, .tax-rate-row span { padding: 3px 6px; border-right: 1px solid #111; border-bottom: 1px solid #111; }
+@media (max-width: 1180px) { .bir-title-grid, .top-strip, .physical-top-strip, .background-grid, .physical-background-grid, .physical-schedule-grid, .payment-row, .payment-header, .form-1701q .physical-top-strip, .form-1701q .physical-background-grid, .page-two-identity-strip, .tax-rate-tables-1701q { grid-template-columns: 1fr; } .bir-box.span-2 { grid-column: span 1; } .bir-row, .bir-row.specify-row, .payment-field-row, .bir-row-two-col, .bir-row-two-col.specify-row-1701q, .bir-two-col-header { grid-template-columns: 48px 1fr; } .bir-row input, .bir-row .specify-input, .bir-two-col-header span, .bir-two-col-header strong, .aggregate-row-1701q .aggregate-amount { grid-column: 1 / -1; } }
 label { display: block; font-weight: 700; color: var(--muted); margin: 0 0 12px; }
 input, textarea, select { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-top: 6px; background: var(--surface-muted); color: var(--text); }
 select option { background: var(--surface); color: var(--text); }

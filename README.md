@@ -24,7 +24,7 @@ Licensed under the Functional Source License, Version 1.1, ALv2 Future License (
 - `ebirforms-core::receipt`: synthetic receipt parsing/matching plus local directory and packaged Himalaya mailbox polling.
 - `ebirforms-cli`: command-line access to the above.
 
-Synthetic fixtures are included for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`. Additional forms require independently authored, redistributable templates/mappings and should be validated against public requirements or authorized operator data.
+Synthetic fixtures are included for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, `1701Q`, and `1702Q`. Additional forms require independently authored, redistributable templates/mappings and should be validated against public requirements or authorized operator data.
 
 ## Build with mise
 
@@ -44,7 +44,7 @@ The macOS binary will be at `./target/release/ebirforms-cli`. The build task als
 
 ## Desktop app
 
-A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard`, `Profiles`, and `Settings`. The dashboard contains only the Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, and `1702Q`; it requires a saved active taxpayer profile before opening a form. Package, queue/job, submission, and receipt actions are embedded in the selected form’s single-column Tax Form Flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run, automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain, and package Himalaya as a desktop resource/sidecar for production receipt mailbox polling.
+A Tauri v2 + Leptos desktop shell lives under `apps/desktop`. It wraps the existing Rust core through Tauri commands and provides a focused left sidebar with `Dashboard`, `Profiles`, and `Settings`. The dashboard contains only the Tax Form Library for `1601C`, `2000`, `2550Q`, `0619E`, `1601EQ`, `1701Q`, and `1702Q`; it requires a saved active taxpayer profile before opening a form. Package, queue/job, submission, and receipt actions are embedded in the selected form’s single-column Tax Form Flow. The desktop tasks install the Rust `trunk` web frontend builder into `target/desktop-tools/` on first run, automatically add the `wasm32-unknown-unknown` Rust target for the active mise Rust toolchain, and package Himalaya as a desktop resource/sidecar for production receipt mailbox polling.
 
 ![PH Tax Forms Desktop prototype dashboard running on Linux](docs/assets/desktop-linux-dashboard.png)
 

@@ -32,7 +32,7 @@ Show:
 1. On `Dashboard`, point to `Tax Form Library` as the only dashboard content.
 2. If no taxpayer profile is saved, show the warning telling the operator to create and save a profile first.
 3. Save or choose a profile under `Profiles`, then return to `Dashboard`.
-4. Choose several forms, for example `2000`, `2550Q`, `0619E`, `1601EQ`, `1702Q`, then return to `1601C` or any form you want to demo. Each click opens a single-column `Tax Form Flow`.
+4. Choose several forms, for example `2000`, `2550Q`, `0619E`, `1601EQ`, `1701Q`, `1702Q`, then return to `1601C` or any form you want to demo. Each click opens a single-column `Tax Form Flow`.
 
 Say:
 
@@ -45,6 +45,7 @@ Supported demo forms:
 - `2550Q` — Quarterly VAT
 - `0619E` — Monthly expanded withholding remittance
 - `1601EQ` — Quarterly expanded withholding return
+- `1701Q` — Quarterly individual income tax
 - `1702Q` — Quarterly corporate income tax
 
 ## 3. Edit and save application data

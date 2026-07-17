@@ -1,0 +1,582 @@
+code = "1701Q"
+version = "v2018"
+display_name = "Quarterly Income Tax Return for Individuals, Estates and Trusts"
+category = "income_tax_individual"
+frequency = "quarterly"
+period_format = "YYYYQn"
+pdf_url = "https://bir-cdn.bir.gov.ph/local/pdf/1701Q%20Jan%202018%20final%20rev2_copy.pdf"
+remote_directory = "/1701Q/"
+filename_pattern = "{tin}-{form_code}-{period}{amendment_suffix}.xml"
+requires_employees = false
+requires_expanded_withholding_agent = false
+requires_vat_registered = false
+
+[[sections]]
+page = 1
+part = "header"
+title = "Filing period and return flags"
+[[sections.fields]]
+item = "internal"
+label = "For the Year"
+json_path = "fields.frm1701q:txtYear"
+xml_key = "frm1701q:txtYear"
+[[sections.fields]]
+item = "1"
+label = "Quarter - 1st"
+json_path = "fields.frm1701q:DateQuarter_1"
+xml_key = "frm1701q:DateQuarter_1"
+[[sections.fields]]
+item = "2"
+label = "Quarter - 2nd"
+json_path = "fields.frm1701q:DateQuarter_2"
+xml_key = "frm1701q:DateQuarter_2"
+[[sections.fields]]
+item = "3"
+label = "Quarter - 3rd"
+json_path = "fields.frm1701q:DateQuarter_3"
+xml_key = "frm1701q:DateQuarter_3"
+[[sections.fields]]
+item = "1"
+label = "Amended Return? - Yes"
+json_path = "fields.frm1701q:AmendedRtn_1"
+xml_key = "frm1701q:AmendedRtn_1"
+[[sections.fields]]
+item = "2"
+label = "Amended Return? - No"
+json_path = "fields.frm1701q:AmendedRtn_2"
+xml_key = "frm1701q:AmendedRtn_2"
+[[sections.fields]]
+item = "internal"
+label = "No. of Sheet/s Attached"
+json_path = "fields.frm1701q:txtSheets"
+xml_key = "frm1701q:txtSheets"
+
+[[sections]]
+page = 1
+part = "part_i"
+title = "Part I – Background Information"
+[[sections.fields]]
+item = "5T"
+label = "Taxpayer TIN - first 3 digits"
+json_path = "fields.frm1701q:txt5TIN1"
+xml_key = "frm1701q:txt5TIN1"
+[[sections.fields]]
+item = "5T"
+label = "Taxpayer TIN - second 3 digits"
+json_path = "fields.frm1701q:txt5TIN2"
+xml_key = "frm1701q:txt5TIN2"
+[[sections.fields]]
+item = "5T"
+label = "Taxpayer TIN - third 3 digits"
+json_path = "fields.frm1701q:txt5TIN3"
+xml_key = "frm1701q:txt5TIN3"
+[[sections.fields]]
+item = "5B"
+label = "Taxpayer Branch Code"
+json_path = "fields.frm1701q:txt5BranchCode"
+xml_key = "frm1701q:txt5BranchCode"
+[[sections.fields]]
+item = "5R"
+label = "RDO Code"
+json_path = "fields.frm1701q:txt5RDOCode"
+xml_key = "frm1701q:txt5RDOCode"
+[[sections.fields]]
+item = "7T"
+label = "Spouse TIN - first 3 digits"
+json_path = "fields.frm1701q:txt7TIN1"
+xml_key = "frm1701q:txt7TIN1"
+[[sections.fields]]
+item = "7T"
+label = "Spouse TIN - second 3 digits"
+json_path = "fields.frm1701q:txt7TIN2"
+xml_key = "frm1701q:txt7TIN2"
+[[sections.fields]]
+item = "7T"
+label = "Spouse TIN - third 3 digits"
+json_path = "fields.frm1701q:txt7TIN3"
+xml_key = "frm1701q:txt7TIN3"
+[[sections.fields]]
+item = "7B"
+label = "Spouse Branch Code"
+json_path = "fields.frm1701q:txt7BranchCode"
+xml_key = "frm1701q:txt7BranchCode"
+[[sections.fields]]
+item = "7R"
+label = "RDO Code"
+json_path = "fields.frm1701q:txt7RDOCode"
+xml_key = "frm1701q:txt7RDOCode"
+[[sections.fields]]
+item = "11A"
+label = "Registered Address"
+json_path = "fields.frm1701q:txt11Address"
+xml_key = "frm1701q:txt11Address"
+[[sections.fields]]
+item = "12A"
+label = "Spouse Registered Address"
+json_path = "fields.frm1701q:txt12Address"
+xml_key = "frm1701q:txt12Address"
+[[sections.fields]]
+item = "13B"
+label = "Date of Birth Month"
+json_path = "fields.frm1701q:txt13BirthMonth"
+xml_key = "frm1701q:txt13BirthMonth"
+[[sections.fields]]
+item = "13B"
+label = "Date of Birth Day"
+json_path = "fields.frm1701q:txt13BirthDay"
+xml_key = "frm1701q:txt13BirthDay"
+[[sections.fields]]
+item = "13B"
+label = "Date of Birth Year"
+json_path = "fields.frm1701q:txt13BirthYear"
+xml_key = "frm1701q:txt13BirthYear"
+[[sections.fields]]
+item = "14"
+label = "Zip Code"
+json_path = "fields.frm1701q:txt14zip"
+xml_key = "frm1701q:txt14zip"
+[[sections.fields]]
+item = "15T"
+label = "Taxpayer Contact Number"
+json_path = "fields.frm1701q:txt15Telno"
+xml_key = "frm1701q:txt15Telno"
+[[sections.fields]]
+item = "16B"
+label = "Spouse Birth Month"
+json_path = "fields.frm1701q:txt16BirthMonth"
+xml_key = "frm1701q:txt16BirthMonth"
+[[sections.fields]]
+item = "16B"
+label = "Spouse Birth Day"
+json_path = "fields.frm1701q:txt16BirthDay"
+xml_key = "frm1701q:txt16BirthDay"
+[[sections.fields]]
+item = "16B"
+label = "Spouse Birth Year"
+json_path = "fields.frm1701q:txt16BirthYear"
+xml_key = "frm1701q:txt16BirthYear"
+[[sections.fields]]
+item = "17"
+label = "Spouse ZIP Code"
+json_path = "fields.frm1701q:txt17"
+xml_key = "frm1701q:txt17"
+[[sections.fields]]
+item = "18T"
+label = "Spouse Contact Number"
+json_path = "fields.frm1701q:txt18Telno"
+xml_key = "frm1701q:txt18Telno"
+[[sections.fields]]
+item = "19"
+label = "Registered Activity / Line of Business"
+json_path = "fields.frm1701q:txt19"
+xml_key = "frm1701q:txt19"
+[[sections.fields]]
+item = "20A"
+label = "ATC - Graduated IT Rates Code"
+json_path = "fields.frm1701q:txt20A"
+xml_key = "frm1701q:txt20A"
+[[sections.fields]]
+item = "20"
+label = "ATC - Graduated IT Rates Selected"
+json_path = "fields.frm1701q:optATC20_1"
+xml_key = "frm1701q:optATC20_1"
+[[sections.fields]]
+item = "20B"
+label = "ATC - 8% IT Rate Code"
+json_path = "fields.frm1701q:txt20B"
+xml_key = "frm1701q:txt20B"
+[[sections.fields]]
+item = "20"
+label = "ATC - 8% IT Rate Selected"
+json_path = "fields.frm1701q:optATC20_2"
+xml_key = "frm1701q:optATC20_2"
+[[sections.fields]]
+item = "20C"
+label = "ATC - Mixed Income Code"
+json_path = "fields.frm1701q:txt20C"
+xml_key = "frm1701q:txt20C"
+[[sections.fields]]
+item = "20"
+label = "ATC - Mixed Income Selected"
+json_path = "fields.frm1701q:optATC20_3"
+xml_key = "frm1701q:optATC20_3"
+[[sections.fields]]
+item = "21"
+label = "Other ATC / Tax Rate Description"
+json_path = "fields.frm1701q:txt21"
+xml_key = "frm1701q:txt21"
+[[sections.fields]]
+item = "22A"
+label = "Spouse ATC - Graduated IT Rates Code"
+json_path = "fields.frm1701q:txt22A"
+xml_key = "frm1701q:txt22A"
+[[sections.fields]]
+item = "22"
+label = "Spouse ATC - Graduated IT Rates Selected"
+json_path = "fields.frm1701q:optATC22_1"
+xml_key = "frm1701q:optATC22_1"
+[[sections.fields]]
+item = "22B"
+label = "Spouse ATC - 8% IT Rate Code"
+json_path = "fields.frm1701q:txt22B"
+xml_key = "frm1701q:txt22B"
+[[sections.fields]]
+item = "22"
+label = "Spouse ATC - 8% IT Rate Selected"
+json_path = "fields.frm1701q:optATC22_2"
+xml_key = "frm1701q:optATC22_2"
+[[sections.fields]]
+item = "22C"
+label = "Spouse ATC - Mixed Income Code"
+json_path = "fields.frm1701q:txt22C"
+xml_key = "frm1701q:txt22C"
+[[sections.fields]]
+item = "22"
+label = "Spouse ATC - Mixed Income Selected"
+json_path = "fields.frm1701q:optATC22_3"
+xml_key = "frm1701q:optATC22_3"
+[[sections.fields]]
+item = "1"
+label = "Method of Deduction - Itemized Deduction"
+json_path = "fields.frm1701:optMethodOfDeduction23:_1"
+xml_key = "frm1701:optMethodOfDeduction23:_1"
+[[sections.fields]]
+item = "2"
+label = "Method of Deduction - Optional Standard Deduction (OSD)"
+json_path = "fields.frm1701:optMethodOfDeduction23:_2"
+xml_key = "frm1701:optMethodOfDeduction23:_2"
+[[sections.fields]]
+item = "1"
+label = "Spouse Method of Deduction - Itemized Deduction"
+json_path = "fields.frm1701:optMethodOfDeduction24:_1"
+xml_key = "frm1701:optMethodOfDeduction24:_1"
+[[sections.fields]]
+item = "2"
+label = "Spouse Method of Deduction - Optional Standard Deduction (OSD)"
+json_path = "fields.frm1701:optMethodOfDeduction24:_2"
+xml_key = "frm1701:optMethodOfDeduction24:_2"
+[[sections.fields]]
+item = "1"
+label = "Claiming Tax Relief? - Yes"
+json_path = "fields.frm1701q:SelTreaty_1"
+xml_key = "frm1701q:SelTreaty_1"
+[[sections.fields]]
+item = "2"
+label = "Claiming Tax Relief? - No"
+json_path = "fields.frm1701q:SelTreaty_2"
+xml_key = "frm1701q:SelTreaty_2"
+[[sections.fields]]
+item = "25"
+label = "Claiming Foreign Tax Credits?"
+json_path = "fields.frm1701q:txtTaxRelief25"
+xml_key = "frm1701q:txtTaxRelief25"
+
+[[sections]]
+page = 1
+part = "part_ii"
+title = "Part II – Computation of Tax"
+[[sections.fields]]
+item = "26A"
+label = "26 A"
+json_path = "fields.frm1701q:txt26A"
+xml_key = "frm1701q:txt26A"
+[[sections.fields]]
+item = "26B"
+label = "26 B"
+json_path = "fields.frm1701q:txt26B"
+xml_key = "frm1701q:txt26B"
+[[sections.fields]]
+item = "27A"
+label = "27 A"
+json_path = "fields.frm1701q:txt27A"
+xml_key = "frm1701q:txt27A"
+[[sections.fields]]
+item = "27B"
+label = "27 B"
+json_path = "fields.frm1701q:txt27B"
+xml_key = "frm1701q:txt27B"
+[[sections.fields]]
+item = "28A"
+label = "28 A"
+json_path = "fields.frm1701q:txt28A"
+xml_key = "frm1701q:txt28A"
+[[sections.fields]]
+item = "28B"
+label = "28 B"
+json_path = "fields.frm1701q:txt28B"
+xml_key = "frm1701q:txt28B"
+[[sections.fields]]
+item = "29A"
+label = "29 A"
+json_path = "fields.frm1701q:txt29A"
+xml_key = "frm1701q:txt29A"
+[[sections.fields]]
+item = "29B"
+label = "29 B"
+json_path = "fields.frm1701q:txt29B"
+xml_key = "frm1701q:txt29B"
+[[sections.fields]]
+item = "30A"
+label = "30 A"
+json_path = "fields.frm1701q:txt30A"
+xml_key = "frm1701q:txt30A"
+[[sections.fields]]
+item = "30B"
+label = "30 B"
+json_path = "fields.frm1701q:txt30B"
+xml_key = "frm1701q:txt30B"
+[[sections.fields]]
+item = "31A"
+label = "31 A"
+json_path = "fields.frm1701q:txt31A"
+xml_key = "frm1701q:txt31A"
+[[sections.fields]]
+item = "31B"
+label = "31 B"
+json_path = "fields.frm1701q:txt31B"
+xml_key = "frm1701q:txt31B"
+[[sections.fields]]
+item = "32A"
+label = "32 A"
+json_path = "fields.frm1701q:txt32A"
+xml_key = "frm1701q:txt32A"
+[[sections.fields]]
+item = "32B"
+label = "32 B"
+json_path = "fields.frm1701q:txt32B"
+xml_key = "frm1701q:txt32B"
+[[sections.fields]]
+item = "33A"
+label = "33 A"
+json_path = "fields.frm1701q:txt33A"
+xml_key = "frm1701q:txt33A"
+[[sections.fields]]
+item = "33B"
+label = "33 B"
+json_path = "fields.frm1701q:txt33B"
+xml_key = "frm1701q:txt33B"
+[[sections.fields]]
+item = "34A"
+label = "34 A"
+json_path = "fields.frm1701q:txt34A"
+xml_key = "frm1701q:txt34A"
+[[sections.fields]]
+item = "34B"
+label = "34 B"
+json_path = "fields.frm1701q:txt34B"
+xml_key = "frm1701q:txt34B"
+[[sections.fields]]
+item = "35A"
+label = "35 A"
+json_path = "fields.frm1701q:txt35A"
+xml_key = "frm1701q:txt35A"
+[[sections.fields]]
+item = "35B"
+label = "35 B"
+json_path = "fields.frm1701q:txt35B"
+xml_key = "frm1701q:txt35B"
+[[sections.fields]]
+item = "36A"
+label = "36 A"
+json_path = "fields.frm1701q:txt36A"
+xml_key = "frm1701q:txt36A"
+[[sections.fields]]
+item = "36B"
+label = "36 B"
+json_path = "fields.frm1701q:txt36B"
+xml_key = "frm1701q:txt36B"
+[[sections.fields]]
+item = "37A"
+label = "37 A"
+json_path = "fields.frm1701q:txt37A"
+xml_key = "frm1701q:txt37A"
+[[sections.fields]]
+item = "37B"
+label = "37 B"
+json_path = "fields.frm1701q:txt37B"
+xml_key = "frm1701q:txt37B"
+[[sections.fields]]
+item = "38A"
+label = "38 A"
+json_path = "fields.frm1701q:txt38A"
+xml_key = "frm1701q:txt38A"
+[[sections.fields]]
+item = "38B"
+label = "38 B"
+json_path = "fields.frm1701q:txt38B"
+xml_key = "frm1701q:txt38B"
+[[sections.fields]]
+item = "38C"
+label = "38 C"
+json_path = "fields.frm1701q:txt38C"
+xml_key = "frm1701q:txt38C"
+[[sections.fields]]
+item = "38D"
+label = "38 D"
+json_path = "fields.frm1701q:txt38D"
+xml_key = "frm1701q:txt38D"
+[[sections.fields]]
+item = "38E"
+label = "38 E"
+json_path = "fields.frm1701q:txt38E"
+xml_key = "frm1701q:txt38E"
+[[sections.fields]]
+item = "38F"
+label = "38 F"
+json_path = "fields.frm1701q:txt38F"
+xml_key = "frm1701q:txt38F"
+[[sections.fields]]
+item = "38G"
+label = "38 G"
+json_path = "fields.frm1701q:txt38G"
+xml_key = "frm1701q:txt38G"
+[[sections.fields]]
+item = "38H"
+label = "38 H"
+json_path = "fields.frm1701q:txt38H"
+xml_key = "frm1701q:txt38H"
+[[sections.fields]]
+item = "38I"
+label = "38 I"
+json_path = "fields.frm1701q:txt38I"
+xml_key = "frm1701q:txt38I"
+[[sections.fields]]
+item = "38J"
+label = "38 J"
+json_path = "fields.frm1701q:txt38J"
+xml_key = "frm1701q:txt38J"
+[[sections.fields]]
+item = "38K"
+label = "38 K"
+json_path = "fields.frm1701q:txt38K"
+xml_key = "frm1701q:txt38K"
+[[sections.fields]]
+item = "38L"
+label = "38 L"
+json_path = "fields.frm1701q:txt38L"
+xml_key = "frm1701q:txt38L"
+[[sections.fields]]
+item = "38M"
+label = "38 M"
+json_path = "fields.frm1701q:txt38M"
+xml_key = "frm1701q:txt38M"
+[[sections.fields]]
+item = "38N"
+label = "38 N"
+json_path = "fields.frm1701q:txt38N"
+xml_key = "frm1701q:txt38N"
+[[sections.fields]]
+item = "39A"
+label = "39 A"
+json_path = "fields.frm1701q:txt39A"
+xml_key = "frm1701q:txt39A"
+[[sections.fields]]
+item = "39B"
+label = "39 B"
+json_path = "fields.frm1701q:txt39B"
+xml_key = "frm1701q:txt39B"
+[[sections.fields]]
+item = "40A"
+label = "40 A"
+json_path = "fields.frm1701q:txt40A"
+xml_key = "frm1701q:txt40A"
+[[sections.fields]]
+item = "40B"
+label = "40 B"
+json_path = "fields.frm1701q:txt40B"
+xml_key = "frm1701q:txt40B"
+[[sections.fields]]
+item = "40C"
+label = "40 C"
+json_path = "fields.frm1701q:txt40C"
+xml_key = "frm1701q:txt40C"
+[[sections.fields]]
+item = "40D"
+label = "40 D"
+json_path = "fields.frm1701q:txt40D"
+xml_key = "frm1701q:txt40D"
+[[sections.fields]]
+item = "40E"
+label = "40 E"
+json_path = "fields.frm1701q:txt40E"
+xml_key = "frm1701q:txt40E"
+[[sections.fields]]
+item = "40F"
+label = "40 F"
+json_path = "fields.frm1701q:txt40F"
+xml_key = "frm1701q:txt40F"
+[[sections.fields]]
+item = "40G"
+label = "40 G"
+json_path = "fields.frm1701q:txt40G"
+xml_key = "frm1701q:txt40G"
+[[sections.fields]]
+item = "40H"
+label = "40 H"
+json_path = "fields.frm1701q:txt40H"
+xml_key = "frm1701q:txt40H"
+[[sections.fields]]
+item = "41A"
+label = "41 A"
+json_path = "fields.frm1701q:txt41A"
+xml_key = "frm1701q:txt41A"
+[[sections.fields]]
+item = "41B"
+label = "41 B"
+json_path = "fields.frm1701q:txt41B"
+xml_key = "frm1701q:txt41B"
+[[sections.fields]]
+item = "41C"
+label = "41 C"
+json_path = "fields.frm1701q:txt41C"
+xml_key = "frm1701q:txt41C"
+
+[[sections]]
+page = 1
+part = "internal"
+title = "Serialization / internal fields"
+[[sections.fields]]
+item = "internal"
+label = "Taxpayer/Filer's Name"
+json_path = "fields.frm1701q:txtTaxPayername"
+xml_key = "frm1701q:txtTaxPayername"
+[[sections.fields]]
+item = "internal"
+label = "Spouse's Name"
+json_path = "fields.frm1701q:txtSpousename"
+xml_key = "frm1701q:txtSpousename"
+[[sections.fields]]
+item = "internal"
+label = "Final copy flag"
+json_path = "fields.txtFinalFlag"
+xml_key = "txtFinalFlag"
+[[sections.fields]]
+item = "internal"
+label = "Enrollment flag"
+json_path = "fields.txtEnroll"
+xml_key = "txtEnroll"
+[[sections.fields]]
+item = "internal"
+label = "eBIRForms Online Confirm Username"
+json_path = "fields.ebirOnlineConfirmUsername"
+xml_key = "ebirOnlineConfirmUsername"
+[[sections.fields]]
+item = "internal"
+label = "eBIRForms Online Username"
+json_path = "fields.ebirOnlineUsername"
+xml_key = "ebirOnlineUsername"
+[[sections.fields]]
+item = "internal"
+label = "eBIRForms Online Secret"
+json_path = "fields.ebirOnlineSecret"
+xml_key = "ebirOnlineSecret"
+[[sections.fields]]
+item = "email"
+label = "Email Address"
+json_path = "fields.txtEmail"
+xml_key = "txtEmail"
+[[sections.fields]]
+item = "internal"
+label = "Drive export selector"
+json_path = "fields.driveSelectTPExport"
+xml_key = "driveSelectTPExport"
