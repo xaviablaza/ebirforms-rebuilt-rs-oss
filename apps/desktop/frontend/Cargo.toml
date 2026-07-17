@@ -1,6 +1,6 @@
 [package]
 name = "ebirforms-desktop-frontend"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 license-file = "../../../LICENSE.md"
 rust-version = "1.75"
