@@ -84,7 +84,9 @@ const TAX_FORMS: &[TaxFormOption] = &[
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 struct ProfileInput {
     id: String,
-    tin: String,
+    tin_1: String,
+    tin_2: String,
+    tin_3: String,
     branch_code: String,
     taxpayer_name: String,
     rdo_code: String,
@@ -197,7 +199,9 @@ fn App() -> impl IntoView {
     let (active_profile_id, set_active_profile_id) = create_signal(None::<String>);
     let (profile, set_profile) = create_signal(ProfileInput {
         id: "synthetic-demo-profile".into(),
-        tin: "123-456-789-00000".into(),
+        tin_1: "123".into(),
+        tin_2: "456".into(),
+        tin_3: "789".into(),
         branch_code: "00000".into(),
         taxpayer_name: "Synthetic Taxpayer Inc.".into(),
         rdo_code: "044".into(),
@@ -420,7 +424,6 @@ fn App() -> impl IntoView {
             <aside class="sidebar">
                 <div>
                     <h1>"PH Tax Forms"</h1>
-                    <p class="muted">"Unofficial synthetic filing demo"</p>
                     <nav>
                         <button on:click=move |_| set_route.set("Dashboard".to_string())>"Dashboard"</button>
                         <button on:click=move |_| set_route.set("Profiles".to_string())>"Profiles"</button>
@@ -468,8 +471,10 @@ fn Profiles(
         let mut next = profile.get();
         match field {
             "id" => next.id = value,
-            "tin" => next.tin = value,
-            "branch_code" => next.branch_code = value,
+            "tin_1" => next.tin_1 = digits_up_to(&value, 3),
+            "tin_2" => next.tin_2 = digits_up_to(&value, 3),
+            "tin_3" => next.tin_3 = digits_up_to(&value, 3),
+            "branch_code" => next.branch_code = digits_up_to(&value, 5),
             "taxpayer_name" => next.taxpayer_name = value,
             "rdo_code" => next.rdo_code = value,
             "registered_address" => next.registered_address = value,
@@ -482,12 +487,18 @@ fn Profiles(
 
     let save_profile = move || {
         let p = profile.get_untracked();
+        let Some(tin) = canonical_profile_tin(&p) else {
+            set_status.set(
+                "Complete all three TIN boxes and the branch code before saving.".to_string(),
+            );
+            return;
+        };
         set_status.set("Saving profile…".to_string());
         spawn_local(async move {
             let args = json!({
                 "profile": {
                     "profile_id": p.id,
-                    "tin": p.tin,
+                    "tin": tin,
                     "email": p.email_address,
                     "taxpayer_name": p.taxpayer_name,
                     "rdo_code": p.rdo_code,
@@ -517,8 +528,18 @@ fn Profiles(
             <p>"Create or choose the active taxpayer profile. The active profile is shown at the bottom-left of the sidebar."</p>
             <div class="form-grid">
                 <label>"Profile ID"<input prop:value=move || profile.get().id on:input=move |ev| update("id", event_target_value(&ev)) /></label>
-                <label>"TIN"<input prop:value=move || profile.get().tin on:input=move |ev| update("tin", event_target_value(&ev)) /></label>
-                <label>"Branch code"<input prop:value=move || profile.get().branch_code on:input=move |ev| update("branch_code", event_target_value(&ev)) /></label>
+                <fieldset class="profile-tin-field">
+                    <legend>"TIN (3–3–3) / Branch code (max 5)"</legend>
+                    <div class="profile-tin-inputs">
+                        <input aria-label="TIN first 3 digits" inputmode="numeric" pattern="[0-9]*" maxlength="3" prop:value=move || profile.get().tin_1 on:input=move |ev| update("tin_1", event_target_value(&ev)) />
+                        <span aria-hidden="true">"–"</span>
+                        <input aria-label="TIN second 3 digits" inputmode="numeric" pattern="[0-9]*" maxlength="3" prop:value=move || profile.get().tin_2 on:input=move |ev| update("tin_2", event_target_value(&ev)) />
+                        <span aria-hidden="true">"–"</span>
+                        <input aria-label="TIN third 3 digits" inputmode="numeric" pattern="[0-9]*" maxlength="3" prop:value=move || profile.get().tin_3 on:input=move |ev| update("tin_3", event_target_value(&ev)) />
+                        <span aria-hidden="true">"–"</span>
+                        <input aria-label="Branch code, up to 5 digits" inputmode="numeric" pattern="[0-9]*" maxlength="5" prop:value=move || profile.get().branch_code on:input=move |ev| update("branch_code", event_target_value(&ev)) />
+                    </div>
+                </fieldset>
                 <label>"Taxpayer name"<input prop:value=move || profile.get().taxpayer_name on:input=move |ev| update("taxpayer_name", event_target_value(&ev)) /></label>
                 <label>"RDO code"<input prop:value=move || profile.get().rdo_code on:input=move |ev| update("rdo_code", event_target_value(&ev)) /></label>
                 <label>"Registered address"<input prop:value=move || profile.get().registered_address on:input=move |ev| update("registered_address", event_target_value(&ev)) /></label>
@@ -3745,11 +3766,29 @@ fn normalize_submission_mode(value: &str) -> Option<&'static str> {
 }
 
 fn four_digit_pin(value: String) -> String {
+    digits_up_to(&value, 4)
+}
+
+fn digits_up_to(value: &str, max_len: usize) -> String {
     value
         .chars()
         .filter(|ch| ch.is_ascii_digit())
-        .take(4)
+        .take(max_len)
         .collect()
+}
+
+fn canonical_profile_tin(profile: &ProfileInput) -> Option<String> {
+    if profile.tin_1.is_empty()
+        || profile.tin_2.is_empty()
+        || profile.tin_3.is_empty()
+        || profile.branch_code.is_empty()
+    {
+        return None;
+    }
+    Some(format!(
+        "{}-{}-{}-{}",
+        profile.tin_1, profile.tin_2, profile.tin_3, profile.branch_code
+    ))
 }
 
 fn event_target_checked(ev: &web_sys::Event) -> bool {
@@ -3869,6 +3908,41 @@ fn sample_bir_receipt_for_filename(filename: &str) -> String {
     format!(
         "SUBJECT: \"Tax Return Receipt Confirmation\"\nFROM: ebirforms-noreply@bir.gov.ph\nThis confirms receipt of your submission with the following details subject to validation by BIR:\nFile name: {filename}\nDate received by BIR: 15 April 2026\nTime received by BIR: 03:10 PM\nThis is a system-generated email. Please do not reply.\nBureau of Internal Revenue"
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn profile_tin_segments_are_digit_limited_and_composed_for_storage() {
+        assert_eq!(digits_up_to("12a345", 3), "123");
+        assert_eq!(digits_up_to("00x001234", 5), "00001");
+
+        let profile = ProfileInput {
+            tin_1: "123".into(),
+            tin_2: "456".into(),
+            tin_3: "789".into(),
+            branch_code: "00000".into(),
+            ..Default::default()
+        };
+        assert_eq!(
+            canonical_profile_tin(&profile).as_deref(),
+            Some("123-456-789-00000")
+        );
+    }
+
+    #[test]
+    fn profile_tin_requires_every_box_before_storage() {
+        let profile = ProfileInput {
+            tin_1: "123".into(),
+            tin_2: "456".into(),
+            tin_3: String::new(),
+            branch_code: "00000".into(),
+            ..Default::default()
+        };
+        assert_eq!(canonical_profile_tin(&profile), None);
+    }
 }
 
 #[cfg(test)]
