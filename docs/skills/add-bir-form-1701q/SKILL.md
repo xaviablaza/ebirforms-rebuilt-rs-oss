@@ -179,6 +179,13 @@ Observed conventions to preserve until a later verified capture/PDF says otherwi
 - Preserve the user-normalized label mapping in the 1701Q desktop renderer where the XML keys do not line up with PDF item numbers.
 - Desktop-specific `ui1701q:*` fields are acceptable for derived/visual-only controls, labels, and future XML crosswalk work, but only mapped XML keys in `mapping.toml` are serialized.
 - Implement ATC locking in the UI: Estate/Trust forces taxpayer ATC `II012`; graduated ATCs enable Schedule I and method-of-deduction, while 8% ATCs force the 8% rate and disable Schedule I/method-of-deduction.
+- Render Page 1 and Page 2 as separate bordered page cards. 1701Q has no Calendar/Fiscal selector: its header is only year, quarter, amended-return, and sheets-attached.
+- Use real HTML radio inputs for mutually exclusive PDF choices. On Page 1, Boxes 1–4 share one header row and the six ATCs form a readable 3-by-2 radio grid.
+- Apply Schedule I/II locking independently to columns A (taxpayer) and B (spouse), since each filer can have a different ATC/rate. Disabled schedule cells must use actual disabled inputs, not just grey styling.
+- When opening 1701Q, copy TIN segments, RDO, taxpayer name, registered address, ZIP, and email from the active taxpayer profile into the form payload before rendering. Keep the derived fields disabled/readonly according to the normalized box rules.
+- Visually verify both PDF-inspired page cards in a running frontend, then exercise Estate/Trust forcing and graduated-versus-8% schedule locking through actual DOM radio clicks.
+- Keep 1701Q arithmetic in a pure, centavo-based module and test it independently from Leptos: Schedule I (38/40/41/45/46), Schedule II (49/51/53/54), credits (62/63), penalties (67/68), Part III carryovers (26–30), and aggregate Box 31. The desktop adapter must recalculate after amount, ATC, deduction-method, and year changes.
+- Add a renderer-presence contract that checks Boxes 1–68 plus 10A, 16A, and 25A, and a field-key crosswalk test covering both A/B columns for Boxes 26–30 and 36–68. Calculated outputs should be readonly and visually distinct.
 
 ## Pitfalls
 
