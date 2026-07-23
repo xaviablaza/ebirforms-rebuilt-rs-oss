@@ -333,7 +333,9 @@ fn output_is_deterministic_preserves_art_and_appends_known_overlay() {
     assert!(content.contains("(K)"));
     assert!(content.contains("(R)"));
     assert!(!content.contains("KNOWN TAXPAYER"));
-    assert!(content.contains("(123)"));
+    assert!(content.contains("(1)"));
+    assert!(content.contains("(2)"));
+    assert!(content.contains("(3)"));
     assert!(!content.contains("123.45"));
     let page = output.get_dictionary(output.get_pages()[&1]).unwrap();
     assert!(page.get(b"Contents").unwrap().as_array().unwrap().len() >= 2);
@@ -412,11 +414,32 @@ fn calibrated_segmented_header_tin_payment_and_page2_coordinates() {
     let page2 = text_placements(&output, 2);
     assert_placement(&page2, "1", 35.77, 831.0);
     assert_placement(&page2, "NAME", 226.0, 831.0);
-    // Item 4 adjustment whole portion ends before x=491 and its normalized
-    // cents occupy the two cells beginning at x=506.
-    assert_placement(&page2, "1,234", 465.0, 637.0);
+    // Item 4 adjustment is right-aligned one digit per printed whole-number
+    // cell; the heavier guides represent thousands separators.
+    assert_placement(&page2, "1", 438.33, 637.0);
+    assert_placement(&page2, "2", 452.69, 637.0);
+    assert_placement(&page2, "3", 467.05, 637.0);
+    assert_placement(&page2, "4", 481.42, 637.0);
     assert_placement(&page2, "5", 510.6, 637.0);
     assert_placement(&page2, "0", 524.6, 637.0);
+}
+
+#[test]
+fn sheets_and_treaty_follow_guides_while_preprinted_atc_is_not_overlaid() {
+    let output = render_1601c_pdf(
+        &valid_template(),
+        &xml(&[("txtSheets", "2"), ("txtATC", "WC010"), ("selTreaty", "PH")]),
+    )
+    .unwrap();
+    let placements = text_placements(&output, 1);
+
+    // A count is right-aligned in Box 4 rather than padded with synthetic zeroes.
+    assert_placement(&placements, "2", 510.4, 812.0);
+    // Box 13A uses one glyph per printed guide cell when the value fits.
+    assert_placement(&placements, "P", 352.84, 662.0);
+    assert_placement(&placements, "H", 367.31, 662.0);
+    // Box 5's ATC is fixed artwork in this template.
+    assert!(!placements.iter().any(|(text, _, _)| text == "WC010"));
 }
 
 #[test]
@@ -450,9 +473,12 @@ fn monetary_values_split_whole_and_cents_and_reject_bad_precision() {
     ] {
         let output = render_1601c_pdf(&valid_template(), &xml(&[("txtTax14", value)])).unwrap();
         let placements = text_placements(&output, 1);
-        assert!(placements
+        let rendered_whole: String = placements
             .iter()
-            .any(|(text, x, y)| text == expected_whole && *x < 549.0 && (*y - 628.0).abs() < 0.02));
+            .filter(|(_, x, y)| *x < 549.0 && (*y - 628.0).abs() < 0.02)
+            .map(|(text, _, _)| text.as_str())
+            .collect();
+        assert_eq!(rendered_whole, expected_whole.replace(',', ""));
         assert_placement(&placements, expected_cents[0], 569.85, 628.0);
         assert_placement(&placements, expected_cents[1], 584.35, 628.0);
         assert!(!placements

@@ -217,7 +217,7 @@ fn insert_field(
     Ok(())
 }
 
-const NON_PRINTING_FIELDS: &[&str] = &["txtCurrentPage", "txtMaxPage", "txtLineBus"];
+const NON_PRINTING_FIELDS: &[&str] = &["txtATC", "txtCurrentPage", "txtMaxPage", "txtLineBus"];
 
 fn is_known_field(name: &str) -> bool {
     LAYOUT.iter().any(|spec| spec.key == name) || NON_PRINTING_FIELDS.contains(&name)
@@ -233,6 +233,11 @@ enum Kind {
     Text(Alignment),
     /// A fixed number of equal-width boxes. Each glyph is centered in its box.
     Segmented {
+        cells: usize,
+    },
+    /// A fixed number of equal-width boxes populated from the right. This is
+    /// used for numeric counts where leading zeroes should not be manufactured.
+    RightSegmented {
         cells: usize,
     },
     /// Use the printed character guides when the value fits; otherwise render
@@ -300,6 +305,18 @@ macro_rules! s {
         }
     };
 }
+macro_rules! rs {
+    ($k:literal,$p:literal,$x:literal,$y:literal,$w:literal,$cells:literal) => {
+        Spec {
+            key: $k,
+            page: $p,
+            x: $x as f32,
+            y: $y as f32,
+            width: $w as f32,
+            kind: Kind::RightSegmented { cells: $cells },
+        }
+    };
+}
 macro_rules! ad {
     ($k:literal,$p:literal,$x:literal,$y:literal,$w:literal,$cells:literal) => {
         Spec {
@@ -334,8 +351,7 @@ const LAYOUT: &[Spec] = &[
     c!("AmendedRtn_2", 1, 232, 813),
     c!("TaxWithheld_1", 1, 304.5, 813),
     c!("TaxWithheld_2", 1, 346, 813),
-    s!("txtSheets", 1, 448, 812, 72, 5),
-    t!("txtATC", 1, 534, 812, 60),
+    rs!("txtSheets", 1, 448, 812, 72, 5),
     s!("txtTIN1", 1, 234, 781, 43, 3),
     s!("txtTIN2", 1, 291, 781, 43, 3),
     s!("txtTIN3", 1, 348, 781, 43, 3),
@@ -353,7 +369,7 @@ const LAYOUT: &[Spec] = &[
     ad!("txtEmail", 1, 104, 680, 490, 34),
     c!("SpecialTax_1", 1, 175, 662),
     c!("SpecialTax_2", 1, 218, 662),
-    t!("selTreaty", 1, 348, 662, 232),
+    ad!("selTreaty", 1, 348, 662, 246, 17),
     a!("txtTax14", 1, 391, 628, 549, 565, 594),
     a!("txtTax15", 1, 391, 602, 549, 565, 594),
     a!("txtTax16", 1, 391, 586, 549, 565, 594),
@@ -494,10 +510,6 @@ fn overlay_operations(
         if value.is_empty() {
             continue;
         }
-        // WW010 is already printed in the January 2018 template.
-        if spec.key == "txtATC" && value.trim() == "WW010" {
-            continue;
-        }
         if spec.kind == Kind::Check {
             if selected(fields, spec.key)? {
                 ops.extend(check_operations(spec.x, spec.y));
@@ -525,6 +537,11 @@ fn overlay_operations(
                 enforce_capacity(spec.key, encoded.len(), cells)?;
                 push_segmented_text(&mut ops, spec, cells, encoded);
             }
+            Kind::RightSegmented { cells } => {
+                let encoded = encoded_value(spec.key, value)?;
+                enforce_capacity(spec.key, encoded.len(), cells)?;
+                push_right_segmented_text(&mut ops, spec, cells, encoded);
+            }
             Kind::AdaptiveSegmented { cells } => {
                 let encoded = encoded_value(spec.key, value)?;
                 if encoded.len() <= cells {
@@ -541,11 +558,18 @@ fn overlay_operations(
                 cents_end,
             } => {
                 let (whole, cents) = split_amount(spec.key, value)?;
+                // The whole-number portion has eleven printed guide cells.
+                // Commas are represented by the heavier thousands guides, so
+                // render only digits/sign and right-align one glyph per cell.
+                let whole = whole.replace(',', "");
                 let whole = encoded_value(spec.key, &whole)?;
-                let whole_capacity = ((whole_end - spec.x - 2.0) / glyph_width()).floor() as usize;
-                enforce_capacity(spec.key, whole.len(), whole_capacity)?;
-                let x = whole_end - 2.0 - whole.len() as f32 * glyph_width();
-                push_text(&mut ops, x, spec.y, whole);
+                const WHOLE_CELLS: usize = 11;
+                enforce_capacity(spec.key, whole.len(), WHOLE_CELLS)?;
+                let whole_spec = Spec {
+                    width: whole_end - spec.x,
+                    ..*spec
+                };
+                push_right_segmented_text(&mut ops, &whole_spec, WHOLE_CELLS, whole);
 
                 // The cents portion has two printed cells. Center each digit so
                 // it cannot drift across either the decimal marker or box edge.
@@ -586,6 +610,21 @@ fn push_segmented_text(ops: &mut Vec<Operation>, spec: &Spec, cells: usize, enco
     let cell_width = spec.width / cells as f32;
     for (index, byte) in encoded.into_iter().enumerate() {
         let x = spec.x + cell_width * (index as f32 + 0.5) - glyph_width() / 2.0;
+        push_text(ops, x, spec.y, vec![byte]);
+    }
+}
+
+fn push_right_segmented_text(
+    ops: &mut Vec<Operation>,
+    spec: &Spec,
+    cells: usize,
+    encoded: Vec<u8>,
+) {
+    let cell_width = spec.width / cells as f32;
+    let first_cell = cells - encoded.len();
+    for (index, byte) in encoded.into_iter().enumerate() {
+        let cell = first_cell + index;
+        let x = spec.x + cell_width * (cell as f32 + 0.5) - glyph_width() / 2.0;
         push_text(ops, x, spec.y, vec![byte]);
     }
 }
@@ -959,7 +998,7 @@ mod tests {
     #[test]
     fn layout_covers_every_printable_mapping_key_exactly_once() {
         let mapping = include_str!("../forms/1601C/mapping.toml");
-        let excluded = ["txtCurrentPage", "txtMaxPage", "txtLineBus"];
+        let excluded = NON_PRINTING_FIELDS;
         let expected: Vec<&str> = mapping
             .lines()
             .filter_map(|line| line.strip_prefix('"')?.split_once('"').map(|(key, _)| key))
@@ -974,7 +1013,7 @@ mod tests {
             );
         }
         for key in excluded {
-            assert!(!LAYOUT.iter().any(|spec| spec.key == key));
+            assert!(!LAYOUT.iter().any(|spec| spec.key == *key));
         }
     }
 }
