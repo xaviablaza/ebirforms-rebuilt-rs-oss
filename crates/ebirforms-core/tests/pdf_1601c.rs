@@ -374,7 +374,7 @@ fn rejects_exclusive_overlong_and_non_winansi_values() {
 }
 
 #[test]
-fn calibrated_segmented_header_tin_payment_and_page2_coordinates() {
+fn calibrated_segmented_header_tin_and_page2_coordinates() {
     let output = render_1601c_pdf(
         &valid_template(),
         &xml(&[
@@ -384,9 +384,6 @@ fn calibrated_segmented_header_tin_payment_and_page2_coordinates() {
             ("txtTIN2", "456"),
             ("txtTIN3", "789"),
             ("txtBranchCode", "00000"),
-            ("txtAgency37", "BANK"),
-            ("txtNumber37", "ABC"),
-            ("txtDate37", "07/23/2026"),
             ("txtTaxAgentNo", "AGENT-123"),
             ("txtDateIssue", "01/02/2024"),
             ("txtDateExpiry", "01/02/2027"),
@@ -404,16 +401,14 @@ fn calibrated_segmented_header_tin_payment_and_page2_coordinates() {
     assert_placement(&page1, "0", 50.85, 812.0);
     assert_placement(&page1, "6", 65.35, 812.0);
     assert_placement(&page1, "1", 238.77, 781.0);
-    assert_placement(&page1, "BANK", 122.0, 137.0);
-    assert_placement(&page1, "ABC", 193.0, 137.0);
-    assert_placement(&page1, "07/23/2026", 279.0, 137.0);
     assert_placement(&page1, "AGENT-123", 134.0, 182.0);
     assert_placement(&page1, "01/02/2024", 286.0, 179.0);
     assert_placement(&page1, "01/02/2027", 452.0, 179.0);
 
     let page2 = text_placements(&output, 2);
     assert_placement(&page2, "1", 35.77, 831.0);
-    assert_placement(&page2, "NAME", 226.0, 831.0);
+    assert_placement(&page2, "N", 222.83, 831.0);
+    assert_placement(&page2, "A", 237.29, 831.0);
     // Item 4 adjustment is right-aligned one digit per printed whole-number
     // cell; the heavier guides represent thousands separators.
     assert_placement(&page2, "1", 438.33, 637.0);
@@ -425,7 +420,7 @@ fn calibrated_segmented_header_tin_payment_and_page2_coordinates() {
 }
 
 #[test]
-fn sheets_start_in_the_first_guide_and_preprinted_atc_is_not_overlaid() {
+fn sheets_start_in_the_second_guide_and_preprinted_atc_is_not_overlaid() {
     let output = render_1601c_pdf(
         &valid_template(),
         &xml(&[("txtSheets", "2"), ("txtATC", "WC010"), ("selTreaty", "PH")]),
@@ -433,9 +428,9 @@ fn sheets_start_in_the_first_guide_and_preprinted_atc_is_not_overlaid() {
     .unwrap();
     let placements = text_placements(&output, 1);
 
-    // Box 4 is completed from the first printed guide, like the other header
-    // fields, rather than placing a one-digit count in its final guide.
-    assert_placement(&placements, "2", 452.8, 812.0);
+    // Box 4 reserves the first printed guide and starts a one-digit count in
+    // the second printed cell.
+    assert_placement(&placements, "2", 467.2, 812.0);
     // Box 13A uses one glyph per printed guide cell when the value fits.
     assert_placement(&placements, "P", 352.84, 662.0);
     assert_placement(&placements, "H", 367.31, 662.0);
@@ -444,7 +439,7 @@ fn sheets_start_in_the_first_guide_and_preprinted_atc_is_not_overlaid() {
 }
 
 #[test]
-fn guided_address_uses_cells_when_it_fits_and_whole_text_when_it_does_not() {
+fn registered_address_uses_cells_and_wraps_to_the_continuation_line() {
     let short = render_1601c_pdf(&valid_template(), &xml(&[("txtAddress", "AB CD")])).unwrap();
     let placements = text_placements(&short, 1);
     for (text, x) in [
@@ -462,11 +457,14 @@ fn guided_address_uses_cells_when_it_fits_and_whole_text_when_it_does_not() {
     assert_eq!(long.len(), 41);
     let overflow = render_1601c_pdf(&valid_template(), &xml(&[("txtAddress", long)])).unwrap();
     let placements = text_placements(&overflow, 1);
-    assert_placement(&placements, long, 19.5, 733.0);
+    assert_placement(&placements, "1", 22.3125, 733.0);
+    assert_placement(&placements, "0", 584.89, 733.0);
+    assert_placement(&placements, "X", 22.27, 717.0);
+    assert!(!placements.iter().any(|(text, _, _)| text == long));
 }
 
 #[test]
-fn duplicate_registered_address_is_not_painted_on_the_continuation_line() {
+fn duplicate_registered_address_is_suppressed_or_wrapped_once() {
     let duplicate = render_1601c_pdf(
         &valid_template(),
         &xml(&[
@@ -491,6 +489,38 @@ fn duplicate_registered_address_is_not_painted_on_the_continuation_line() {
     assert!(placements
         .iter()
         .any(|(text, _, y)| text == "U" && (*y - 717.0).abs() < 0.02));
+
+    let long = "123 DEMO SOLAR STREET, BARANGAY SAMPLE, MAKATI CITY";
+    let wrapped = render_1601c_pdf(
+        &valid_template(),
+        &xml(&[("txtAddress", long), ("txtAddress2", long)]),
+    )
+    .unwrap();
+    let placements = text_placements(&wrapped, 1);
+    assert!(placements
+        .iter()
+        .any(|(text, _, y)| text == "1" && (*y - 733.0).abs() < 0.02));
+    assert!(placements
+        .iter()
+        .any(|(text, _, y)| text == "M" && (*y - 717.0).abs() < 0.02));
+    assert!(!placements.iter().any(|(text, _, _)| text == long));
+}
+
+#[test]
+fn box_37_values_are_accepted_but_not_printed() {
+    let output = render_1601c_pdf(
+        &valid_template(),
+        &xml(&[
+            ("txtMonth", "12"),
+            ("txtAgency37", "BANK"),
+            ("txtNumber37", "ABC"),
+            ("txtDate37", "12/31/2025"),
+            ("txtAmount37", "4583.45"),
+        ]),
+    )
+    .unwrap();
+    let placements = text_placements(&output, 1);
+    assert!(!placements.iter().any(|(_, _, y)| (*y - 137.0).abs() < 0.02));
 }
 
 #[test]
