@@ -217,7 +217,16 @@ fn insert_field(
     Ok(())
 }
 
-const NON_PRINTING_FIELDS: &[&str] = &["txtATC", "txtCurrentPage", "txtMaxPage", "txtLineBus"];
+const NON_PRINTING_FIELDS: &[&str] = &[
+    "txtATC",
+    "txtCurrentPage",
+    "txtMaxPage",
+    "txtLineBus",
+    "txtAgency37",
+    "txtNumber37",
+    "txtDate37",
+    "txtAmount37",
+];
 
 fn is_known_field(name: &str) -> bool {
     LAYOUT.iter().any(|spec| spec.key == name) || NON_PRINTING_FIELDS.contains(&name)
@@ -334,17 +343,19 @@ const LAYOUT: &[Spec] = &[
     c!("AmendedRtn_2", 1, 232, 813),
     c!("TaxWithheld_1", 1, 304.5, 813),
     c!("TaxWithheld_2", 1, 346, 813),
-    s!("txtSheets", 1, 448, 812, 72, 5),
+    // Box 4's first printed guide is reserved. Counts start in the second
+    // guide and continue left-to-right through the remaining four cells.
+    s!("txtSheets", 1, 462.4, 812, 57.6, 4),
     s!("txtTIN1", 1, 234, 781, 43, 3),
     s!("txtTIN2", 1, 291, 781, 43, 3),
     s!("txtTIN3", 1, 348, 781, 43, 3),
     s!("txtBranchCode", 1, 406, 781, 72, 5),
     s!("txtRDOCode", 1, 550, 781, 44, 3),
-    // Boxes 8, 9, 10 and 12 use short vertical character guides. Short
-    // values are centered one glyph per guide cell; long values remain whole.
+    // Boxes 8, 10 and 12 use short vertical character guides. Short values
+    // are centered one glyph per guide cell; long values remain whole.
     ad!("txtTaxpayerName", 1, 17.5, 758, 577, 40),
-    ad!("txtAddress", 1, 17.5, 733, 577, 40),
-    ad!("txtAddress2", 1, 17.5, 717, 444.5, 31),
+    s!("txtAddress", 1, 17.5, 733, 577, 40),
+    s!("txtAddress2", 1, 17.5, 717, 444.5, 31),
     s!("txtZipCode", 1, 534, 717, 60, 4),
     ad!("txtTelNum", 1, 104, 696, 172, 12),
     c!("CatAgent_P", 1, 449, 695),
@@ -383,11 +394,6 @@ const LAYOUT: &[Spec] = &[
     t!("txtTaxAgentNo", 1, 132, 182, 141),
     t!("txtDateIssue", 1, 284, 179, 62),
     t!("txtDateExpiry", 1, 450, 179, 56),
-    // Payment baselines sit above the ruled lower edge of each handwriting row.
-    t!("txtAgency37", 1, 120, 137, 70),
-    t!("txtNumber37", 1, 191, 137, 85),
-    t!("txtDate37", 1, 277, 137, 113),
-    a!("txtAmount37", 1, 391, 137, 549, 565, 594),
     t!("txtAgency38", 1, 120, 119, 70),
     t!("txtNumber38", 1, 191, 119, 85),
     t!("txtDate38", 1, 277, 119, 113),
@@ -404,7 +410,7 @@ const LAYOUT: &[Spec] = &[
     s!("txtPg2TIN2", 2, 74, 831, 43, 3),
     s!("txtPg2TIN3", 2, 117, 831, 43, 3),
     s!("txtPg2BranchCode", 2, 160, 831, 58, 5),
-    t!("txtPg2TaxpayerName", 2, 224, 831, 356),
+    s!("txtPg2TaxpayerName", 2, 218, 831, 376, 26),
     a!("sched1:txtTotal1", 2, 333, 637, 491, 506, 534),
 ];
 
@@ -417,7 +423,8 @@ const EXCLUSIVE_PAIRS: &[(&str, &str)] = &[
 
 /// Overlay parsed 1601C XML values on an operator-supplied official template.
 pub fn render_1601c_pdf(template: &[u8], xml: &[u8]) -> Result<Vec<u8>, Pdf1601cError> {
-    let fields = parse_1601c_xml(xml)?;
+    let mut fields = parse_1601c_xml(xml)?;
+    normalize_registered_address(&mut fields);
     if !LAYOUT.iter().any(|spec| {
         fields
             .get(spec.key)
@@ -453,6 +460,53 @@ pub fn render_1601c_pdf(template: &[u8], xml: &[u8]) -> Result<Vec<u8>, Pdf1601c
     doc.save_to(&mut out)
         .map_err(|e| Pdf1601cError::Pdf(e.to_string()))?;
     Ok(out.into_inner())
+}
+
+fn normalize_registered_address(fields: &mut BTreeMap<String, String>) {
+    const FIRST_LINE_CELLS: usize = 40;
+    let Some(primary) = fields.get("txtAddress").cloned() else {
+        return;
+    };
+    let primary = primary.trim();
+    let secondary = fields.get("txtAddress2").map(|value| value.trim());
+    let continuation_available = secondary.is_none()
+        || secondary.is_some_and(str::is_empty)
+        || secondary.is_some_and(|value| value == primary);
+
+    if primary.chars().count() <= FIRST_LINE_CELLS {
+        if secondary.is_some_and(|value| value == primary) {
+            fields.insert("txtAddress2".into(), String::new());
+        }
+        return;
+    }
+    if !continuation_available {
+        return;
+    }
+
+    let (first, second) = split_at_printed_cell(primary, FIRST_LINE_CELLS);
+    fields.insert("txtAddress".into(), first);
+    fields.insert("txtAddress2".into(), second);
+}
+
+fn split_at_printed_cell(value: &str, limit: usize) -> (String, String) {
+    let chars: Vec<char> = value.chars().collect();
+    if chars.len() <= limit {
+        return (value.to_string(), String::new());
+    }
+    let whitespace = chars[..limit]
+        .iter()
+        .rposition(|ch| ch.is_whitespace())
+        .filter(|index| *index > 0);
+    let split = whitespace.unwrap_or(limit);
+    let remainder = if whitespace.is_some() {
+        split + 1
+    } else {
+        split
+    };
+    (
+        chars[..split].iter().collect::<String>(),
+        chars[remainder..].iter().collect::<String>(),
+    )
 }
 
 fn selected(fields: &BTreeMap<String, String>, key: &str) -> Result<bool, Pdf1601cError> {
@@ -491,16 +545,6 @@ fn overlay_operations(
             continue;
         };
         if value.is_empty() {
-            continue;
-        }
-        // eBIR XML commonly repeats the complete registered address in both
-        // address records. The printed second line is a continuation line, so
-        // do not paint an identical value twice.
-        if spec.key == "txtAddress2"
-            && fields
-                .get("txtAddress")
-                .is_some_and(|primary| primary.trim() == value.trim())
-        {
             continue;
         }
         if spec.kind == Kind::Check {
