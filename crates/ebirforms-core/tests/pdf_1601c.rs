@@ -425,7 +425,7 @@ fn calibrated_segmented_header_tin_payment_and_page2_coordinates() {
 }
 
 #[test]
-fn sheets_and_treaty_follow_guides_while_preprinted_atc_is_not_overlaid() {
+fn sheets_start_in_the_first_guide_and_preprinted_atc_is_not_overlaid() {
     let output = render_1601c_pdf(
         &valid_template(),
         &xml(&[("txtSheets", "2"), ("txtATC", "WC010"), ("selTreaty", "PH")]),
@@ -433,8 +433,9 @@ fn sheets_and_treaty_follow_guides_while_preprinted_atc_is_not_overlaid() {
     .unwrap();
     let placements = text_placements(&output, 1);
 
-    // A count is right-aligned in Box 4 rather than padded with synthetic zeroes.
-    assert_placement(&placements, "2", 510.4, 812.0);
+    // Box 4 is completed from the first printed guide, like the other header
+    // fields, rather than placing a one-digit count in its final guide.
+    assert_placement(&placements, "2", 452.8, 812.0);
     // Box 13A uses one glyph per printed guide cell when the value fits.
     assert_placement(&placements, "P", 352.84, 662.0);
     assert_placement(&placements, "H", 367.31, 662.0);
@@ -462,6 +463,34 @@ fn guided_address_uses_cells_when_it_fits_and_whole_text_when_it_does_not() {
     let overflow = render_1601c_pdf(&valid_template(), &xml(&[("txtAddress", long)])).unwrap();
     let placements = text_placements(&overflow, 1);
     assert_placement(&placements, long, 19.5, 733.0);
+}
+
+#[test]
+fn duplicate_registered_address_is_not_painted_on_the_continuation_line() {
+    let duplicate = render_1601c_pdf(
+        &valid_template(),
+        &xml(&[
+            ("txtAddress", "123 SAMPLE STREET"),
+            ("txtAddress2", "123 SAMPLE STREET"),
+        ]),
+    )
+    .unwrap();
+    let placements = text_placements(&duplicate, 1);
+    assert!(placements.iter().any(|(_, _, y)| (*y - 733.0).abs() < 0.02));
+    assert!(!placements.iter().any(|(_, _, y)| (*y - 717.0).abs() < 0.02));
+
+    let continuation = render_1601c_pdf(
+        &valid_template(),
+        &xml(&[
+            ("txtAddress", "123 SAMPLE STREET"),
+            ("txtAddress2", "UNIT 2"),
+        ]),
+    )
+    .unwrap();
+    let placements = text_placements(&continuation, 1);
+    assert!(placements
+        .iter()
+        .any(|(text, _, y)| text == "U" && (*y - 717.0).abs() < 0.02));
 }
 
 #[test]
