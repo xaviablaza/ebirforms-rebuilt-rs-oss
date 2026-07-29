@@ -227,7 +227,7 @@ dependencies = [
 
 [[package]]
 name = "ebirforms-cli"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "ebirforms-core",
  "serde",
@@ -236,7 +236,7 @@ dependencies = [
 
 [[package]]
 name = "ebirforms-core"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "aes 0.8.4",
  "cipher 0.4.4",
