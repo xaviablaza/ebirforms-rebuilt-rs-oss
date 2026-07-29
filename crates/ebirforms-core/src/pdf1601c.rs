@@ -235,11 +235,6 @@ enum Kind {
     Segmented {
         cells: usize,
     },
-    /// A fixed number of equal-width boxes populated from the right. This is
-    /// used for numeric counts where leading zeroes should not be manufactured.
-    RightSegmented {
-        cells: usize,
-    },
     /// Use the printed character guides when the value fits; otherwise render
     /// the complete value as ordinary contiguous text across the same box.
     AdaptiveSegmented {
@@ -305,18 +300,6 @@ macro_rules! s {
         }
     };
 }
-macro_rules! rs {
-    ($k:literal,$p:literal,$x:literal,$y:literal,$w:literal,$cells:literal) => {
-        Spec {
-            key: $k,
-            page: $p,
-            x: $x as f32,
-            y: $y as f32,
-            width: $w as f32,
-            kind: Kind::RightSegmented { cells: $cells },
-        }
-    };
-}
 macro_rules! ad {
     ($k:literal,$p:literal,$x:literal,$y:literal,$w:literal,$cells:literal) => {
         Spec {
@@ -351,7 +334,7 @@ const LAYOUT: &[Spec] = &[
     c!("AmendedRtn_2", 1, 232, 813),
     c!("TaxWithheld_1", 1, 304.5, 813),
     c!("TaxWithheld_2", 1, 346, 813),
-    rs!("txtSheets", 1, 448, 812, 72, 5),
+    s!("txtSheets", 1, 448, 812, 72, 5),
     s!("txtTIN1", 1, 234, 781, 43, 3),
     s!("txtTIN2", 1, 291, 781, 43, 3),
     s!("txtTIN3", 1, 348, 781, 43, 3),
@@ -510,6 +493,16 @@ fn overlay_operations(
         if value.is_empty() {
             continue;
         }
+        // eBIR XML commonly repeats the complete registered address in both
+        // address records. The printed second line is a continuation line, so
+        // do not paint an identical value twice.
+        if spec.key == "txtAddress2"
+            && fields
+                .get("txtAddress")
+                .is_some_and(|primary| primary.trim() == value.trim())
+        {
+            continue;
+        }
         if spec.kind == Kind::Check {
             if selected(fields, spec.key)? {
                 ops.extend(check_operations(spec.x, spec.y));
@@ -536,11 +529,6 @@ fn overlay_operations(
                 let encoded = encoded_value(spec.key, value)?;
                 enforce_capacity(spec.key, encoded.len(), cells)?;
                 push_segmented_text(&mut ops, spec, cells, encoded);
-            }
-            Kind::RightSegmented { cells } => {
-                let encoded = encoded_value(spec.key, value)?;
-                enforce_capacity(spec.key, encoded.len(), cells)?;
-                push_right_segmented_text(&mut ops, spec, cells, encoded);
             }
             Kind::AdaptiveSegmented { cells } => {
                 let encoded = encoded_value(spec.key, value)?;
