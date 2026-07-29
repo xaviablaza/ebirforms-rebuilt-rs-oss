@@ -130,6 +130,7 @@ mise run render-sample
 mise run package-sample
 
 cargo run -p ebirforms-cli -- diff-fixture --form 1601C --input tests/fixtures/1601C/input.json --fixture tests/fixtures/1601C/synthetic_encrypted.xml
+cargo run -p ebirforms-cli -- render-pdf --form 1601C --xml tests/fixtures/1601C/synthetic_plaintext.xml --template /path/to/operator-supplied-1601C.pdf --out /tmp/1601C-filled.pdf
 cargo run -p ebirforms-cli -- submit --form 1601C --input tests/fixtures/1601C/input.json --dry-run --records /tmp/ebirforms-submissions.json
 cargo run -p ebirforms-cli -- queue --form 1601C --input tests/fixtures/1601C/input.json --dry-run --db /tmp/ebirforms-jobs.sqlite
 cargo run -p ebirforms-cli -- run-queue --dry-run --db /tmp/ebirforms-jobs.sqlite --records /tmp/ebirforms-submissions.json --limit 1
@@ -138,6 +139,12 @@ cargo run -p ebirforms-cli -- receipt-match --receipt tests/fixtures/1601C/recei
 ```
 
 Default local state paths are under `.ebirforms/`, which is gitignored.
+
+### 1601C PDF export
+
+`render-pdf` overlays plaintext eBIR XML on an official blank PDF supplied by the operator at runtime. The official PDF is not bundled or downloaded. The exporter currently supports only the semantically identified January 2018 Form 1601C template: exactly two unrotated 612 × 936 point pages, with no effective crop or user-unit scaling. It accepts both official `div` envelope records and the repository's synthetic `field` fixture format, rejects unknown fields and inputs with no printable values, rejects text that cannot be represented safely in WinAnsi/Courier, and writes the result atomically. The output path must differ from both the template and XML input paths.
+
+Coordinates are a fixed clean-room layout, not AcroForm fields. Operators should visually review generated forms before use; other revisions or geometries are rejected.
 
 ## Production filing configuration
 

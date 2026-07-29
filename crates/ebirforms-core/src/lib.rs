@@ -4,6 +4,7 @@ pub mod crypto;
 pub mod form;
 pub mod job;
 pub mod package;
+pub mod pdf1601c;
 pub mod profile;
 pub mod receipt;
 pub mod submission;
@@ -18,6 +19,7 @@ pub use job::{
 pub use package::{
     build_submission_package, sha256_hex, PackageError, SubmissionManifest, SubmissionPackage,
 };
+pub use pdf1601c::{parse_1601c_xml, render_1601c_pdf, Pdf1601cError};
 pub use profile::{
     AppSettings, AppState, AppStateStore, PinVerifier, ProfileError, SubmissionModePreference,
     TaxpayerProfile, Theme,

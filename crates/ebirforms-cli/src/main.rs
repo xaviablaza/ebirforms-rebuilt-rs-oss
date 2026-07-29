@@ -1,8 +1,9 @@
 use ebirforms_core::{
     build_submission_package, decrypt_payload, encrypt_payload, parse_and_apply_receipt,
-    poll_receipt_directory, poll_receipts_himalaya, run_due_jobs_dry_run, run_due_jobs_live,
-    sha256_hex, submit_with_store, AppStateStore, DryRunTransport, HimalayaReceiptPollOptions,
-    JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode, TaxpayerProfile, Theme,
+    poll_receipt_directory, poll_receipts_himalaya, render_1601c_pdf, run_due_jobs_dry_run,
+    run_due_jobs_live, sha256_hex, submit_with_store, AppStateStore, DryRunTransport,
+    HimalayaReceiptPollOptions, JobMode, JobStore, SftpTransport, SubmissionStore, SubmitMode,
+    TaxpayerProfile, Theme,
 };
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
@@ -19,6 +20,7 @@ fn usage(program: &str) {
     eprintln!("  {program} decrypt <encrypted.xml> <plaintext.xml>");
     eprintln!("  {program} import-xml --input <synthetic_or_authorized_plaintext.xml> --out <input.json> [--email <email>] [--profile-id <id>]");
     eprintln!("  {program} render --form 1601C --input <input.json> --out <plaintext.xml>");
+    eprintln!("  {program} render-pdf --form 1601C --xml <plaintext.xml> --template <official.pdf> --out <filled.pdf>");
     eprintln!("  {program} package --form 1601C --input <input.json> --out <upload.xml> [--manifest <manifest.json>]");
     eprintln!("  {program} diff-fixture --form 1601C --input <input.json> --fixture <synthetic_or_authorized_encrypted.xml>");
     eprintln!("  {program} submit --form 1601C --input <input.json> --dry-run [--records <submissions.json>]");
@@ -43,6 +45,8 @@ fn usage(program: &str) {
 struct Args {
     form: Option<String>,
     input: Option<PathBuf>,
+    xml: Option<PathBuf>,
+    template: Option<PathBuf>,
     out: Option<PathBuf>,
     manifest: Option<PathBuf>,
     fixture: Option<PathBuf>,
@@ -84,6 +88,7 @@ fn main() -> ExitCode {
         "encrypt" | "decrypt" => run_transform(command, &argv[2..]),
         "import-xml" => run_import_xml(parse_flags(&argv[2..])),
         "render" => run_render(parse_flags(&argv[2..])),
+        "render-pdf" => run_render_pdf(parse_flags(&argv[2..])),
         "package" => run_package(parse_flags(&argv[2..])),
         "diff-fixture" => run_diff_fixture(parse_flags(&argv[2..])),
         "submit" => run_submit(parse_flags(&argv[2..])),
@@ -126,6 +131,16 @@ fn parse_flags(args: &[String]) -> Result<Args, String> {
                 i += 1;
                 parsed.input = Some(PathBuf::from(
                     args.get(i).ok_or("--input requires a value")?,
+                ));
+            }
+            "--xml" => {
+                i += 1;
+                parsed.xml = Some(PathBuf::from(args.get(i).ok_or("--xml requires a value")?));
+            }
+            "--template" => {
+                i += 1;
+                parsed.template = Some(PathBuf::from(
+                    args.get(i).ok_or("--template requires a value")?,
                 ));
             }
             "--out" => {
@@ -288,6 +303,91 @@ fn run_render(args: Result<Args, String>) -> Result<(), String> {
     write_bytes(out, plaintext.as_bytes())?;
     println!("wrote {} bytes to {}", plaintext.len(), out.display());
     Ok(())
+}
+
+fn run_render_pdf(args: Result<Args, String>) -> Result<(), String> {
+    let args = args?;
+    let form = args.form.as_deref().ok_or("render-pdf requires --form")?;
+    if form != "1601C" {
+        return Err("render-pdf currently supports only --form 1601C".to_string());
+    }
+    let xml_path = args.xml.as_deref().ok_or("render-pdf requires --xml")?;
+    let template_path = args
+        .template
+        .as_deref()
+        .ok_or("render-pdf requires --template")?;
+    let out = args.out.as_deref().ok_or("render-pdf requires --out")?;
+    if paths_refer_to_same_target(template_path, out)? {
+        return Err("--out must not be the same file as --template".to_string());
+    }
+    if paths_refer_to_same_target(xml_path, out)? {
+        return Err("--out must not be the same file as --xml".to_string());
+    }
+    let template = fs::read(template_path)
+        .map_err(|err| format!("failed to read {}: {err}", template_path.display()))?;
+    let xml = fs::read(xml_path)
+        .map_err(|err| format!("failed to read {}: {err}", xml_path.display()))?;
+    let pdf = render_1601c_pdf(&template, &xml).map_err(|err| err.to_string())?;
+    write_bytes_atomically(out, &pdf)?;
+    println!("wrote {} bytes to {}", pdf.len(), out.display());
+    Ok(())
+}
+
+fn paths_refer_to_same_target(template: &Path, out: &Path) -> Result<bool, String> {
+    let template = fs::canonicalize(template)
+        .map_err(|err| format!("failed to resolve {}: {err}", template.display()))?;
+    if let Ok(existing_out) = fs::canonicalize(out) {
+        return Ok(existing_out == template);
+    }
+    let parent = out
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let parent = match fs::canonicalize(parent) {
+        Ok(parent) => parent,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(err) => {
+            return Err(format!(
+                "failed to resolve output directory {}: {err}",
+                parent.display()
+            ))
+        }
+    };
+    Ok(out
+        .file_name()
+        .map(|name| parent.join(name) == template)
+        .unwrap_or(false))
+}
+
+fn write_bytes_atomically(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    fs::create_dir_all(parent)
+        .map_err(|err| format!("failed to create {}: {err}", parent.display()))?;
+    let name = path
+        .file_name()
+        .ok_or("output path must name a file")?
+        .to_string_lossy();
+    let temporary = parent.join(format!(".{name}.tmp-{}", std::process::id()));
+    let result = (|| {
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temporary)
+            .map_err(|err| format!("failed to create {}: {err}", temporary.display()))?;
+        file.write_all(bytes)
+            .map_err(|err| format!("failed to write {}: {err}", temporary.display()))?;
+        file.sync_all()
+            .map_err(|err| format!("failed to sync {}: {err}", temporary.display()))?;
+        fs::rename(&temporary, path)
+            .map_err(|err| format!("failed to replace {}: {err}", path.display()))
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temporary);
+    }
+    result
 }
 
 fn run_import_xml(args: Result<Args, String>) -> Result<(), String> {
@@ -940,4 +1040,21 @@ fn write_bytes(path: &Path, bytes: &[u8]) -> Result<(), String> {
         }
     }
     fs::write(path, bytes).map_err(|err| format!("failed to write {}: {err}", path.display()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn same_target_helper_rejects_an_input_as_output() {
+        let directory =
+            std::env::temp_dir().join(format!("ebirforms-cli-same-target-{}", std::process::id()));
+        fs::create_dir_all(&directory).unwrap();
+        let xml = directory.join("input.xml");
+        fs::write(&xml, b"xml").unwrap();
+        assert!(paths_refer_to_same_target(&xml, &xml).unwrap());
+        assert!(!paths_refer_to_same_target(&xml, &directory.join("output.pdf")).unwrap());
+        fs::remove_dir_all(directory).unwrap();
+    }
 }
